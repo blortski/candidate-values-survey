@@ -6,6 +6,10 @@
  * and displaying results.
  */
 
+// Import GitHub API and configuration
+const { githubAPI } = window;
+const { appConfig } = window;
+
 // Global variables
 let surveyData = null;
 let currentQuestion = 0;
@@ -260,8 +264,27 @@ function calculateResults() {
         }
     };
     
-    // Save results locally and display them
+    // Save results to localStorage as a fallback
     localStorage.setItem(`surveyResult_${candidateEmail}`, JSON.stringify(finalResults));
+    
+    // If GitHub API is available, save results to GitHub
+    if (window.githubAPI && appConfig && appConfig.github && appConfig.github.token) {
+        // Configure GitHub API
+        githubAPI.setToken(appConfig.github.token);
+        
+        // Save results to GitHub
+        githubAPI.saveSurveyResult(finalResults)
+            .then(() => {
+                console.log('Survey results saved to GitHub successfully');
+            })
+            .catch(error => {
+                console.error('Error saving results to GitHub:', error);
+                showError('Your results were saved locally, but there was an error saving to our database. Please notify the administrator.');
+            });
+    } else {
+        console.warn('GitHub API or token not available. Results saved to localStorage only.');
+    }
+    
     showResults(finalResults);
 }
 

@@ -286,6 +286,32 @@
         .refresh-btn {
             margin-right: 10px;
         }
+        
+        .loading-indicator {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+        }
+        
+        .loading-indicator .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -301,32 +327,37 @@
         </header>
         
         <main>
-            <div id="login-section">
+            <section id="login-section">
                 <div class="login-container">
                     <h2>Admin Login</h2>
-                    <p>Please enter the admin password to access the survey results.</p>
+                    <p>Enter the admin password to access the dashboard.</p>
                     <div class="form-group">
                         <label for="admin-password">Password:</label>
-                        <input type="password" id="admin-password" placeholder="Enter admin password">
+                        <input type="password" id="admin-password" required>
                     </div>
-                    <button id="login-btn" class="btn">Login</button>
                     <p id="login-error" class="error-message"></p>
+                    <button id="login-btn" class="btn primary-btn">Login</button>
                 </div>
-            </div>
+            </section>
             
-            <div id="dashboard-section" style="display: none;">
+            <section id="dashboard-section" style="display: none;">
                 <div class="dashboard-header">
-                    <h2 class="dashboard-title">Survey Results</h2>
-                    <div>
-                        <button id="refresh-btn" class="btn refresh-btn">Refresh Data</button>
-                        <button id="logout-btn" class="btn logout-btn">Logout</button>
+                    <h2>Survey Results</h2>
+                    <div class="dashboard-actions">
+                        <button id="refresh-btn" class="btn secondary-btn">Refresh Data</button>
+                        <button id="logout-btn" class="btn secondary-btn">Logout</button>
                     </div>
                 </div>
                 
-                <div id="results-container">
+                <div id="loading-indicator" class="loading-indicator">
+                    <div class="spinner"></div>
+                    <p>Loading survey results...</p>
+                </div>
+                
+                <div id="results-container" class="results-container">
                     <!-- Results will be loaded here -->
                 </div>
-            </div>
+            </section>
         </main>
         
         <div id="details-modal" class="modal">
@@ -340,13 +371,17 @@
         
         <footer>
             <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-            <span class="version">v1.0.3</span>
+            <span class="version">v1.0.4</span>
         </footer>
     </div>
     
+    <!-- Load configuration and GitHub API -->
+    <script src="js/lib/config.js"></script>
+    <script src="js/lib/github-api.js"></script>
+    
     <script>
-        // Admin password
-        const ADMIN_PASSWORD = 'WildZora2025';
+        // Admin password from configuration
+        const ADMIN_PASSWORD = appConfig.admin.password;
         
         // DOM Elements
         const loginSection = document.getElementById('login-section');
@@ -357,6 +392,7 @@
         const logoutBtn = document.getElementById('logout-btn');
         const refreshBtn = document.getElementById('refresh-btn');
         const resultsContainer = document.getElementById('results-container');
+        const loadingIndicator = document.getElementById('loading-indicator');
         const detailsModal = document.getElementById('details-modal');
         const closeModal = document.querySelector('.close-modal');
         const candidateDetailsContainer = document.getElementById('candidate-details-container');
@@ -404,8 +440,42 @@
             showLogin();
         }
         
-        // Load survey results from localStorage
-        function loadResults() {
+        // Load survey results
+        async function loadResults() {
+            showLoading(true);
+            
+            try {
+                let results = [];
+                
+                // If GitHub API is configured, try to load results from GitHub
+                if (githubAPI && appConfig.github.token) {
+                    githubAPI.setToken(appConfig.github.token);
+                    results = await githubAPI.getAllSurveyResults();
+                    console.log('Loaded results from GitHub:', results.length);
+                }
+                
+                // If no results from GitHub or no token, fall back to localStorage
+                if (results.length === 0) {
+                    results = getResultsFromLocalStorage();
+                    console.log('Loaded results from localStorage:', results.length);
+                }
+                
+                displayResults(results);
+            } catch (error) {
+                console.error('Error loading results:', error);
+                resultsContainer.innerHTML = `
+                    <div class="error-container">
+                        <p class="error-message">Error loading survey results. Please try again later.</p>
+                        <p class="error-details">${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Get results from localStorage
+        function getResultsFromLocalStorage() {
             const results = [];
             
             // Get all keys from localStorage
@@ -423,7 +493,13 @@
                 }
             }
             
-            displayResults(results);
+            return results;
+        }
+        
+        // Show or hide loading indicator
+        function showLoading(show) {
+            loadingIndicator.style.display = show ? 'flex' : 'none';
+            resultsContainer.style.display = show ? 'none' : 'block';
         }
         
         // Display results in the table
@@ -456,7 +532,7 @@
             
             results.forEach((result, index) => {
                 const date = new Date(result.timestamp).toLocaleDateString();
-                const overallScore = calculateOverallScore(result.scores);
+                const overallScore = result.overallScore ? result.overallScore.percentage : calculateOverallScore(result.scores);
                 
                 tableHTML += `
                     <tr>
@@ -511,7 +587,7 @@
         
         // Show candidate details in modal
         function showCandidateDetails(result) {
-            const overallScore = calculateOverallScore(result.scores);
+            const overallScore = result.overallScore ? result.overallScore.percentage : calculateOverallScore(result.scores);
             let alignmentLevel = '';
             
             if (overallScore >= 75) {
@@ -640,17 +716,13 @@
         });
         
         // Event listeners
+        document.addEventListener('DOMContentLoaded', checkAuth);
         loginBtn.addEventListener('click', handleLogin);
         adminPasswordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleLogin();
-            }
+            if (e.key === 'Enter') handleLogin();
         });
         logoutBtn.addEventListener('click', handleLogout);
         refreshBtn.addEventListener('click', loadResults);
-        
-        // Initialize
-        checkAuth();
     </script>
 </body>
 </html>
