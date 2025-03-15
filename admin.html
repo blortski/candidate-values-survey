@@ -210,16 +210,17 @@
         }
         
         .modal-content {
-            background-color: white;
-            margin: 5% auto;
+            background-color: #fefefe;
+            margin: 15% auto;
             padding: 20px;
-            border-radius: 8px;
+            border: 1px solid #888;
             width: 80%;
-            max-width: 900px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            max-width: 600px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         
-        .close-modal {
+        .close-modal, .close-token-modal {
             color: #aaa;
             float: right;
             font-size: 28px;
@@ -227,8 +228,36 @@
             cursor: pointer;
         }
         
-        .close-modal:hover {
-            color: #333;
+        .close-modal:hover, .close-token-modal:hover {
+            color: #000;
+        }
+        
+        .loading-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            display: none;
+        }
+        
+        .token-info {
+            margin: 15px 0;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .token-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        #github-token {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         
         .candidate-details {
@@ -287,15 +316,7 @@
             margin-right: 10px;
         }
         
-        .loading-indicator {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            flex-direction: column;
-        }
-        
-        .loading-indicator .spinner {
+        .spinner {
             border: 8px solid #f3f3f3;
             border-top: 8px solid var(--primary-color);
             border-radius: 50%;
@@ -345,6 +366,7 @@
                     <h2>Survey Results</h2>
                     <div class="dashboard-actions">
                         <button id="refresh-btn" class="btn secondary-btn">Refresh Data</button>
+                        <button id="github-token-btn" class="btn secondary-btn">Set GitHub Token</button>
                         <button id="logout-btn" class="btn secondary-btn">Logout</button>
                     </div>
                 </div>
@@ -369,6 +391,25 @@
             </div>
         </div>
         
+        <div id="token-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-token-modal">&times;</span>
+                <div id="token-container">
+                    <h2>Set GitHub Token</h2>
+                    <p>Enter your GitHub Personal Access Token to enable permanent storage of survey results.</p>
+                    <div class="form-group">
+                        <label for="github-token">GitHub Token:</label>
+                        <input type="password" id="github-token" placeholder="Enter your GitHub token">
+                    </div>
+                    <p class="token-info">This token will be stored securely in your browser and used to save survey results to GitHub.</p>
+                    <div class="token-actions">
+                        <button id="save-token-btn" class="btn primary-btn">Save Token</button>
+                        <button id="clear-token-btn" class="btn secondary-btn">Clear Token</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <footer>
             <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
             <span class="version">v1.0.4</span>
@@ -383,6 +424,9 @@
         // Admin password from configuration
         const ADMIN_PASSWORD = appConfig.admin.password;
         
+        // GitHub token storage key
+        const GITHUB_TOKEN_KEY = 'wildZora_githubToken';
+        
         // DOM Elements
         const loginSection = document.getElementById('login-section');
         const dashboardSection = document.getElementById('dashboard-section');
@@ -396,6 +440,14 @@
         const detailsModal = document.getElementById('details-modal');
         const closeModal = document.querySelector('.close-modal');
         const candidateDetailsContainer = document.getElementById('candidate-details-container');
+        
+        // Token modal elements
+        const tokenModal = document.getElementById('token-modal');
+        const closeTokenModal = document.querySelector('.close-token-modal');
+        const githubTokenInput = document.getElementById('github-token');
+        const saveTokenBtn = document.getElementById('save-token-btn');
+        const clearTokenBtn = document.getElementById('clear-token-btn');
+        const githubTokenBtn = document.getElementById('github-token-btn');
         
         // Check if admin is logged in
         function checkAuth() {
@@ -419,6 +471,17 @@
         function showDashboard() {
             loginSection.style.display = 'none';
             dashboardSection.style.display = 'block';
+            
+            // Check if GitHub token is set
+            const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+            if (token) {
+                // Set token in appConfig and githubAPI
+                appConfig.github.token = token;
+                if (githubAPI) {
+                    githubAPI.setToken(token);
+                }
+            }
+            
             loadResults();
         }
         
@@ -438,6 +501,37 @@
         function handleLogout() {
             sessionStorage.removeItem('adminAuthenticated');
             showLogin();
+        }
+        
+        // Show GitHub token modal
+        function showTokenModal() {
+            const currentToken = localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+            githubTokenInput.value = currentToken;
+            tokenModal.style.display = 'block';
+        }
+        
+        // Save GitHub token
+        function saveGitHubToken() {
+            const token = githubTokenInput.value.trim();
+            if (token) {
+                localStorage.setItem(GITHUB_TOKEN_KEY, token);
+                appConfig.github.token = token;
+                if (githubAPI) {
+                    githubAPI.setToken(token);
+                }
+                tokenModal.style.display = 'none';
+                loadResults(); // Reload results with new token
+            }
+        }
+        
+        // Clear GitHub token
+        function clearGitHubToken() {
+            localStorage.removeItem(GITHUB_TOKEN_KEY);
+            githubTokenInput.value = '';
+            appConfig.github.token = '';
+            if (githubAPI) {
+                githubAPI.setToken('');
+            }
         }
         
         // Load survey results
@@ -713,6 +807,9 @@
             if (event.target === detailsModal) {
                 detailsModal.style.display = 'none';
             }
+            if (event.target === tokenModal) {
+                tokenModal.style.display = 'none';
+            }
         });
         
         // Event listeners
@@ -723,6 +820,14 @@
         });
         logoutBtn.addEventListener('click', handleLogout);
         refreshBtn.addEventListener('click', loadResults);
+        
+        // Token management event listeners
+        githubTokenBtn.addEventListener('click', showTokenModal);
+        saveTokenBtn.addEventListener('click', saveGitHubToken);
+        clearTokenBtn.addEventListener('click', clearGitHubToken);
+        closeTokenModal.addEventListener('click', () => {
+            tokenModal.style.display = 'none';
+        });
     </script>
 </body>
 </html>
