@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wild Zora Survey Admin Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .admin-container {
+            padding: 20px;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .candidate-list {
+            margin-bottom: 30px;
+        }
+        
+        .candidate-card {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .candidate-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .candidate-name {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .candidate-email {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .candidate-date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .overall-score {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .high {
+            color: #2e7d32;
+        }
+        
+        .medium {
+            color: #ff8f00;
+        }
+        
+        .low {
+            color: #c62828;
+        }
+        
+        .category-scores {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .category-score {
+            background-color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .category-score.high {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .category-score.medium {
+            background-color: #fff8e1;
+            color: #ff8f00;
+        }
+        
+        .category-score.low {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .detail-view {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .back-btn {
+            margin-bottom: 15px;
+        }
+        
+        .detail-header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .detail-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .detail-categories {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-btn {
+            margin-left: 10px;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .login-form input {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .login-error {
+            color: #c62828;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        @media (min-width: 768px) {
+            .detail-categories {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wild Zora Survey Admin Dashboard</h1>
+            <p class="subtitle">View and analyze candidate survey results</p>
+        </header>
+        
+        <main id="main-content" class="admin-container">
+            <!-- Login form will be displayed here initially -->
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Admin password - in a real application, this would be handled securely on the server
+        const ADMIN_PASSWORD = "WildZora2025";
+        
+        document.addEventListener('DOMContentLoaded', checkAuthentication);
+        
+        function checkAuthentication() {
+            const isAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
+            
+            if (isAuthenticated) {
+                showAdminDashboard();
+            } else {
+                showLoginForm();
+            }
+        }
+        
+        function showLoginForm(error = null) {
+            const mainContent = document.getElementById('main-content');
+            
+            let loginHTML = `
+                <div class="login-container">
+                    <h2>Admin Login</h2>
+                    <p>Please enter the admin password to access the dashboard.</p>
+                    
+                    ${error ? `<div class="login-error">${error}</div>` : ''}
+                    
+                    <form id="login-form" class="login-form">
+                        <input type="password" id="admin-password" placeholder="Enter password" required>
+                        <button type="submit" class="btn primary-btn">Login</button>
+                    </form>
+                    
+                    <p style="margin-top: 20px; text-align: center;">
+                        <a href="index.html">Return to Survey</a>
+                    </p>
+                </div>
+            `;
+            
+            mainContent.innerHTML = loginHTML;
+            
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const password = document.getElementById('admin-password').value;
+                
+                if (password === ADMIN_PASSWORD) {
+                    sessionStorage.setItem('adminAuthenticated', 'true');
+                    showAdminDashboard();
+                } else {
+                    showLoginForm('Incorrect password. Please try again.');
+                }
+            });
+        }
+        
+        function showAdminDashboard() {
+            const mainContent = document.getElementById('main-content');
+            
+            mainContent.innerHTML = `
+                <div class="admin-header">
+                    <h2>Candidate Results</h2>
+                    <div>
+                        <button id="refresh-btn" class="btn secondary-btn refresh-btn">Refresh Data</button>
+                        <button id="logout-btn" class="btn secondary-btn">Logout</button>
+                    </div>
+                </div>
+                
+                <div id="results-container">
+                    <!-- Results will be loaded here -->
+                    <div class="no-results">
+                        <p>No survey results found. Candidates need to complete the survey first.</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('refresh-btn').addEventListener('click', loadResults);
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                sessionStorage.removeItem('adminAuthenticated');
+                showLoginForm();
+            });
+            
+            loadResults();
+        }
+        
+        function loadResults() {
+            const resultsContainer = document.getElementById('results-container');
+            const results = getAllSurveyResults();
+            
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <p>No survey results found. Candidates need to complete the survey first.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort results by timestamp (newest first)
+            results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            let html = `<div class="candidate-list">`;
+            
+            results.forEach(result => {
+                const date = new Date(result.timestamp).toLocaleDateString();
+                const overallAlignment = result.overallScore ? result.overallScore.alignment : 'unknown';
+                const overallPercentage = result.overallScore ? result.overallScore.percentage : 'N/A';
+                
+                html += `
+                    <div class="candidate-card" onclick="showCandidateDetails('${result.candidateEmail}')">
+                        <div class="candidate-name">${result.candidateName}</div>
+                        <div class="candidate-email">${result.candidateEmail}</div>
+                        <div class="candidate-date">Completed on: ${date}</div>
+                        <div class="overall-score ${overallAlignment}">
+                            Overall Alignment: ${overallAlignment.charAt(0).toUpperCase() + overallAlignment.slice(1)} (${overallPercentage}%)
+                        </div>
+                        <div class="category-scores">
+                            ${getCategoryBadges(result.levels)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            resultsContainer.innerHTML = html;
+        }
+        
+        function getAllSurveyResults() {
+            const results = [];
+            
+            // Loop through localStorage to find survey results
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                
+                if (key.startsWith('survey_result_')) {
+                    try {
+                        const result = JSON.parse(localStorage.getItem(key));
+                        results.push(result);
+                    } catch (e) {
+                        console.error('Error parsing result:', e);
+                    }
+                }
+            }
+            
+            return results;
+        }
+        
+        function getCategoryBadges(levels) {
+            let badges = '';
+            
+            if (!levels) return badges;
+            
+            for (const [category, level] of Object.entries(levels)) {
+                let categoryName = '';
+                
+                switch(category) {
+                    case 'optimism':
+                        categoryName = 'Optimism';
+                        break;
+                    case 'productivity':
+                        categoryName = 'Productivity';
+                        break;
+                    case 'valueOrientation':
+                        categoryName = 'Value';
+                        break;
+                    case 'collaboration':
+                        categoryName = 'Collaboration';
+                        break;
+                    case 'generalInsight':
+                        categoryName = 'Insight';
+                        break;
+                }
+                
+                badges += `<span class="category-score ${level}">${categoryName}: ${level.charAt(0).toUpperCase() + level.slice(1)}</span>`;
+            }
+            
+            return badges;
+        }
+        
+        function showCandidateDetails(email) {
+            const resultsContainer = document.getElementById('results-container');
+            const key = `survey_result_${email}`;
+            const resultData = JSON.parse(localStorage.getItem(key));
+            
+            if (!resultData) {
+                return;
+            }
+            
+            const date = new Date(resultData.timestamp).toLocaleDateString();
+            const time = new Date(resultData.timestamp).toLocaleTimeString();
+            
+            let detailHtml = `
+                <div class="detail-view">
+                    <button class="btn secondary-btn back-btn" onclick="loadResults()">Back to List</button>
+                    
+                    <div class="detail-header">
+                        <h2>${resultData.candidateName}</h2>
+                        <div class="detail-meta">Email: ${resultData.candidateEmail}</div>
+                        <div class="detail-meta">Completed on: ${date} at ${time}</div>
+                    </div>
+            `;
+            
+            // Add overall score if available
+            if (resultData.overallScore) {
+                const overallScore = resultData.overallScore;
+                detailHtml += `
+                    <h3>Overall Values Alignment</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${overallScore.percentage}%"></div>
+                    </div>
+                    <p class="score-text">Score: ${overallScore.score}/${overallScore.maxScore} (${overallScore.percentage}%)</p>
+                    <p class="score-text">Alignment: <span class="${overallScore.alignment}">${overallScore.alignment.charAt(0).toUpperCase() + overallScore.alignment.slice(1)}</span></p>
+                    <p class="interpretation">
+                        ${overallScore.alignment === 'high' ? 'Strong alignment with Wild Zora values' : 
+                          overallScore.alignment === 'medium' ? 'Moderate alignment with Wild Zora values' : 
+                          'Potential misalignment with Wild Zora values'}
+                    </p>
+                `;
+            }
+            
+            detailHtml += `
+                <h3>Category Scores</h3>
+                <div class="detail-categories">
+            `;
+            
+            // Add each category result
+            const categories = [
+                { id: 'optimism', name: 'Optimism' },
+                { id: 'productivity', name: 'Productivity & Continuous Improvement' },
+                { id: 'valueOrientation', name: 'Value Orientation' },
+                { id: 'collaboration', name: 'Collaboration' },
+                { id: 'generalInsight', name: 'General Insight' }
+            ];
+            
+            categories.forEach(category => {
+                const score = resultData.scores[category.id];
+                const level = resultData.levels[category.id];
+                
+                // Estimate max score based on level thresholds
+                let maxScore = 21; // Default for categories with 7 questions
+                if (category.id === 'generalInsight') {
+                    maxScore = 6; // Only 2 questions
+                }
+                
+                const percentScore = (score / maxScore) * 100;
+                
+                detailHtml += `
+                    <div class="result-category">
+                        <h3 class="result-title">${category.name}</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentScore}%"></div>
+                        </div>
+                        <p class="score-text">Score: ${score}/${maxScore}</p>
+                        <p class="score-text">Level: <span class="${level}">${level.charAt(0).toUpperCase() + level.slice(1)}</span></p>
+                    </div>
+                `;
+            });
+            
+            detailHtml += `
+                    </div>
+                    
+                    <h3>Overall Profile</h3>
+                    <p>${getStrengthDescription(resultData.levels)}</p>
+                </div>
+            `;
+            
+            resultsContainer.innerHTML = detailHtml;
+        }
+        
+        function getStrengthDescription(levels) {
+            const strengths = [];
+            const areas = [];
+            
+            if (levels.optimism === 'high') strengths.push('strong optimism');
+            if (levels.productivity === 'high') strengths.push('excellent productivity habits');
+            if (levels.valueOrientation === 'high') strengths.push('strong focus on business value');
+            if (levels.collaboration === 'high') strengths.push('great collaborative skills');
+            
+            if (levels.optimism === 'low') areas.push('optimism');
+            if (levels.productivity === 'low') areas.push('productivity habits');
+            if (levels.valueOrientation === 'low') areas.push('focus on business value');
+            if (levels.collaboration === 'low') areas.push('collaborative approach');
+            
+            let description = 'This candidate shows ';
+            
+            if (strengths.length > 0) {
+                description += `${strengths.join(', ')}`;
+            } else {
+                description += 'a balanced approach across all categories';
+            }
+            
+            if (areas.length > 0) {
+                description += ` with opportunities for growth in ${areas.join(', ')}`;
+            }
+            
+            return description;
+        }
+    </script>
+</body>
+</html>
