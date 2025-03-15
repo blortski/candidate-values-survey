@@ -1,172 +1,349 @@
 /**
- * GitHub API Utility for Candidate Values Survey
- * 
- * This utility provides functions to save and retrieve survey results using GitHub's API.
- * Survey results are stored as JSON files in a 'data/results' directory in the repository.
+ * GitHub API utility for the Candidate Values Survey
+ * Handles saving and retrieving survey results to/from GitHub
  */
 
 class GitHubAPI {
-    constructor(options = {}) {
-        this.owner = options.owner || 'blortski';
-        this.repo = options.repo || 'candidate-values-survey';
-        this.branch = options.branch || 'main';
-        this.resultsPath = options.resultsPath || 'data/results';
-        this.token = options.token || '';
+    constructor(config) {
+        this.owner = config.owner;
+        this.repo = config.repo;
+        this.branch = config.branch;
+        this.resultsPath = config.resultsPath;
+        this.token = config.token || '';
+        this.baseUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents`;
     }
-
+    
     /**
-     * Set the GitHub Personal Access Token
+     * Set the GitHub token
      * @param {string} token - GitHub Personal Access Token
      */
     setToken(token) {
         this.token = token;
     }
-
+    
     /**
-     * Save a survey result to GitHub
-     * @param {object} result - The survey result to save
-     * @returns {Promise} - A promise that resolves when the result is saved
+     * Check if the API is properly configured
+     * @returns {boolean} - True if configured, false otherwise
      */
-    async saveSurveyResult(result) {
-        if (!this.token) {
-            throw new Error('GitHub token not set. Please set a token before saving results.');
+    isConfigured() {
+        return !!this.token;
+    }
+    
+    /**
+     * Save survey results to GitHub
+     * @param {Object} results - Survey results object
+     * @returns {Promise<Object>} - Promise resolving to the API response
+     */
+    async saveSurveyResults(results) {
+        if (!this.isConfigured()) {
+            throw new Error('GitHub API is not configured. Please set a token.');
         }
-
+        
+        // Create a unique filename based on timestamp and email
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const email = results.candidateEmail.replace(/[^a-zA-Z0-9]/g, '_');
+        const filename = `${timestamp}_${email}.json`;
+        const path = `${this.resultsPath}/${filename}`;
+        
+        // Convert results to JSON string
+        const content = JSON.stringify(results, null, 2);
+        
+        // Encode content to base64
+        const base64Content = btoa(unescape(encodeURIComponent(content)));
+        
+        // Prepare request data
+        const data = {
+            message: `Add survey results for ${results.candidateName}`,
+            content: base64Content,
+            branch: this.branch
+        };
+        
+        // Send request to GitHub API
         try {
-            // Create a unique filename based on timestamp and email
-            const timestamp = new Date(result.timestamp).getTime();
-            const sanitizedEmail = result.candidateEmail.replace(/[^a-zA-Z0-9]/g, '_');
-            const filename = `${timestamp}_${sanitizedEmail}.json`;
-            const path = `${this.resultsPath}/${filename}`;
-            
-            // Convert result to JSON string
-            const content = JSON.stringify(result, null, 2);
-            
-            // Encode content to base64
-            const encodedContent = btoa(unescape(encodeURIComponent(content)));
-            
-            // Check if the results directory exists, create if not
-            await this._ensureResultsDirectoryExists();
-            
-            // Create the file in the repository
-            const response = await fetch(`https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`, {
+            const response = await fetch(`${this.baseUrl}/${path}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `token ${this.token}`,
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    message: `Add survey result for ${result.candidateName}`,
-                    content: encodedContent,
-                    branch: this.branch
-                })
+                body: JSON.stringify(data)
             });
             
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(`Failed to save survey result: ${error.message}`);
+                const errorData = await response.json();
+                throw new Error(`GitHub API error: ${errorData.message}`);
             }
             
             return await response.json();
         } catch (error) {
-            console.error('Error saving survey result to GitHub:', error);
+            console.error('Error saving survey results to GitHub:', error);
             throw error;
         }
     }
-
+    
     /**
      * Get all survey results from GitHub
-     * @returns {Promise<Array>} - A promise that resolves to an array of survey results
+     * @returns {Promise<Array>} - Promise resolving to an array of survey results
      */
     async getAllSurveyResults() {
+        if (!this.isConfigured()) {
+            throw new Error('GitHub API is not configured. Please set a token.');
+        }
+        
         try {
-            // Get the contents of the results directory
-            const response = await fetch(`https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.resultsPath}?ref=${this.branch}`);
+            // Get directory contents
+            const response = await fetch(`${this.baseUrl}/${this.resultsPath}?ref=${this.branch}`, {
+                headers: {
+                    'Authorization': `token ${this.token}`
+                }
+            });
             
             if (!response.ok) {
-                // If directory doesn't exist yet, return empty array
-                if (response.status === 404) {
-                    return [];
-                }
-                const error = await response.json();
-                throw new Error(`Failed to get survey results: ${error.message}`);
+                const errorData = await response.json();
+                throw new Error(`GitHub API error: ${errorData.message}`);
             }
             
             const files = await response.json();
             
-            // If no files or not an array, return empty array
-            if (!files || !Array.isArray(files)) {
-                return [];
-            }
-            
-            // Fetch the content of each file
-            const results = await Promise.all(
-                files.map(async (file) => {
-                    const fileResponse = await fetch(file.download_url);
-                    if (!fileResponse.ok) {
-                        console.error(`Failed to fetch file: ${file.name}`);
-                        return null;
-                    }
-                    return await fileResponse.json();
-                })
+            // Filter out non-JSON files and README
+            const jsonFiles = files.filter(file => 
+                file.type === 'file' && 
+                file.name.endsWith('.json') && 
+                file.name !== 'README.md'
             );
             
-            // Filter out any null results and return
-            return results.filter(result => result !== null);
+            // Get content of each file
+            const resultsPromises = jsonFiles.map(async file => {
+                const fileResponse = await fetch(file.download_url);
+                if (!fileResponse.ok) {
+                    throw new Error(`Failed to download file: ${file.name}`);
+                }
+                return await fileResponse.json();
+            });
+            
+            return await Promise.all(resultsPromises);
         } catch (error) {
             console.error('Error getting survey results from GitHub:', error);
-            // Return empty array on error to prevent app from breaking
-            return [];
+            throw error;
         }
     }
-
+    
     /**
-     * Ensure the results directory exists in the repository
-     * @private
+     * Save in-progress survey information to GitHub
+     * @param {Object} surveyInfo - Information about the in-progress survey
+     * @returns {Promise<Object>} - Promise resolving to the API response
      */
-    async _ensureResultsDirectoryExists() {
+    async saveInProgressSurvey(surveyInfo) {
+        if (!this.isConfigured()) {
+            throw new Error('GitHub API is not configured. Please set a token.');
+        }
+        
+        // Create a unique identifier for the in-progress survey
+        const id = surveyInfo.id || `${Date.now()}_${surveyInfo.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        surveyInfo.id = id;
+        
+        // Path for in-progress surveys
+        const path = `${this.resultsPath}/in-progress/${id}.json`;
+        
+        // Convert data to JSON string
+        const content = JSON.stringify(surveyInfo, null, 2);
+        
+        // Encode content to base64
+        const base64Content = btoa(unescape(encodeURIComponent(content)));
+        
+        // Prepare request data
+        const data = {
+            message: `Update in-progress survey for ${surveyInfo.name}`,
+            content: base64Content,
+            branch: this.branch
+        };
+        
+        // Check if file already exists
         try {
-            // Check if the directory exists
-            const response = await fetch(`https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.resultsPath}?ref=${this.branch}`);
+            const checkResponse = await fetch(`${this.baseUrl}/${path}?ref=${this.branch}`, {
+                headers: {
+                    'Authorization': `token ${this.token}`
+                }
+            });
             
-            // If directory exists, return
-            if (response.ok) {
-                return;
+            // If file exists, include its SHA in the request
+            if (checkResponse.ok) {
+                const fileData = await checkResponse.json();
+                data.sha = fileData.sha;
             }
             
-            // If error is not 404 (Not Found), throw error
-            if (response.status !== 404) {
-                const error = await response.json();
-                throw new Error(`Failed to check if results directory exists: ${error.message}`);
-            }
-            
-            // Create a placeholder file to create the directory
-            const placeholderContent = '# Survey Results\n\nThis directory contains survey results submitted by candidates.';
-            const encodedContent = btoa(unescape(encodeURIComponent(placeholderContent)));
-            
-            const createResponse = await fetch(`https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.resultsPath}/README.md`, {
+            // Send request to GitHub API
+            const response = await fetch(`${this.baseUrl}/${path}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `token ${this.token}`,
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`GitHub API error: ${errorData.message}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error saving in-progress survey to GitHub:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Get all in-progress surveys from GitHub
+     * @returns {Promise<Array>} - Promise resolving to an array of in-progress surveys
+     */
+    async getInProgressSurveys() {
+        if (!this.isConfigured()) {
+            throw new Error('GitHub API is not configured. Please set a token.');
+        }
+        
+        try {
+            // Create in-progress directory if it doesn't exist
+            try {
+                await this.ensureInProgressDirectory();
+            } catch (error) {
+                console.warn('Error ensuring in-progress directory exists:', error);
+                // Continue anyway, as the directory might already exist
+            }
+            
+            // Get directory contents
+            const response = await fetch(`${this.baseUrl}/${this.resultsPath}/in-progress?ref=${this.branch}`, {
+                headers: {
+                    'Authorization': `token ${this.token}`
+                }
+            });
+            
+            if (!response.ok) {
+                // If directory doesn't exist, return empty array
+                if (response.status === 404) {
+                    return [];
+                }
+                
+                const errorData = await response.json();
+                throw new Error(`GitHub API error: ${errorData.message}`);
+            }
+            
+            const files = await response.json();
+            
+            // Filter out non-JSON files
+            const jsonFiles = files.filter(file => 
+                file.type === 'file' && 
+                file.name.endsWith('.json')
+            );
+            
+            // Get content of each file
+            const surveysPromises = jsonFiles.map(async file => {
+                const fileResponse = await fetch(file.download_url);
+                if (!fileResponse.ok) {
+                    throw new Error(`Failed to download file: ${file.name}`);
+                }
+                return await fileResponse.json();
+            });
+            
+            return await Promise.all(surveysPromises);
+        } catch (error) {
+            console.error('Error getting in-progress surveys from GitHub:', error);
+            // Return empty array in case of error
+            return [];
+        }
+    }
+    
+    /**
+     * Remove an in-progress survey from GitHub
+     * @param {string} id - ID of the in-progress survey to remove
+     * @returns {Promise<Object>} - Promise resolving to the API response
+     */
+    async removeInProgressSurvey(id) {
+        if (!this.isConfigured()) {
+            throw new Error('GitHub API is not configured. Please set a token.');
+        }
+        
+        const path = `${this.resultsPath}/in-progress/${id}.json`;
+        
+        try {
+            // Get file SHA
+            const fileResponse = await fetch(`${this.baseUrl}/${path}?ref=${this.branch}`, {
+                headers: {
+                    'Authorization': `token ${this.token}`
+                }
+            });
+            
+            if (!fileResponse.ok) {
+                if (fileResponse.status === 404) {
+                    // File doesn't exist, nothing to delete
+                    return { deleted: false, message: 'File not found' };
+                }
+                
+                const errorData = await fileResponse.json();
+                throw new Error(`GitHub API error: ${errorData.message}`);
+            }
+            
+            const fileData = await fileResponse.json();
+            
+            // Delete file
+            const deleteResponse = await fetch(`${this.baseUrl}/${path}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    message: 'Create survey results directory',
-                    content: encodedContent,
+                    message: `Remove in-progress survey ${id}`,
+                    sha: fileData.sha,
                     branch: this.branch
                 })
             });
             
-            if (!createResponse.ok) {
-                const error = await createResponse.json();
-                throw new Error(`Failed to create results directory: ${error.message}`);
+            if (!deleteResponse.ok) {
+                const errorData = await deleteResponse.json();
+                throw new Error(`GitHub API error: ${errorData.message}`);
             }
+            
+            return await deleteResponse.json();
         } catch (error) {
-            console.error('Error ensuring results directory exists:', error);
+            console.error('Error removing in-progress survey from GitHub:', error);
             throw error;
+        }
+    }
+    
+    /**
+     * Ensure the in-progress directory exists
+     * @returns {Promise<void>}
+     */
+    async ensureInProgressDirectory() {
+        // Check if directory exists
+        const response = await fetch(`${this.baseUrl}/${this.resultsPath}/in-progress?ref=${this.branch}`, {
+            headers: {
+                'Authorization': `token ${this.token}`
+            }
+        });
+        
+        // If directory doesn't exist, create it with a README
+        if (response.status === 404) {
+            const readmeContent = `# In-Progress Surveys\n\nThis directory contains information about surveys that are currently in progress.\n\nFiles are automatically managed by the application.`;
+            const base64Content = btoa(unescape(encodeURIComponent(readmeContent)));
+            
+            await fetch(`${this.baseUrl}/${this.resultsPath}/in-progress/README.md`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Create in-progress surveys directory',
+                    content: base64Content,
+                    branch: this.branch
+                })
+            });
         }
     }
 }
 
-// Create and export a singleton instance
-const githubAPI = new GitHubAPI();
+// Create GitHub API instance if in browser environment
+const githubAPI = typeof window !== 'undefined' ? new GitHubAPI(appConfig.github) : null;
