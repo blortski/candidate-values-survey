@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.0.9
+ * Version: v1.0.10
  */
 
 // Global variables
@@ -14,11 +14,6 @@ let currentQuestion = 0;
 let userResponses = {};
 let candidateName = '';
 let candidateEmail = '';
-
-// DOM elements - Get these when needed to ensure they exist
-const getIntroSection = () => document.getElementById('intro-section');
-const getQuestionsSection = () => document.getElementById('questions-section');
-const getResultsSection = () => document.getElementById('results-section');
 
 // Initialize the survey when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -31,11 +26,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const startButton = document.getElementById('start-survey');
     if (startButton) {
         console.log('Start button found, adding event listener');
-        startButton.addEventListener('click', startSurvey);
+        startButton.addEventListener('click', function() {
+            console.log('Start button clicked');
+            startSurvey();
+        });
     } else {
         console.error('Start button not found');
     }
 });
+
+// Fallback for direct script loading
+window.onload = function() {
+    console.log('Window loaded');
+    
+    // Check if we already set up the event listener in DOMContentLoaded
+    const startButton = document.getElementById('start-survey');
+    if (startButton && !startButton._hasClickListener) {
+        console.log('Adding click listener in window.onload');
+        startButton.addEventListener('click', function() {
+            console.log('Start button clicked (from window.onload)');
+            startSurvey();
+        });
+        startButton._hasClickListener = true;
+    }
+};
 
 /**
  * Initialize the survey by loading the survey data
@@ -59,9 +73,9 @@ async function initializeSurvey() {
  * Start the survey by collecting candidate information
  */
 function startSurvey() {
-    console.log('Start survey button clicked');
+    console.log('Start survey function called');
     
-    const introSection = getIntroSection();
+    const introSection = document.getElementById('intro-section');
     if (!introSection) {
         console.error('Intro section not found');
         return;
@@ -107,8 +121,8 @@ function startSurvey() {
 function showQuestions() {
     console.log('Showing questions');
     
-    const introSection = getIntroSection();
-    const questionsSection = getQuestionsSection();
+    const introSection = document.getElementById('intro-section');
+    const questionsSection = document.getElementById('questions-section');
     
     if (!introSection || !questionsSection) {
         console.error('Required sections not found');
@@ -351,8 +365,8 @@ function calculateResults() {
 function showResults(results) {
     console.log('Showing results');
     
-    const questionsSection = getQuestionsSection();
-    const resultsSection = getResultsSection();
+    const questionsSection = document.getElementById('questions-section');
+    const resultsSection = document.getElementById('results-section');
     
     if (!questionsSection || !resultsSection) {
         console.error('Required sections not found');

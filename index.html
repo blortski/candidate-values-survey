@@ -348,7 +348,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.0.9</span>
+                <span class="version" id="app-version">v1.0.10</span>
             </div>
         </footer>
     </div>
@@ -357,17 +357,12 @@
     <script src="js/lib/config.js"></script>
     <script src="js/lib/github-api.js"></script>
     
+    <!-- Load survey script directly -->
+    <script src="js/survey.js"></script>
+    
     <script>
         // Set version from config
         document.getElementById('app-version').textContent = config.version;
-        
-        // Ensure scripts are fully loaded before loading survey.js
-        window.addEventListener('DOMContentLoaded', function() {
-            // Create a script element for survey.js
-            const surveyScript = document.createElement('script');
-            surveyScript.src = 'js/survey.js';
-            document.body.appendChild(surveyScript);
-        });
     </script>
 </body>
 </html>
