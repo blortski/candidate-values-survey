@@ -1091,6 +1091,17 @@
             }
         }
         
+        // Get survey results from localStorage
+        function getResultsFromLocalStorage() {
+            try {
+                const storedResults = localStorage.getItem('surveyResults');
+                return storedResults ? JSON.parse(storedResults) : [];
+            } catch (error) {
+                console.error('Error retrieving results from localStorage:', error);
+                return [];
+            }
+        }
+        
         // Close modal when clicking the X
         closeModal.addEventListener('click', () => {
             detailsModal.style.display = 'none';
