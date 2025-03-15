@@ -28,7 +28,8 @@ startSurveyBtn.addEventListener('click', startSurvey);
  */
 async function initializeSurvey() {
     try {
-        const response = await fetch('/data/survey.json');
+        // Use a relative path that works with GitHub Pages
+        const response = await fetch('./data/survey.json');
         if (!response.ok) {
             throw new Error('Failed to load survey data');
         }
