@@ -1,14 +1,12 @@
 /**
- * Wild Zora Potential Hire Survey
+ * Wild Zora Candidate Values Survey
  * 
  * This script handles the functionality of the candidate values survey,
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
+ * 
+ * Version: v1.0.9
  */
-
-// Import GitHub API and configuration - with fallbacks if not defined
-const githubAPI = window.githubAPI || null;
-const appConfig = window.appConfig || { version: 'v1.0.8' };
 
 // Global variables
 let surveyData = null;
@@ -16,32 +14,41 @@ let currentQuestion = 0;
 let userResponses = {};
 let candidateName = '';
 let candidateEmail = '';
-let surveyStartTime = null;
-let surveyId = null;
-let inProgressUpdateInterval = null;
 
-// DOM elements
-const introSection = document.getElementById('intro-section');
-const questionsSection = document.getElementById('questions-section');
-const resultsSection = document.getElementById('results-section');
-const startSurveyBtn = document.getElementById('start-survey');
+// DOM elements - Get these when needed to ensure they exist
+const getIntroSection = () => document.getElementById('intro-section');
+const getQuestionsSection = () => document.getElementById('questions-section');
+const getResultsSection = () => document.getElementById('results-section');
 
-// Event listeners
-document.addEventListener('DOMContentLoaded', initializeSurvey);
-startSurveyBtn.addEventListener('click', startSurvey);
+// Initialize the survey when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded');
+    
+    // Load survey data
+    initializeSurvey();
+    
+    // Add event listener to start button
+    const startButton = document.getElementById('start-survey');
+    if (startButton) {
+        console.log('Start button found, adding event listener');
+        startButton.addEventListener('click', startSurvey);
+    } else {
+        console.error('Start button not found');
+    }
+});
 
 /**
  * Initialize the survey by loading the survey data
  */
 async function initializeSurvey() {
     try {
-        // Use a relative path that works with GitHub Pages
+        console.log('Initializing survey...');
         const response = await fetch('./data/survey.json');
         if (!response.ok) {
-            throw new Error('Failed to load survey data');
+            throw new Error(`Failed to load survey data: ${response.status} ${response.statusText}`);
         }
         surveyData = await response.json();
-        console.log('Survey data loaded successfully');
+        console.log('Survey data loaded successfully:', surveyData);
     } catch (error) {
         console.error('Error loading survey data:', error);
         showError('Failed to load survey. Please refresh the page and try again.');
@@ -52,6 +59,14 @@ async function initializeSurvey() {
  * Start the survey by collecting candidate information
  */
 function startSurvey() {
+    console.log('Start survey button clicked');
+    
+    const introSection = getIntroSection();
+    if (!introSection) {
+        console.error('Intro section not found');
+        return;
+    }
+    
     // Create a form to collect candidate information
     introSection.innerHTML = `
         <h2>Before we begin</h2>
@@ -70,69 +85,19 @@ function startSurvey() {
     `;
 
     // Add event listener to the form
-    document.getElementById('candidate-info-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        candidateName = document.getElementById('candidate-name').value.trim();
-        candidateEmail = document.getElementById('candidate-email').value.trim();
-        
-        if (candidateName && candidateEmail) {
-            // Record survey start time
-            surveyStartTime = new Date();
+    const form = document.getElementById('candidate-info-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            candidateName = document.getElementById('candidate-name').value.trim();
+            candidateEmail = document.getElementById('candidate-email').value.trim();
             
-            // Generate a unique ID for this survey
-            surveyId = `${Date.now()}_${candidateEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-            
-            // Save in-progress status
-            saveInProgressStatus();
-            
-            // Start periodic updates of in-progress status (every minute)
-            inProgressUpdateInterval = setInterval(saveInProgressStatus, 60000);
-            
-            showQuestions();
-        }
-    });
-}
-
-/**
- * Save the in-progress status to GitHub and localStorage
- */
-function saveInProgressStatus() {
-    if (!candidateName || !candidateEmail || !surveyStartTime) return;
-    
-    const currentTime = new Date();
-    const elapsedTimeMs = currentTime - surveyStartTime;
-    const elapsedMinutes = Math.floor(elapsedTimeMs / 60000);
-    
-    const inProgressData = {
-        id: surveyId,
-        name: candidateName,
-        email: candidateEmail,
-        startTime: surveyStartTime.toISOString(),
-        lastUpdateTime: currentTime.toISOString(),
-        elapsedMinutes: elapsedMinutes,
-        currentQuestion: currentQuestion + 1,
-        totalQuestions: surveyData.questions.length,
-        progress: Math.round((currentQuestion / surveyData.questions.length) * 100),
-        responses: userResponses
-    };
-    
-    // Save to localStorage as a backup
-    try {
-        localStorage.setItem(`inProgressSurvey_${surveyId}`, JSON.stringify(inProgressData));
-    } catch (error) {
-        console.warn('Failed to save to localStorage:', error);
-    }
-    
-    // Try to save to GitHub if API is available
-    if (githubAPI && appConfig && appConfig.github && appConfig.github.token) {
-        try {
-            githubAPI.setToken(appConfig.github.token);
-            githubAPI.saveInProgressSurvey(inProgressData).catch(error => {
-                console.warn('Failed to save in-progress status to GitHub:', error);
-            });
-        } catch (error) {
-            console.warn('Error with GitHub API:', error);
-        }
+            if (candidateName && candidateEmail) {
+                showQuestions();
+            }
+        });
+    } else {
+        console.error('Candidate info form not found');
     }
 }
 
@@ -140,6 +105,16 @@ function saveInProgressStatus() {
  * Display the questions section and show the first question
  */
 function showQuestions() {
+    console.log('Showing questions');
+    
+    const introSection = getIntroSection();
+    const questionsSection = getQuestionsSection();
+    
+    if (!introSection || !questionsSection) {
+        console.error('Required sections not found');
+        return;
+    }
+    
     introSection.classList.add('hidden');
     questionsSection.classList.remove('hidden');
     
@@ -158,12 +133,19 @@ function showQuestions() {
         </div>
     `;
     
-    // Add event listeners for navigation buttons
-    document.getElementById('prev-btn').addEventListener('click', showPreviousQuestion);
-    document.getElementById('next-btn').addEventListener('click', handleNextQuestion);
+    // Add event listeners to navigation buttons
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
     
-    // Show the first question
-    showQuestion(0);
+    if (prevBtn && nextBtn) {
+        prevBtn.addEventListener('click', showPreviousQuestion);
+        nextBtn.addEventListener('click', handleNextQuestion);
+        
+        // Show the first question
+        showQuestion(0);
+    } else {
+        console.error('Navigation buttons not found');
+    }
 }
 
 /**
@@ -171,50 +153,66 @@ function showQuestions() {
  * @param {number} questionIndex - The index of the question to display
  */
 function showQuestion(questionIndex) {
+    if (!surveyData || !surveyData.questions) {
+        console.error('Survey data not loaded');
+        return;
+    }
+    
+    if (questionIndex < 0 || questionIndex >= surveyData.questions.length) {
+        console.error('Invalid question index:', questionIndex);
+        return;
+    }
+    
     currentQuestion = questionIndex;
     const question = surveyData.questions[questionIndex];
     const questionContainer = document.getElementById('question-container');
     
-    // Update progress indicators
-    document.getElementById('current-question').textContent = questionIndex + 1;
-    document.querySelector('.progress-fill').style.width = `${((questionIndex + 1) / surveyData.questions.length) * 100}%`;
+    if (!questionContainer) {
+        console.error('Question container not found');
+        return;
+    }
     
-    // Enable/disable previous button
-    document.getElementById('prev-btn').disabled = questionIndex === 0;
+    // Update progress indicator
+    const currentQuestionEl = document.getElementById('current-question');
+    const progressFill = document.querySelector('.progress-fill');
     
-    // Update next button text for last question
+    if (currentQuestionEl) {
+        currentQuestionEl.textContent = questionIndex + 1;
+    }
+    
+    if (progressFill) {
+        progressFill.style.width = `${((questionIndex + 1) / surveyData.questions.length) * 100}%`;
+    }
+    
+    // Update button states
+    const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
-    nextBtn.textContent = questionIndex === surveyData.questions.length - 1 ? 'Submit' : 'Next';
     
-    // Build the question HTML
-    let questionHTML = `
-        <div class="question">
-            <h3>${question.text}</h3>
-            <div class="options">
-    `;
+    if (prevBtn) {
+        prevBtn.disabled = questionIndex === 0;
+    }
     
-    // Add options
-    question.options.forEach(option => {
-        const isChecked = userResponses[question.id] === option.id ? 'checked' : '';
-        questionHTML += `
-            <div class="option">
-                <input type="radio" id="option-${option.id}" name="q${question.id}" value="${option.id}" ${isChecked}>
-                <label for="option-${option.id}">${option.text}</label>
-            </div>
-        `;
-    });
+    if (nextBtn) {
+        nextBtn.textContent = questionIndex === surveyData.questions.length - 1 ? 'Submit' : 'Next';
+    }
     
-    questionHTML += `
-            </div>
+    // Create the question HTML
+    questionContainer.innerHTML = `
+        <div class="question" data-question-id="${question.id}">
+            <h3 class="question-text">${question.text}</h3>
+            <ul class="options">
+                ${question.options.map(option => `
+                    <li class="option">
+                        <label>
+                            <input type="radio" name="q${question.id}" value="${option.id}" 
+                                ${userResponses[question.id] === option.id ? 'checked' : ''}>
+                            ${option.text}
+                        </label>
+                    </li>
+                `).join('')}
+            </ul>
         </div>
     `;
-    
-    questionContainer.innerHTML = questionHTML;
-    
-    // Update in-progress status
-    if (surveyStartTime) {
-        saveInProgressStatus();
-    }
 }
 
 /**
@@ -230,6 +228,11 @@ function showPreviousQuestion() {
  * Handle the next button click - either show the next question or submit the survey
  */
 function handleNextQuestion() {
+    if (!surveyData || !surveyData.questions) {
+        console.error('Survey data not loaded');
+        return;
+    }
+    
     // Save the current response
     const question = surveyData.questions[currentQuestion];
     const selectedOption = document.querySelector(`input[name="q${question.id}"]:checked`);
@@ -254,6 +257,8 @@ function handleNextQuestion() {
  * Calculate the survey results
  */
 function calculateResults() {
+    console.log('Calculating results');
+    
     const results = {
         optimism: 0,
         productivity: 0,
@@ -268,107 +273,75 @@ function calculateResults() {
         const question = surveyData.questions[questionIndex];
         const option = question.options.find(opt => opt.id === optionId);
         
-        // Find which category this question belongs to
-        for (const category of surveyData.categories) {
-            if (category.questions.includes(parseInt(questionId))) {
-                results[category.id] += option.score;
-                break;
+        if (option && option.score !== undefined) {
+            // Find which category this question belongs to
+            for (const category of surveyData.categories) {
+                if (category.questions.includes(parseInt(questionId))) {
+                    results[category.id] += option.score;
+                    break;
+                }
             }
         }
     });
     
-    // Determine result levels for each category
-    const resultLevels = {};
-    Object.keys(results).forEach(category => {
-        const score = results[category];
-        const thresholds = surveyData.scoring.thresholds[category];
-        
-        if (score >= thresholds.high) {
-            resultLevels[category] = 'high';
-        } else if (score >= thresholds.medium) {
-            resultLevels[category] = 'medium';
-        } else {
-            resultLevels[category] = 'low';
-        }
-    });
-    
-    // Calculate overall score
-    let totalScore = 0;
-    let maxPossibleScore = 0;
-    
-    Object.keys(results).forEach(category => {
-        totalScore += results[category];
-        maxPossibleScore += surveyData.scoring.categories[category].maxScore;
-    });
-    
-    const overallPercentage = Math.round((totalScore / maxPossibleScore) * 100);
-    
-    // Determine overall alignment level
-    let overallAlignment;
-    if (overallPercentage >= surveyData.scoring.overall.high) {
-        overallAlignment = 'high';
-    } else if (overallPercentage >= surveyData.scoring.overall.medium) {
-        overallAlignment = 'medium';
-    } else {
-        overallAlignment = 'low';
-    }
-    
-    // Store the results
-    const finalResults = {
-        candidateName,
-        candidateEmail,
-        timestamp: new Date().toISOString(),
-        scores: results,
-        levels: resultLevels,
-        responses: userResponses,
-        overallScore: {
-            score: totalScore,
-            maxScore: maxPossibleScore,
-            percentage: overallPercentage,
-            alignment: overallAlignment
-        }
+    // Calculate percentage scores
+    const maxScores = {
+        optimism: 21,         // 7 questions, max score 3 per question
+        productivity: 21,      // 7 questions, max score 3 per question
+        valueOrientation: 21,  // 7 questions, max score 3 per question
+        collaboration: 21,     // 7 questions, max score 3 per question
+        generalInsight: 6      // 2 questions, max score 3 per question
     };
     
-    // Clear the in-progress update interval
-    if (inProgressUpdateInterval) {
-        clearInterval(inProgressUpdateInterval);
-    }
+    const percentageResults = {};
+    Object.keys(results).forEach(category => {
+        percentageResults[category] = Math.round((results[category] / maxScores[category]) * 100);
+    });
     
-    // Remove in-progress status from localStorage
-    if (surveyId) {
-        localStorage.removeItem(`inProgressSurvey_${surveyId}`);
-    }
+    // Calculate overall score (average of all categories)
+    const overallScore = Math.round(
+        Object.values(percentageResults).reduce((sum, score) => sum + score, 0) / 
+        Object.keys(percentageResults).length
+    );
     
-    // Try to remove in-progress status from GitHub
-    if (githubAPI && appConfig && appConfig.github && appConfig.github.token && surveyId) {
-        githubAPI.setToken(appConfig.github.token);
-        githubAPI.removeInProgressSurvey(surveyId).catch(error => {
-            console.warn('Failed to remove in-progress status from GitHub:', error);
-        });
-    }
+    // Determine result levels
+    const levels = {};
+    Object.keys(percentageResults).forEach(category => {
+        const score = percentageResults[category];
+        if (score >= 85) {
+            levels[category] = 'excellent';
+        } else if (score >= 70) {
+            levels[category] = 'good';
+        } else if (score >= 50) {
+            levels[category] = 'average';
+        } else {
+            levels[category] = 'needs_improvement';
+        }
+    });
     
-    // Save results to localStorage as a fallback
-    localStorage.setItem(`surveyResult_${candidateEmail}`, JSON.stringify(finalResults));
+    // Prepare final results object
+    const finalResults = {
+        candidateName: candidateName,
+        candidateEmail: candidateEmail,
+        timestamp: new Date().toISOString(),
+        rawScores: results,
+        percentageScores: percentageResults,
+        levels: levels,
+        overallScore: overallScore,
+        responses: userResponses
+    };
     
-    // If GitHub API is available, save results to GitHub
-    if (githubAPI && appConfig && appConfig.github && appConfig.github.token) {
-        // Configure GitHub API
-        githubAPI.setToken(appConfig.github.token);
-        
-        // Save results to GitHub
-        githubAPI.saveSurveyResults(finalResults)
-            .then(() => {
-                console.log('Survey results saved to GitHub successfully');
-            })
-            .catch(error => {
-                console.error('Error saving results to GitHub:', error);
-                showError('Your results were saved locally, but there was an error saving to our database. Please notify the administrator.');
-            });
-    } else {
-        console.warn('GitHub API or token not available. Results saved to localStorage only.');
-    }
+    console.log('Final results:', finalResults);
     
+    // Display the results
     showResults(finalResults);
+    
+    // Save results to localStorage as a backup
+    try {
+        localStorage.setItem(`survey_result_${candidateEmail}`, JSON.stringify(finalResults));
+    } catch (error) {
+        console.warn('Failed to save results to localStorage:', error);
+    }
 }
 
 /**
@@ -376,70 +349,68 @@ function calculateResults() {
  * @param {object} results - The calculated survey results
  */
 function showResults(results) {
+    console.log('Showing results');
+    
+    const questionsSection = getQuestionsSection();
+    const resultsSection = getResultsSection();
+    
+    if (!questionsSection || !resultsSection) {
+        console.error('Required sections not found');
+        return;
+    }
+    
     questionsSection.classList.add('hidden');
     resultsSection.classList.remove('hidden');
     
-    let resultsHTML = `
-        <h2>Thank You, ${results.candidateName}!</h2>
-        <p>Your survey has been submitted successfully. Here's a summary of your results:</p>
+    // Get strength description based on result levels
+    const strengthDescription = getStrengthDescription(results.levels);
+    
+    // Create results HTML
+    resultsSection.innerHTML = `
+        <h2>Survey Results</h2>
+        <p>Thank you for completing the Wild Zora Candidate Values Survey, ${results.candidateName}!</p>
         
         <div class="overall-result">
-            <h3>Overall Values Alignment</h3>
+            <h3>Overall Alignment Score: ${results.overallScore}%</h3>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: ${results.overallScore.percentage}%"></div>
+                <div class="progress-fill" style="width: ${results.overallScore}%"></div>
             </div>
-            <p class="score-text">Score: ${results.overallScore.score}/${results.overallScore.maxScore} (${results.overallScore.percentage}%)</p>
-            <p class="alignment-level ${results.overallScore.alignment}">
-                ${results.overallScore.alignment === 'high' ? 'Strong alignment with Wild Zora values' : 
-                  results.overallScore.alignment === 'medium' ? 'Moderate alignment with Wild Zora values' : 
-                  'Potential misalignment with Wild Zora values'}
-            </p>
         </div>
         
-        <h3>Category Breakdown</h3>
         <div class="results-container">
-    `;
-    
-    // Add each category result
-    surveyData.categories.forEach(category => {
-        const score = results.scores[category.id];
-        const level = results.levels[category.id];
-        const maxScore = surveyData.scoring.categories[category.id].maxScore;
-        const interpretation = surveyData.scoring.categories[category.id].interpretation[level];
-        const percentScore = (score / maxScore) * 100;
-        
-        resultsHTML += `
-            <div class="result-category">
-                <h3 class="result-title">${category.name}</h3>
-                <p class="result-description">${category.description}</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${percentScore}%"></div>
+            ${surveyData.categories.map(category => `
+                <div class="result-category">
+                    <h4>${category.name}</h4>
+                    <p>${category.description}</p>
+                    <div class="score-display">
+                        <span class="score-value">${results.percentageScores[category.id]}%</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${getScoreClass(results.percentageScores[category.id])}" 
+                                style="width: ${results.percentageScores[category.id]}%"></div>
+                        </div>
+                    </div>
                 </div>
-                <p class="score-text">Score: ${score}/${maxScore}</p>
-                <p class="interpretation">${interpretation}</p>
-            </div>
-        `;
-    });
-    
-    // Add overall summary
-    resultsHTML += `
+            `).join('')}
         </div>
+        
         <div class="result-summary">
-            <h3>Overall Profile</h3>
-            <p>Based on your responses, you show ${getStrengthDescription(results.levels)}.</p>
-            <p>Thank you for completing the Wild Zora Potential Hire Survey. Your results have been recorded.</p>
+            <h3>Your Strengths</h3>
+            <p>${strengthDescription}</p>
         </div>
+        
         <div class="result-actions">
-            <button id="print-results" class="btn primary-btn">Print Results</button>
+            <p>Your results have been recorded. Thank you for your participation!</p>
+            <button id="print-results" class="btn secondary-btn">Print Results</button>
         </div>
     `;
     
-    resultsSection.innerHTML = resultsHTML;
-    
-    // Add print functionality
-    document.getElementById('print-results').addEventListener('click', () => {
-        window.print();
-    });
+    // Add event listener to print button
+    const printButton = document.getElementById('print-results');
+    if (printButton) {
+        printButton.addEventListener('click', () => {
+            window.print();
+        });
+    }
 }
 
 /**
@@ -450,32 +421,46 @@ function showResults(results) {
 function getStrengthDescription(levels) {
     const strengths = [];
     
-    if (levels.optimism === 'high') {
-        strengths.push('strong optimism');
+    if (levels.optimism === 'excellent' || levels.optimism === 'good') {
+        strengths.push('maintaining a positive outlook and finding solutions in challenging situations');
     }
     
-    if (levels.productivity === 'high') {
-        strengths.push('high productivity');
+    if (levels.productivity === 'excellent' || levels.productivity === 'good') {
+        strengths.push('organizing your work effectively and continuously improving your processes');
     }
     
-    if (levels.valueOrientation === 'high') {
-        strengths.push('strong value orientation');
+    if (levels.valueOrientation === 'excellent' || levels.valueOrientation === 'good') {
+        strengths.push('focusing on business value and making decisions that drive meaningful results');
     }
     
-    if (levels.collaboration === 'high') {
-        strengths.push('excellent collaboration skills');
+    if (levels.collaboration === 'excellent' || levels.collaboration === 'good') {
+        strengths.push('working well with others and communicating effectively in a team environment');
+    }
+    
+    if (levels.generalInsight === 'excellent' || levels.generalInsight === 'good') {
+        strengths.push('demonstrating good general awareness and adaptability in various situations');
     }
     
     if (strengths.length === 0) {
-        return 'areas for potential growth across all categories';
+        return 'Based on your responses, we recommend focusing on developing skills across all our core value areas.';
     } else if (strengths.length === 1) {
-        return strengths[0];
-    } else if (strengths.length === 2) {
-        return `${strengths[0]} and ${strengths[1]}`;
+        return `Based on your responses, you show particular strength in ${strengths[0]}.`;
     } else {
         const lastStrength = strengths.pop();
-        return `${strengths.join(', ')}, and ${lastStrength}`;
+        return `Based on your responses, you show particular strengths in ${strengths.join(', ')} and ${lastStrength}.`;
     }
+}
+
+/**
+ * Get CSS class based on score
+ * @param {number} score - The score to classify
+ * @returns {string} The CSS class name
+ */
+function getScoreClass(score) {
+    if (score >= 85) return 'score-excellent';
+    if (score >= 70) return 'score-good';
+    if (score >= 50) return 'score-average';
+    return 'score-needs-improvement';
 }
 
 /**
@@ -483,29 +468,23 @@ function getStrengthDescription(levels) {
  * @param {string} message - The error message to display
  */
 function showError(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
+    console.error('Error:', message);
     
-    // Remove any existing error messages
-    const existingErrors = document.querySelectorAll('.error-message');
-    existingErrors.forEach(error => error.remove());
+    // Create error element if it doesn't exist
+    let errorElement = document.getElementById('error-message');
+    if (!errorElement) {
+        errorElement = document.createElement('div');
+        errorElement.id = 'error-message';
+        errorElement.className = 'error-message';
+        document.body.appendChild(errorElement);
+    }
     
-    // Add the new error message
-    document.body.appendChild(errorDiv);
+    // Show the error message
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
     
-    // Remove the error message after 5 seconds
+    // Hide the error after 5 seconds
     setTimeout(() => {
-        errorDiv.remove();
+        errorElement.style.display = 'none';
     }, 5000);
-}
-
-/**
- * Check if an email address is valid
- * @param {string} email - The email address to validate
- * @returns {boolean} True if the email is valid, false otherwise
- */
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
 }
