@@ -477,6 +477,221 @@
             color: var(--primary-color);
             display: none;
         }
+        
+        /* Values Management Styles */
+        .values-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        
+        .values-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .values-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .values-table th,
+        .values-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .values-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .values-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .alignment-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .alignment-fill {
+            height: 100%;
+            border-radius: 10px;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .alignment-bar span {
+            position: relative;
+            z-index: 1;
+            padding-left: 5px;
+            font-weight: bold;
+            color: var(--dark-text);
+        }
+        
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .slider.round {
+            border-radius: 24px;
+        }
+        
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        
+        .status-text {
+            vertical-align: middle;
+        }
+        
+        /* Question Accordion */
+        .question-accordion {
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .question-header {
+            padding: 12px 15px;
+            background-color: #f5f5f5;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .question-content {
+            padding: 15px;
+            display: none;
+            border-top: 1px solid #ddd;
+        }
+        
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        
+        .option-id {
+            font-weight: bold;
+            margin-right: 10px;
+            padding: 2px 8px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+        }
+        
+        .option-text {
+            flex: 1;
+        }
+        
+        .option-score {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* Option Edit */
+        .option-edit {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .option-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .option-row label {
+            width: 100px;
+            font-weight: bold;
+        }
+        
+        .option-row input,
+        .option-row select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        /* Error Message */
+        #values-error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -546,6 +761,19 @@
                 <div id="results-container" class="results-container">
                     <!-- Results will be loaded here -->
                 </div>
+                
+                <!-- Values Management Section -->
+                <div class="values-section">
+                    <div class="values-header">
+                        <h3>Company Values Management</h3>
+                        <button id="refresh-values-btn" class="btn secondary-btn">Refresh Values</button>
+                    </div>
+                    <p>Manage the company values that are being tested in the survey. You can enable or disable values, edit their descriptions, and manage the assessment questions.</p>
+                    <div id="values-error" class="error-message"></div>
+                    <div id="values-container">
+                        <!-- Values will be loaded here -->
+                    </div>
+                </div>
             </section>
         </main>
         
@@ -578,10 +806,62 @@
             </div>
         </div>
         
+        <!-- Edit Value Modal -->
+        <div id="edit-value-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-edit-value-modal">&times;</span>
+                <div id="edit-value-container">
+                    <h2>Edit Company Value</h2>
+                    <div class="form-group">
+                        <label for="value-name">Value Name:</label>
+                        <input type="text" id="value-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="value-description">Description:</label>
+                        <textarea id="value-description" rows="3" required></textarea>
+                    </div>
+                    <button id="save-value-btn" class="btn primary-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Questions Modal -->
+        <div id="edit-questions-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-edit-questions-modal">&times;</span>
+                <div id="edit-questions-container">
+                    <h2>Edit Questions for <span id="value-name-display"></span></h2>
+                    <p>Click on a question to expand it and see the options. Click the Edit button to modify a question.</p>
+                    <div id="questions-container">
+                        <!-- Questions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Question Modal -->
+        <div id="edit-question-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-edit-question-modal">&times;</span>
+                <div id="edit-question-container">
+                    <h2>Edit Question</h2>
+                    <div class="form-group">
+                        <label for="question-text">Question:</label>
+                        <textarea id="question-text" rows="3" required></textarea>
+                    </div>
+                    <h3>Options</h3>
+                    <div id="options-container">
+                        <!-- Options will be loaded here -->
+                    </div>
+                    <button id="save-question-btn" class="btn primary-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+        
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.0.10</span>
+                <span class="version" id="app-version">v1.1.1</span>
             </div>
         </footer>
     </div>
@@ -589,6 +869,7 @@
     <!-- Load configuration and GitHub API -->
     <script src="js/lib/config.js"></script>
     <script src="js/lib/github-api.js"></script>
+    <script src="js/admin-values.js"></script>
     
     <script>
         // Set version from config
@@ -631,6 +912,17 @@
         const copyLinkBtn = document.getElementById('copy-link-btn');
         const copyConfirmation = document.getElementById('copy-confirmation');
         
+        // Modal elements for values management
+        const editValueModal = document.getElementById('edit-value-modal');
+        const closeEditValueModal = document.querySelector('.close-edit-value-modal');
+        const editQuestionsModal = document.getElementById('edit-questions-modal');
+        const closeEditQuestionsModal = document.querySelector('.close-edit-questions-modal');
+        const editQuestionModal = document.getElementById('edit-question-modal');
+        const closeEditQuestionModal = document.querySelector('.close-edit-question-modal');
+        const saveValueBtn = document.getElementById('save-value-btn');
+        const saveQuestionBtn = document.getElementById('save-question-btn');
+        const refreshValuesBtn = document.getElementById('refresh-values-btn');
+        
         // Check if admin is logged in
         function checkAuth() {
             const isAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
@@ -672,6 +964,11 @@
             
             loadResults();
             loadInProgressSurveys();
+            
+            // Initialize values management
+            if (window.adminValues) {
+                window.adminValues.initialize();
+            }
         }
         
         // Handle login
@@ -1189,6 +1486,49 @@
                     copyConfirmation.style.display = 'none';
                 }, 2000);
             });
+            
+            // Values management event listeners
+            if (refreshValuesBtn) {
+                refreshValuesBtn.addEventListener('click', function() {
+                    if (window.adminValues) {
+                        window.adminValues.initialize();
+                    }
+                });
+            }
+            
+            if (closeEditValueModal) {
+                closeEditValueModal.addEventListener('click', function() {
+                    editValueModal.style.display = 'none';
+                });
+            }
+            
+            if (closeEditQuestionsModal) {
+                closeEditQuestionsModal.addEventListener('click', function() {
+                    editQuestionsModal.style.display = 'none';
+                });
+            }
+            
+            if (closeEditQuestionModal) {
+                closeEditQuestionModal.addEventListener('click', function() {
+                    editQuestionModal.style.display = 'none';
+                });
+            }
+            
+            if (saveValueBtn) {
+                saveValueBtn.addEventListener('click', function() {
+                    if (window.adminValues) {
+                        window.adminValues.saveEditedValue();
+                    }
+                });
+            }
+            
+            if (saveQuestionBtn) {
+                saveQuestionBtn.addEventListener('click', function() {
+                    if (window.adminValues) {
+                        window.adminValues.saveEditedQuestion();
+                    }
+                });
+            }
         });
     </script>
 </body>

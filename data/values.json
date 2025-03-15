@@ -1,0 +1,55 @@
+{
+  "lastUpdated": "2025-03-15T17:33:58-06:00",
+  "values": [
+    {
+      "id": "optimism",
+      "name": "Optimism",
+      "description": "How you approach challenges and setbacks",
+      "enabled": true,
+      "stats": {
+        "candidatesTested": 0,
+        "averageAlignment": 0
+      }
+    },
+    {
+      "id": "productivity",
+      "name": "Productivity & Continuous Improvement",
+      "description": "Your work habits and improvement approaches",
+      "enabled": true,
+      "stats": {
+        "candidatesTested": 0,
+        "averageAlignment": 0
+      }
+    },
+    {
+      "id": "valueOrientation",
+      "name": "Value Orientation",
+      "description": "Your focus on ROI and business value",
+      "enabled": true,
+      "stats": {
+        "candidatesTested": 0,
+        "averageAlignment": 0
+      }
+    },
+    {
+      "id": "collaboration",
+      "name": "Collaboration",
+      "description": "Your teamwork, communication, and interpersonal skills",
+      "enabled": true,
+      "stats": {
+        "candidatesTested": 0,
+        "averageAlignment": 0
+      }
+    },
+    {
+      "id": "generalInsight",
+      "name": "General Insight",
+      "description": "Additional insights about your approach",
+      "enabled": true,
+      "stats": {
+        "candidatesTested": 0,
+        "averageAlignment": 0
+      }
+    }
+  ]
+}
