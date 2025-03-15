@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-03-15T23:50:23.992Z",
+  "lastUpdated": "2025-03-15T23:50:24.975Z",
   "values": [
     {
       "id": "optimism",
@@ -35,7 +35,7 @@
       "id": "collaboration",
       "name": "Collaboration",
       "description": "Your teamwork, communication, and interpersonal skills",
-      "enabled": true,
+      "enabled": false,
       "stats": {
         "candidatesTested": 0,
         "averageAlignment": 0
