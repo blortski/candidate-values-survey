@@ -6,9 +6,9 @@
  * and displaying results.
  */
 
-// Import GitHub API and configuration
-const githubAPI = window.githubAPI;
-const appConfig = window.appConfig;
+// Import GitHub API and configuration - with fallbacks if not defined
+const githubAPI = window.githubAPI || null;
+const appConfig = window.appConfig || { version: 'v1.0.8' };
 
 // Global variables
 let surveyData = null;
@@ -117,14 +117,22 @@ function saveInProgressStatus() {
     };
     
     // Save to localStorage as a backup
-    localStorage.setItem(`inProgressSurvey_${surveyId}`, JSON.stringify(inProgressData));
+    try {
+        localStorage.setItem(`inProgressSurvey_${surveyId}`, JSON.stringify(inProgressData));
+    } catch (error) {
+        console.warn('Failed to save to localStorage:', error);
+    }
     
     // Try to save to GitHub if API is available
     if (githubAPI && appConfig && appConfig.github && appConfig.github.token) {
-        githubAPI.setToken(appConfig.github.token);
-        githubAPI.saveInProgressSurvey(inProgressData).catch(error => {
-            console.warn('Failed to save in-progress status to GitHub:', error);
-        });
+        try {
+            githubAPI.setToken(appConfig.github.token);
+            githubAPI.saveInProgressSurvey(inProgressData).catch(error => {
+                console.warn('Failed to save in-progress status to GitHub:', error);
+            });
+        } catch (error) {
+            console.warn('Error with GitHub API:', error);
+        }
     }
 }
 
