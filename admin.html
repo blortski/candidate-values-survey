@@ -592,10 +592,10 @@
     
     <script>
         // Set version from config
-        document.getElementById('app-version').textContent = appConfig.version;
+        document.getElementById('app-version').textContent = config.version;
         
         // Admin password from configuration
-        const ADMIN_PASSWORD = appConfig.admin.password;
+        const ADMIN_PASSWORD = config.admin.password;
         
         // GitHub token storage key
         const GITHUB_TOKEN_KEY = 'wildZora_githubToken';
@@ -659,7 +659,7 @@
             
             if (token) {
                 // Set token from localStorage
-                appConfig.github.token = token;
+                config.github.token = token;
                 if (githubAPI) {
                     githubAPI.setToken(token);
                 }
@@ -704,7 +704,7 @@
             const token = githubTokenInput.value.trim();
             if (token) {
                 localStorage.setItem(GITHUB_TOKEN_KEY, token);
-                appConfig.github.token = token;
+                config.github.token = token;
                 if (githubAPI) {
                     githubAPI.setToken(token);
                 }
@@ -718,7 +718,7 @@
         function clearGitHubToken() {
             localStorage.removeItem(GITHUB_TOKEN_KEY);
             githubTokenInput.value = '';
-            appConfig.github.token = '';
+            config.github.token = '';
             if (githubAPI) {
                 githubAPI.setToken('');
             }
@@ -746,8 +746,8 @@
                 let results = [];
                 
                 // If GitHub API is configured, try to load results from GitHub
-                if (githubAPI && appConfig.github.token) {
-                    githubAPI.setToken(appConfig.github.token);
+                if (githubAPI && config.github.token) {
+                    githubAPI.setToken(config.github.token);
                     results = await githubAPI.getAllSurveyResults();
                     console.log('Loaded results from GitHub:', results.length);
                 }
@@ -784,8 +784,8 @@
                 let inProgressSurveys = [];
                 
                 // If GitHub API is configured, try to load in-progress surveys from GitHub
-                if (githubAPI && appConfig.github.token) {
-                    githubAPI.setToken(appConfig.github.token);
+                if (githubAPI && config.github.token) {
+                    githubAPI.setToken(config.github.token);
                     inProgressSurveys = await githubAPI.getInProgressSurveys();
                     console.log('Loaded in-progress surveys from GitHub:', inProgressSurveys.length);
                 }
