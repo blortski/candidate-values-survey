@@ -145,9 +145,121 @@
             margin-bottom: 20px;
         }
         
-        .dashboard-title {
-            margin: 0;
+        .dashboard-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .results-container {
+            margin-top: 20px;
+        }
+        
+        .in-progress-container {
+            margin-bottom: 30px;
+            border: 1px solid var(--accent-color);
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .in-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .in-progress-title {
             color: var(--primary-color);
+            margin: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .in-progress-title .pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(196, 22, 28, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(196, 22, 28, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(196, 22, 28, 0);
+            }
+        }
+        
+        .in-progress-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .in-progress-table th,
+        .in-progress-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .in-progress-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .in-progress-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .in-progress-table .time-elapsed {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .in-progress-table .progress-indicator {
+            display: flex;
+            align-items: center;
+        }
+        
+        .in-progress-table .progress-bar {
+            flex: 1;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-right: 10px;
+        }
+        
+        .in-progress-table .progress-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            border-radius: 5px;
+        }
+        
+        .in-progress-table .progress-text {
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+        
+        .no-in-progress {
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            padding: 15px;
         }
         
         .results-table {
@@ -333,6 +445,38 @@
                 transform: rotate(360deg);
             }
         }
+        
+        .client-link-container {
+            margin-bottom: 20px;
+        }
+        
+        .link-box {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        #survey-link {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+        }
+        
+        #copy-link-btn {
+            margin-left: 10px;
+        }
+        
+        .copy-confirmation {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -363,7 +507,7 @@
             
             <section id="dashboard-section" style="display: none;">
                 <div class="dashboard-header">
-                    <h2>Survey Results</h2>
+                    <h2>Admin Dashboard</h2>
                     <div class="dashboard-actions">
                         <button id="refresh-btn" class="btn secondary-btn">Refresh Data</button>
                         <button id="github-token-btn" class="btn secondary-btn">Set GitHub Token</button>
@@ -371,11 +515,34 @@
                     </div>
                 </div>
                 
-                <div id="loading-indicator" class="loading-indicator">
-                    <div class="spinner"></div>
-                    <p>Loading survey results...</p>
+                <!-- Client Survey Link Section -->
+                <div class="client-link-container">
+                    <h3>Share Survey Link</h3>
+                    <p>Share this link with candidates to take the Wild Zora Values Survey:</p>
+                    <div class="link-box">
+                        <input type="text" id="survey-link" value="https://blortski.github.io/candidate-values-survey/" readonly>
+                        <button id="copy-link-btn" class="btn primary-btn">Copy Link</button>
+                    </div>
+                    <div id="copy-confirmation" class="copy-confirmation">Link copied to clipboard!</div>
                 </div>
                 
+                <div id="loading-indicator" class="loading-indicator">
+                    <div class="spinner"></div>
+                    <p>Loading data...</p>
+                </div>
+                
+                <!-- In-Progress Surveys Section -->
+                <div id="in-progress-container" class="in-progress-container">
+                    <div class="in-progress-header">
+                        <h3 class="in-progress-title"><span class="pulse"></span>In-Progress Surveys</h3>
+                        <button id="refresh-in-progress-btn" class="btn secondary-btn">Refresh</button>
+                    </div>
+                    <div id="in-progress-content">
+                        <!-- In-progress surveys will be loaded here -->
+                    </div>
+                </div>
+                
+                <h3>Completed Surveys</h3>
                 <div id="results-container" class="results-container">
                     <!-- Results will be loaded here -->
                 </div>
@@ -402,6 +569,7 @@
                         <input type="password" id="github-token" placeholder="Enter your GitHub token">
                     </div>
                     <p class="token-info">This token will be stored securely in your browser and used to save survey results to GitHub.</p>
+                    <p id="default-token-message" class="token-info" style="color: var(--primary-color); font-weight: bold;">A default token is currently being used. You only need to set a custom token if you want to use your own GitHub account.</p>
                     <div class="token-actions">
                         <button id="save-token-btn" class="btn primary-btn">Save Token</button>
                         <button id="clear-token-btn" class="btn secondary-btn">Clear Token</button>
@@ -440,6 +608,9 @@
         const detailsModal = document.getElementById('details-modal');
         const closeModal = document.querySelector('.close-modal');
         const candidateDetailsContainer = document.getElementById('candidate-details-container');
+        const inProgressContainer = document.getElementById('in-progress-container');
+        const inProgressContent = document.getElementById('in-progress-content');
+        const refreshInProgressBtn = document.getElementById('refresh-in-progress-btn');
         
         // Token modal elements
         const tokenModal = document.getElementById('token-modal');
@@ -448,6 +619,12 @@
         const saveTokenBtn = document.getElementById('save-token-btn');
         const clearTokenBtn = document.getElementById('clear-token-btn');
         const githubTokenBtn = document.getElementById('github-token-btn');
+        const defaultTokenMessage = document.getElementById('default-token-message');
+        
+        // Client survey link elements
+        const surveyLinkInput = document.getElementById('survey-link');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        const copyConfirmation = document.getElementById('copy-confirmation');
         
         // Check if admin is logged in
         function checkAuth() {
@@ -472,17 +649,29 @@
             loginSection.style.display = 'none';
             dashboardSection.style.display = 'block';
             
-            // Check if GitHub token is set
+            // Check if GitHub token is set in localStorage
             const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+            
             if (token) {
-                // Set token in appConfig and githubAPI
+                // Set token from localStorage
                 appConfig.github.token = token;
                 if (githubAPI) {
                     githubAPI.setToken(token);
                 }
+                defaultTokenMessage.style.display = 'none';
+            } else if (appConfig.github.defaultToken) {
+                // Use default token from config if available
+                appConfig.github.token = appConfig.github.defaultToken;
+                if (githubAPI) {
+                    githubAPI.setToken(appConfig.github.defaultToken);
+                }
+                defaultTokenMessage.style.display = 'block';
+            } else {
+                defaultTokenMessage.style.display = 'none';
             }
             
             loadResults();
+            loadInProgressSurveys();
         }
         
         // Handle login
@@ -519,6 +708,7 @@
                 if (githubAPI) {
                     githubAPI.setToken(token);
                 }
+                defaultTokenMessage.style.display = 'none';
                 tokenModal.style.display = 'none';
                 loadResults(); // Reload results with new token
             }
@@ -532,6 +722,7 @@
             if (githubAPI) {
                 githubAPI.setToken('');
             }
+            defaultTokenMessage.style.display = 'block';
         }
         
         // Load survey results
@@ -554,13 +745,17 @@
                     console.log('Loaded results from localStorage:', results.length);
                 }
                 
+                // Sort results by timestamp (newest first)
+                results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                // Display results
                 displayResults(results);
             } catch (error) {
                 console.error('Error loading results:', error);
                 resultsContainer.innerHTML = `
-                    <div class="error-container">
-                        <p class="error-message">Error loading survey results. Please try again later.</p>
-                        <p class="error-details">${error.message}</p>
+                    <div class="error-message">
+                        <p>Error loading survey results. Please try again.</p>
+                        <p>Error details: ${error.message}</p>
                     </div>
                 `;
             } finally {
@@ -568,26 +763,125 @@
             }
         }
         
-        // Get results from localStorage
-        function getResultsFromLocalStorage() {
-            const results = [];
+        // Load in-progress surveys
+        async function loadInProgressSurveys() {
+            inProgressContent.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>Loading in-progress surveys...</p></div>';
             
-            // Get all keys from localStorage
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
+            try {
+                let inProgressSurveys = [];
                 
-                // Check if key starts with 'surveyResult_'
-                if (key.startsWith('surveyResult_')) {
-                    try {
-                        const result = JSON.parse(localStorage.getItem(key));
-                        results.push(result);
-                    } catch (error) {
-                        console.error('Error parsing result:', error);
-                    }
+                // If GitHub API is configured, try to load in-progress surveys from GitHub
+                if (githubAPI && appConfig.github.token) {
+                    githubAPI.setToken(appConfig.github.token);
+                    inProgressSurveys = await githubAPI.getInProgressSurveys();
+                    console.log('Loaded in-progress surveys from GitHub:', inProgressSurveys.length);
                 }
+                
+                // Display in-progress surveys
+                displayInProgressSurveys(inProgressSurveys);
+            } catch (error) {
+                console.error('Error loading in-progress surveys:', error);
+                inProgressContent.innerHTML = `
+                    <div class="error-message">
+                        <p>Error loading in-progress surveys. Please try again.</p>
+                        <p>Error details: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Display in-progress surveys
+        function displayInProgressSurveys(surveys) {
+            if (!surveys || surveys.length === 0) {
+                inProgressContent.innerHTML = '<p class="no-in-progress">No surveys currently in progress.</p>';
+                return;
             }
             
-            return results;
+            // Sort by start time (newest first)
+            surveys.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            
+            let html = `
+                <table class="in-progress-table">
+                    <thead>
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Email</th>
+                            <th>Time Elapsed</th>
+                            <th>Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            surveys.forEach(survey => {
+                // Calculate current elapsed time
+                const startTime = new Date(survey.startTime);
+                const now = new Date();
+                const elapsedMs = now - startTime;
+                const elapsedMinutes = Math.floor(elapsedMs / 60000);
+                const elapsedSeconds = Math.floor((elapsedMs % 60000) / 1000);
+                
+                // Format time as MM:SS
+                const timeDisplay = `${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`;
+                
+                html += `
+                    <tr>
+                        <td>${survey.name}</td>
+                        <td>${survey.email}</td>
+                        <td class="time-elapsed">${timeDisplay}</td>
+                        <td>
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${survey.progress}%"></div>
+                                </div>
+                                <span class="progress-text">${survey.progress}% (Q${survey.currentQuestion}/${survey.totalQuestions})</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            inProgressContent.innerHTML = html;
+            
+            // Start auto-refresh timer for elapsed time
+            startInProgressTimeUpdater(surveys);
+        }
+        
+        // Update elapsed time for in-progress surveys
+        let timeUpdateInterval;
+        function startInProgressTimeUpdater(surveys) {
+            // Clear any existing interval
+            if (timeUpdateInterval) {
+                clearInterval(timeUpdateInterval);
+            }
+            
+            // Update every second
+            timeUpdateInterval = setInterval(() => {
+                const timeElements = document.querySelectorAll('.in-progress-table .time-elapsed');
+                if (timeElements.length === 0) {
+                    clearInterval(timeUpdateInterval);
+                    return;
+                }
+                
+                surveys.forEach((survey, index) => {
+                    if (index < timeElements.length) {
+                        const startTime = new Date(survey.startTime);
+                        const now = new Date();
+                        const elapsedMs = now - startTime;
+                        const elapsedMinutes = Math.floor(elapsedMs / 60000);
+                        const elapsedSeconds = Math.floor((elapsedMs % 60000) / 1000);
+                        
+                        // Format time as MM:SS
+                        const timeDisplay = `${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`;
+                        timeElements[index].textContent = timeDisplay;
+                    }
+                });
+            }, 1000);
         }
         
         // Show or hide loading indicator
@@ -813,20 +1107,64 @@
         });
         
         // Event listeners
-        document.addEventListener('DOMContentLoaded', checkAuth);
-        loginBtn.addEventListener('click', handleLogin);
-        adminPasswordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-        logoutBtn.addEventListener('click', handleLogout);
-        refreshBtn.addEventListener('click', loadResults);
-        
-        // Token management event listeners
-        githubTokenBtn.addEventListener('click', showTokenModal);
-        saveTokenBtn.addEventListener('click', saveGitHubToken);
-        clearTokenBtn.addEventListener('click', clearGitHubToken);
-        closeTokenModal.addEventListener('click', () => {
-            tokenModal.style.display = 'none';
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check authentication on page load
+            checkAuth();
+            
+            // Login button
+            loginBtn.addEventListener('click', handleLogin);
+            
+            // Enter key in password field
+            adminPasswordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            // Logout button
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Refresh button
+            refreshBtn.addEventListener('click', () => {
+                loadResults();
+                loadInProgressSurveys();
+            });
+            
+            // Refresh in-progress button
+            refreshInProgressBtn.addEventListener('click', loadInProgressSurveys);
+            
+            // GitHub token button
+            githubTokenBtn.addEventListener('click', showTokenModal);
+            
+            // Save token button
+            saveTokenBtn.addEventListener('click', saveGitHubToken);
+            
+            // Clear token button
+            clearTokenBtn.addEventListener('click', clearGitHubToken);
+            
+            // Close token modal
+            closeTokenModal.addEventListener('click', () => {
+                tokenModal.style.display = 'none';
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === detailsModal) {
+                    detailsModal.style.display = 'none';
+                }
+                if (e.target === tokenModal) {
+                    tokenModal.style.display = 'none';
+                }
+            });
+            
+            // Copy link button
+            copyLinkBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(surveyLinkInput.value);
+                copyConfirmation.style.display = 'block';
+                setTimeout(() => {
+                    copyConfirmation.style.display = 'none';
+                }, 2000);
+            });
         });
     </script>
 </body>

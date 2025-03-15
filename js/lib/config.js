@@ -9,7 +9,8 @@ const config = {
         repo: 'candidate-values-survey',    // Repository name
         branch: 'main',                     // Branch name
         resultsPath: 'data/results',        // Path to store results
-        token: ''                           // GitHub Personal Access Token (to be set)
+        token: '',                          // GitHub Personal Access Token (to be set)
+        defaultToken: 'YOUR_GITHUB_TOKEN'   // Default token (replace with actual token)
     },
     
     // Admin configuration
@@ -18,7 +19,7 @@ const config = {
     },
     
     // Application version
-    version: 'v1.0.4'
+    version: 'v1.0.5'
 };
 
 // Export the configuration
