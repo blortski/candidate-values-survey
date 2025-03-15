@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-03-15T23:50:23.025Z",
+  "lastUpdated": "2025-03-15T23:50:23.992Z",
   "values": [
     {
       "id": "optimism",
@@ -25,7 +25,7 @@
       "id": "valueOrientation",
       "name": "Value Orientation",
       "description": "Your focus on ROI and business value",
-      "enabled": true,
+      "enabled": false,
       "stats": {
         "candidatesTested": 0,
         "averageAlignment": 0
