@@ -5,19 +5,36 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.1.2
+ * Version: v1.1.4
  */
 
 // Global variables
 let surveyData = null;
+let valuesData = null;
 let currentQuestion = 0;
 let userResponses = {};
 let candidateName = '';
 let candidateEmail = '';
+let surveyId = null;
+let githubAPI = null;
+let filteredQuestions = [];
 
 // Initialize the survey when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM fully loaded');
+    
+    // Initialize GitHub API if available
+    if (window.githubAPI) {
+        githubAPI = window.githubAPI;
+        console.log('GitHub API initialized');
+        
+        // Check if token is set in localStorage
+        const token = localStorage.getItem('wildZora_githubToken');
+        if (token) {
+            githubAPI.setToken(token);
+            console.log('GitHub token set from localStorage');
+        }
+    }
     
     // Load survey data
     initializeSurvey();
@@ -52,21 +69,70 @@ window.onload = function() {
 };
 
 /**
- * Initialize the survey by loading the survey data
+ * Initialize the survey by loading the survey data and values data
  */
 async function initializeSurvey() {
     try {
         console.log('Initializing survey...');
-        const response = await fetch('./data/survey.json');
-        if (!response.ok) {
-            throw new Error(`Failed to load survey data: ${response.status} ${response.statusText}`);
+        
+        // Load survey data
+        const surveyResponse = await fetch('./data/survey.json');
+        if (!surveyResponse.ok) {
+            throw new Error(`Failed to load survey data: ${surveyResponse.status} ${surveyResponse.statusText}`);
         }
-        surveyData = await response.json();
+        surveyData = await surveyResponse.json();
         console.log('Survey data loaded successfully:', surveyData);
+        
+        // Load values data
+        const valuesResponse = await fetch('./data/values.json');
+        if (!valuesResponse.ok) {
+            throw new Error(`Failed to load values data: ${valuesResponse.status} ${valuesResponse.statusText}`);
+        }
+        valuesData = await valuesResponse.json();
+        console.log('Values data loaded successfully:', valuesData);
+        
+        // Filter questions based on enabled values
+        filterQuestionsByEnabledValues();
     } catch (error) {
         console.error('Error loading survey data:', error);
         showError('Failed to load survey. Please refresh the page and try again.');
     }
+}
+
+/**
+ * Filter questions to only include those associated with enabled values
+ */
+function filterQuestionsByEnabledValues() {
+    if (!surveyData || !valuesData) {
+        console.error('Survey data or values data not loaded');
+        return;
+    }
+    
+    // Create a map of enabled values
+    const enabledValues = {};
+    valuesData.values.forEach(value => {
+        enabledValues[value.id] = value.enabled;
+    });
+    
+    console.log('Enabled values:', enabledValues);
+    
+    // Get list of questions associated with enabled values
+    const enabledQuestionIds = [];
+    surveyData.categories.forEach(category => {
+        if (enabledValues[category.id]) {
+            // If this value is enabled, add all its questions to the enabled list
+            enabledQuestionIds.push(...category.questions);
+        }
+    });
+    
+    console.log('Enabled question IDs:', enabledQuestionIds);
+    
+    // Filter the questions array to only include enabled questions
+    filteredQuestions = surveyData.questions.filter(question => 
+        enabledQuestionIds.includes(question.id)
+    );
+    
+    console.log('Filtered questions:', filteredQuestions.length);
 }
 
 /**
@@ -107,11 +173,46 @@ function startSurvey() {
             candidateEmail = document.getElementById('candidate-email').value.trim();
             
             if (candidateName && candidateEmail) {
+                // Generate a unique ID for this survey
+                surveyId = `${Date.now()}_${candidateEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                
+                // Save in-progress survey to GitHub
+                saveInProgressSurvey();
+                
+                // Show questions
                 showQuestions();
             }
         });
     } else {
         console.error('Candidate info form not found');
+    }
+}
+
+/**
+ * Save in-progress survey information to GitHub
+ */
+async function saveInProgressSurvey() {
+    if (!githubAPI || !githubAPI.isConfigured()) {
+        console.warn('GitHub API not configured, in-progress survey will not be saved');
+        return;
+    }
+    
+    try {
+        const inProgressData = {
+            id: surveyId,
+            name: candidateName,
+            email: candidateEmail,
+            startTime: new Date().toISOString(),
+            currentQuestion: currentQuestion,
+            responses: userResponses,
+            status: 'in-progress'
+        };
+        
+        console.log('Saving in-progress survey:', inProgressData);
+        await githubAPI.saveInProgressSurvey(inProgressData);
+        console.log('In-progress survey saved successfully');
+    } catch (error) {
+        console.error('Error saving in-progress survey:', error);
     }
 }
 
@@ -135,9 +236,9 @@ function showQuestions() {
     // Initialize progress tracker
     questionsSection.innerHTML = `
         <div class="progress-container">
-            <div class="progress-text">Question <span id="current-question">1</span> of ${surveyData.questions.length}</div>
+            <div class="progress-text">Question <span id="current-question">1</span> of ${filteredQuestions.length}</div>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: ${(1/surveyData.questions.length) * 100}%"></div>
+                <div class="progress-fill" style="width: ${(1/filteredQuestions.length) * 100}%"></div>
             </div>
         </div>
         <div id="question-container"></div>
@@ -167,18 +268,18 @@ function showQuestions() {
  * @param {number} questionIndex - The index of the question to display
  */
 function showQuestion(questionIndex) {
-    if (!surveyData || !surveyData.questions) {
-        console.error('Survey data not loaded');
+    if (!filteredQuestions || filteredQuestions.length === 0) {
+        console.error('No filtered questions available');
         return;
     }
     
-    if (questionIndex < 0 || questionIndex >= surveyData.questions.length) {
+    if (questionIndex < 0 || questionIndex >= filteredQuestions.length) {
         console.error('Invalid question index:', questionIndex);
         return;
     }
     
     currentQuestion = questionIndex;
-    const question = surveyData.questions[questionIndex];
+    const question = filteredQuestions[questionIndex];
     const questionContainer = document.getElementById('question-container');
     
     if (!questionContainer) {
@@ -195,7 +296,7 @@ function showQuestion(questionIndex) {
     }
     
     if (progressFill) {
-        progressFill.style.width = `${((questionIndex + 1) / surveyData.questions.length) * 100}%`;
+        progressFill.style.width = `${((questionIndex + 1) / filteredQuestions.length) * 100}%`;
     }
     
     // Update button states
@@ -207,7 +308,7 @@ function showQuestion(questionIndex) {
     }
     
     if (nextBtn) {
-        nextBtn.textContent = questionIndex === surveyData.questions.length - 1 ? 'Submit' : 'Next';
+        nextBtn.textContent = questionIndex === filteredQuestions.length - 1 ? 'Submit' : 'Next';
     }
     
     // Create the question HTML
@@ -242,13 +343,13 @@ function showPreviousQuestion() {
  * Handle the next button click - either show the next question or submit the survey
  */
 function handleNextQuestion() {
-    if (!surveyData || !surveyData.questions) {
-        console.error('Survey data not loaded');
+    if (!filteredQuestions || filteredQuestions.length === 0) {
+        console.error('No filtered questions available');
         return;
     }
     
     // Save the current response
-    const question = surveyData.questions[currentQuestion];
+    const question = filteredQuestions[currentQuestion];
     const selectedOption = document.querySelector(`input[name="q${question.id}"]:checked`);
     
     if (!selectedOption) {
@@ -258,8 +359,11 @@ function handleNextQuestion() {
     
     userResponses[question.id] = selectedOption.value;
     
+    // Update in-progress survey with the new response
+    saveInProgressSurvey();
+    
     // If this is the last question, submit the survey
-    if (currentQuestion === surveyData.questions.length - 1) {
+    if (currentQuestion === filteredQuestions.length - 1) {
         calculateResults();
     } else {
         // Otherwise, show the next question
@@ -273,25 +377,38 @@ function handleNextQuestion() {
 function calculateResults() {
     console.log('Calculating results');
     
-    const results = {
-        optimism: 0,
-        productivity: 0,
-        valueOrientation: 0,
-        collaboration: 0,
-        generalInsight: 0
-    };
+    // Initialize results object with all categories from values data
+    const results = {};
+    if (valuesData && valuesData.values) {
+        valuesData.values.forEach(value => {
+            if (value.enabled) {
+                results[value.id] = 0;
+            }
+        });
+    } else {
+        // Fallback if values data is not available
+        results.optimism = 0;
+        results.productivity = 0;
+        results.valueOrientation = 0;
+        results.collaboration = 0;
+        results.generalInsight = 0;
+    }
     
     // Calculate scores for each category
     Object.entries(userResponses).forEach(([questionId, optionId]) => {
-        const questionIndex = surveyData.questions.findIndex(q => q.id === parseInt(questionId));
-        const question = surveyData.questions[questionIndex];
-        const option = question.options.find(opt => opt.id === optionId);
+        const questionObj = filteredQuestions.find(q => q.id === parseInt(questionId));
+        if (!questionObj) return;
+        
+        const option = questionObj.options.find(opt => opt.id === optionId);
         
         if (option && option.score !== undefined) {
             // Find which category this question belongs to
             for (const category of surveyData.categories) {
                 if (category.questions.includes(parseInt(questionId))) {
-                    results[category.id] += option.score;
+                    // Only add score if the category is enabled
+                    if (results[category.id] !== undefined) {
+                        results[category.id] += option.score;
+                    }
                     break;
                 }
             }
@@ -299,24 +416,37 @@ function calculateResults() {
     });
     
     // Calculate percentage scores
-    const maxScores = {
-        optimism: 21,         // 7 questions, max score 3 per question
-        productivity: 21,      // 7 questions, max score 3 per question
-        valueOrientation: 21,  // 7 questions, max score 3 per question
-        collaboration: 21,     // 7 questions, max score 3 per question
-        generalInsight: 6      // 2 questions, max score 3 per question
-    };
+    const maxScores = {};
+    
+    // Calculate max scores based on enabled values and their questions
+    surveyData.categories.forEach(category => {
+        if (results[category.id] !== undefined) {
+            // Count how many questions from this category are in the filtered questions
+            const categoryQuestionCount = filteredQuestions.filter(q => 
+                category.questions.includes(q.id)
+            ).length;
+            
+            // Max score is 3 points per question
+            maxScores[category.id] = categoryQuestionCount * 3;
+        }
+    });
     
     const percentageResults = {};
     Object.keys(results).forEach(category => {
-        percentageResults[category] = Math.round((results[category] / maxScores[category]) * 100);
+        if (maxScores[category] && maxScores[category] > 0) {
+            percentageResults[category] = Math.round((results[category] / maxScores[category]) * 100);
+        } else {
+            percentageResults[category] = 0;
+        }
     });
     
     // Calculate overall score (average of all categories)
-    const overallScore = Math.round(
-        Object.values(percentageResults).reduce((sum, score) => sum + score, 0) / 
-        Object.keys(percentageResults).length
-    );
+    const overallScore = Object.keys(percentageResults).length > 0 
+        ? Math.round(
+            Object.values(percentageResults).reduce((sum, score) => sum + score, 0) / 
+            Object.keys(percentageResults).length
+        )
+        : 0;
     
     // Determine result levels
     const levels = {};
@@ -346,6 +476,16 @@ function calculateResults() {
     };
     
     console.log('Final results:', finalResults);
+    
+    // Remove in-progress survey if it exists
+    if (surveyId && githubAPI && githubAPI.isConfigured()) {
+        try {
+            githubAPI.deleteInProgressSurvey(surveyId);
+            console.log('In-progress survey deleted');
+        } catch (error) {
+            console.error('Error deleting in-progress survey:', error);
+        }
+    }
     
     // Display the results
     showResults(finalResults);
