@@ -261,7 +261,7 @@ function calculateResults() {
     };
     
     // Save results locally and display them
-    localStorage.setItem(`survey_result_${candidateEmail}`, JSON.stringify(finalResults));
+    localStorage.setItem(`surveyResult_${candidateEmail}`, JSON.stringify(finalResults));
     showResults(finalResults);
 }
 

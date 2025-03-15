@@ -340,7 +340,7 @@
         
         <footer>
             <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-            <span class="version">v1.0.2</span>
+            <span class="version">v1.0.3</span>
         </footer>
     </div>
     
@@ -445,7 +445,7 @@
                             <th>Date</th>
                             <th>Optimism</th>
                             <th>Productivity</th>
-                            <th>Value</th>
+                            <th>Value Orientation</th>
                             <th>Collaboration</th>
                             <th>Overall</th>
                             <th>Action</th>
@@ -465,7 +465,7 @@
                         <td>${date}</td>
                         <td class="score-cell ${getScoreClass(result.scores.optimism)}">${result.scores.optimism}</td>
                         <td class="score-cell ${getScoreClass(result.scores.productivity)}">${result.scores.productivity}</td>
-                        <td class="score-cell ${getScoreClass(result.scores.value)}">${result.scores.value}</td>
+                        <td class="score-cell ${getScoreClass(result.scores.valueOrientation)}">${result.scores.valueOrientation}</td>
                         <td class="score-cell ${getScoreClass(result.scores.collaboration)}">${result.scores.collaboration}</td>
                         <td class="score-cell ${getScoreClass(overallScore)}">${overallScore}%</td>
                         <td><button class="btn view-details-btn" data-index="${index}">View Details</button></td>
@@ -492,7 +492,7 @@
         // Calculate overall score as percentage
         function calculateOverallScore(scores) {
             const maxPossibleScore = 21 * 4; // 7 questions per category * 3 points max * 4 categories
-            const totalScore = scores.optimism + scores.productivity + scores.value + scores.collaboration;
+            const totalScore = scores.optimism + scores.productivity + scores.valueOrientation + scores.collaboration;
             return Math.round((totalScore / maxPossibleScore) * 100);
         }
         
@@ -551,8 +551,8 @@
                     
                     <div class="category-score">
                         <h4 class="category-name">Value Orientation</h4>
-                        <div class="score-display ${getScoreClass(result.scores.value)}">${result.scores.value}</div>
-                        <p>${getCategoryInterpretation('value', result.scores.value)}</p>
+                        <div class="score-display ${getScoreClass(result.scores.valueOrientation)}">${result.scores.valueOrientation}</div>
+                        <p>${getCategoryInterpretation('valueOrientation', result.scores.valueOrientation)}</p>
                     </div>
                     
                     <div class="category-score">
@@ -606,7 +606,7 @@
                     medium: 'Balanced approach to productivity',
                     low: 'May need support with productivity systems'
                 },
-                value: {
+                valueOrientation: {
                     high: 'Strong focus on business value and ROI',
                     medium: 'Moderate focus on value creation',
                     low: 'May need guidance on value orientation'
