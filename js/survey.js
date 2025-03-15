@@ -7,8 +7,8 @@
  */
 
 // Import GitHub API and configuration
-const { githubAPI } = window;
-const { appConfig } = window;
+const githubAPI = window.githubAPI;
+const appConfig = window.appConfig;
 
 // Global variables
 let surveyData = null;
@@ -16,6 +16,9 @@ let currentQuestion = 0;
 let userResponses = {};
 let candidateName = '';
 let candidateEmail = '';
+let surveyStartTime = null;
+let surveyId = null;
+let inProgressUpdateInterval = null;
 
 // DOM elements
 const introSection = document.getElementById('intro-section');
@@ -73,9 +76,56 @@ function startSurvey() {
         candidateEmail = document.getElementById('candidate-email').value.trim();
         
         if (candidateName && candidateEmail) {
+            // Record survey start time
+            surveyStartTime = new Date();
+            
+            // Generate a unique ID for this survey
+            surveyId = `${Date.now()}_${candidateEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            // Save in-progress status
+            saveInProgressStatus();
+            
+            // Start periodic updates of in-progress status (every minute)
+            inProgressUpdateInterval = setInterval(saveInProgressStatus, 60000);
+            
             showQuestions();
         }
     });
+}
+
+/**
+ * Save the in-progress status to GitHub and localStorage
+ */
+function saveInProgressStatus() {
+    if (!candidateName || !candidateEmail || !surveyStartTime) return;
+    
+    const currentTime = new Date();
+    const elapsedTimeMs = currentTime - surveyStartTime;
+    const elapsedMinutes = Math.floor(elapsedTimeMs / 60000);
+    
+    const inProgressData = {
+        id: surveyId,
+        name: candidateName,
+        email: candidateEmail,
+        startTime: surveyStartTime.toISOString(),
+        lastUpdateTime: currentTime.toISOString(),
+        elapsedMinutes: elapsedMinutes,
+        currentQuestion: currentQuestion + 1,
+        totalQuestions: surveyData.questions.length,
+        progress: Math.round((currentQuestion / surveyData.questions.length) * 100),
+        responses: userResponses
+    };
+    
+    // Save to localStorage as a backup
+    localStorage.setItem(`inProgressSurvey_${surveyId}`, JSON.stringify(inProgressData));
+    
+    // Try to save to GitHub if API is available
+    if (githubAPI && appConfig && appConfig.github && appConfig.github.token) {
+        githubAPI.setToken(appConfig.github.token);
+        githubAPI.saveInProgressSurvey(inProgressData).catch(error => {
+            console.warn('Failed to save in-progress status to GitHub:', error);
+        });
+    }
 }
 
 /**
@@ -100,7 +150,7 @@ function showQuestions() {
         </div>
     `;
     
-    // Add event listeners to navigation buttons
+    // Add event listeners for navigation buttons
     document.getElementById('prev-btn').addEventListener('click', showPreviousQuestion);
     document.getElementById('next-btn').addEventListener('click', handleNextQuestion);
     
@@ -113,44 +163,49 @@ function showQuestions() {
  * @param {number} questionIndex - The index of the question to display
  */
 function showQuestion(questionIndex) {
-    if (questionIndex < 0 || questionIndex >= surveyData.questions.length) {
-        return;
-    }
-    
     currentQuestion = questionIndex;
     const question = surveyData.questions[questionIndex];
     const questionContainer = document.getElementById('question-container');
     
-    // Update progress indicator
+    // Update progress indicators
     document.getElementById('current-question').textContent = questionIndex + 1;
     document.querySelector('.progress-fill').style.width = `${((questionIndex + 1) / surveyData.questions.length) * 100}%`;
     
-    // Create the question HTML
-    questionContainer.innerHTML = `
-        <div class="question" data-question-id="${question.id}">
-            <h3 class="question-text">${question.text}</h3>
-            <ul class="options">
-                ${question.options.map(option => `
-                    <li class="option">
-                        <label>
-                            <input type="radio" name="q${question.id}" value="${option.id}" 
-                                ${userResponses[question.id] === option.id ? 'checked' : ''}>
-                            ${option.text}
-                        </label>
-                    </li>
-                `).join('')}
-            </ul>
+    // Enable/disable previous button
+    document.getElementById('prev-btn').disabled = questionIndex === 0;
+    
+    // Update next button text for last question
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.textContent = questionIndex === surveyData.questions.length - 1 ? 'Submit' : 'Next';
+    
+    // Build the question HTML
+    let questionHTML = `
+        <div class="question">
+            <h3>${question.text}</h3>
+            <div class="options">
+    `;
+    
+    // Add options
+    question.options.forEach(option => {
+        const isChecked = userResponses[question.id] === option.id ? 'checked' : '';
+        questionHTML += `
+            <div class="option">
+                <input type="radio" id="option-${option.id}" name="q${question.id}" value="${option.id}" ${isChecked}>
+                <label for="option-${option.id}">${option.text}</label>
+            </div>
+        `;
+    });
+    
+    questionHTML += `
+            </div>
         </div>
     `;
     
-    // Update button states
-    document.getElementById('prev-btn').disabled = questionIndex === 0;
-    const nextBtn = document.getElementById('next-btn');
+    questionContainer.innerHTML = questionHTML;
     
-    if (questionIndex === surveyData.questions.length - 1) {
-        nextBtn.textContent = 'Submit';
-    } else {
-        nextBtn.textContent = 'Next';
+    // Update in-progress status
+    if (surveyStartTime) {
+        saveInProgressStatus();
     }
 }
 
@@ -230,22 +285,24 @@ function calculateResults() {
     });
     
     // Calculate overall score
-    const totalScore = Object.values(results).reduce((sum, score) => sum + score, 0);
+    let totalScore = 0;
+    let maxPossibleScore = 0;
     
-    // Calculate maximum possible score
-    const maxPossibleScore = surveyData.categories.reduce((sum, category) => {
-        return sum + (category.questions.length * 3); // Assuming max score per question is 3
-    }, 0);
+    Object.keys(results).forEach(category => {
+        totalScore += results[category];
+        maxPossibleScore += surveyData.scoring.categories[category].maxScore;
+    });
     
-    // Calculate overall percentage
     const overallPercentage = Math.round((totalScore / maxPossibleScore) * 100);
     
     // Determine overall alignment level
-    let overallAlignment = 'low';
-    if (overallPercentage >= 80) {
+    let overallAlignment;
+    if (overallPercentage >= surveyData.scoring.overall.high) {
         overallAlignment = 'high';
-    } else if (overallPercentage >= 60) {
+    } else if (overallPercentage >= surveyData.scoring.overall.medium) {
         overallAlignment = 'medium';
+    } else {
+        overallAlignment = 'low';
     }
     
     // Store the results
@@ -264,16 +321,34 @@ function calculateResults() {
         }
     };
     
+    // Clear the in-progress update interval
+    if (inProgressUpdateInterval) {
+        clearInterval(inProgressUpdateInterval);
+    }
+    
+    // Remove in-progress status from localStorage
+    if (surveyId) {
+        localStorage.removeItem(`inProgressSurvey_${surveyId}`);
+    }
+    
+    // Try to remove in-progress status from GitHub
+    if (githubAPI && appConfig && appConfig.github && appConfig.github.token && surveyId) {
+        githubAPI.setToken(appConfig.github.token);
+        githubAPI.removeInProgressSurvey(surveyId).catch(error => {
+            console.warn('Failed to remove in-progress status from GitHub:', error);
+        });
+    }
+    
     // Save results to localStorage as a fallback
     localStorage.setItem(`surveyResult_${candidateEmail}`, JSON.stringify(finalResults));
     
     // If GitHub API is available, save results to GitHub
-    if (window.githubAPI && appConfig && appConfig.github && appConfig.github.token) {
+    if (githubAPI && appConfig && appConfig.github && appConfig.github.token) {
         // Configure GitHub API
         githubAPI.setToken(appConfig.github.token);
         
         // Save results to GitHub
-        githubAPI.saveSurveyResult(finalResults)
+        githubAPI.saveSurveyResults(finalResults)
             .then(() => {
                 console.log('Survey results saved to GitHub successfully');
             })
@@ -353,7 +428,7 @@ function showResults(results) {
     
     resultsSection.innerHTML = resultsHTML;
     
-    // Add event listener for printing
+    // Add print functionality
     document.getElementById('print-results').addEventListener('click', () => {
         window.print();
     });
@@ -366,31 +441,33 @@ function showResults(results) {
  */
 function getStrengthDescription(levels) {
     const strengths = [];
-    const areas = [];
     
-    if (levels.optimism === 'high') strengths.push('strong optimism');
-    if (levels.productivity === 'high') strengths.push('excellent productivity habits');
-    if (levels.valueOrientation === 'high') strengths.push('strong focus on business value');
-    if (levels.collaboration === 'high') strengths.push('great collaborative skills');
+    if (levels.optimism === 'high') {
+        strengths.push('strong optimism');
+    }
     
-    if (levels.optimism === 'low') areas.push('optimism');
-    if (levels.productivity === 'low') areas.push('productivity habits');
-    if (levels.valueOrientation === 'low') areas.push('focus on business value');
-    if (levels.collaboration === 'low') areas.push('collaborative approach');
+    if (levels.productivity === 'high') {
+        strengths.push('high productivity');
+    }
     
-    let description = '';
+    if (levels.valueOrientation === 'high') {
+        strengths.push('strong value orientation');
+    }
     
-    if (strengths.length > 0) {
-        description += `${strengths.join(', ')}`;
+    if (levels.collaboration === 'high') {
+        strengths.push('excellent collaboration skills');
+    }
+    
+    if (strengths.length === 0) {
+        return 'areas for potential growth across all categories';
+    } else if (strengths.length === 1) {
+        return strengths[0];
+    } else if (strengths.length === 2) {
+        return `${strengths[0]} and ${strengths[1]}`;
     } else {
-        description += 'a balanced approach across all categories';
+        const lastStrength = strengths.pop();
+        return `${strengths.join(', ')}, and ${lastStrength}`;
     }
-    
-    if (areas.length > 0) {
-        description += ` with opportunities for growth in ${areas.join(', ')}`;
-    }
-    
-    return description;
 }
 
 /**
@@ -403,17 +480,24 @@ function showError(message) {
     errorDiv.textContent = message;
     
     // Remove any existing error messages
-    const existingError = document.querySelector('.error-message');
-    if (existingError) {
-        existingError.remove();
-    }
+    const existingErrors = document.querySelectorAll('.error-message');
+    existingErrors.forEach(error => error.remove());
     
     // Add the new error message
-    const currentSection = document.querySelector('.container > main > div:not(.hidden)');
-    currentSection.prepend(errorDiv);
+    document.body.appendChild(errorDiv);
     
-    // Remove the error after 3 seconds
+    // Remove the error message after 5 seconds
     setTimeout(() => {
         errorDiv.remove();
-    }, 3000);
+    }, 5000);
+}
+
+/**
+ * Check if an email address is valid
+ * @param {string} email - The email address to validate
+ * @returns {boolean} True if the email is valid, false otherwise
+ */
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
