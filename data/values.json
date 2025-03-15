@@ -1,11 +1,11 @@
 {
-  "lastUpdated": "2025-03-15T23:49:32.609Z",
+  "lastUpdated": "2025-03-15T23:49:35.208Z",
   "values": [
     {
       "id": "optimism",
       "name": "Optimism",
       "description": "How you approach challenges and setbacks",
-      "enabled": false,
+      "enabled": true,
       "stats": {
         "candidatesTested": 0,
         "averageAlignment": 0
