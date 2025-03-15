@@ -347,3 +347,12 @@ class GitHubAPI {
 
 // Create GitHub API instance if in browser environment
 const githubAPI = typeof window !== 'undefined' ? new GitHubAPI(appConfig.github) : null;
+
+// If in browser environment, add a method to check localStorage for token on initialization
+if (typeof window !== 'undefined' && githubAPI) {
+    // Initialize token from localStorage if available
+    const storedToken = localStorage.getItem('wildZora_githubToken');
+    if (storedToken) {
+        githubAPI.setToken(storedToken);
+    }
+}

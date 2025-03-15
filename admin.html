@@ -569,7 +569,7 @@
                         <input type="password" id="github-token" placeholder="Enter your GitHub token">
                     </div>
                     <p class="token-info">This token will be stored securely in your browser and used to save survey results to GitHub.</p>
-                    <p id="default-token-message" class="token-info" style="color: var(--primary-color); font-weight: bold;">A default token is currently being used. You only need to set a custom token if you want to use your own GitHub account.</p>
+                    <p id="default-token-message" class="token-info" style="color: var(--primary-color); font-weight: bold;"></p>
                     <div class="token-actions">
                         <button id="save-token-btn" class="btn primary-btn">Save Token</button>
                         <button id="clear-token-btn" class="btn secondary-btn">Clear Token</button>
@@ -659,15 +659,10 @@
                     githubAPI.setToken(token);
                 }
                 defaultTokenMessage.style.display = 'none';
-            } else if (appConfig.github.defaultToken) {
-                // Use default token from config if available
-                appConfig.github.token = appConfig.github.defaultToken;
-                if (githubAPI) {
-                    githubAPI.setToken(appConfig.github.defaultToken);
-                }
-                defaultTokenMessage.style.display = 'block';
             } else {
-                defaultTokenMessage.style.display = 'none';
+                // No token available
+                defaultTokenMessage.textContent = 'Please set a GitHub token to access survey results.';
+                defaultTokenMessage.style.display = 'block';
             }
             
             loadResults();
@@ -722,6 +717,7 @@
             if (githubAPI) {
                 githubAPI.setToken('');
             }
+            defaultTokenMessage.textContent = 'Please set a GitHub token to access survey results.';
             defaultTokenMessage.style.display = 'block';
         }
         
@@ -730,6 +726,18 @@
             showLoading(true);
             
             try {
+                // Check if GitHub API is configured
+                if (!githubAPI || !githubAPI.isConfigured()) {
+                    resultsContainer.innerHTML = `
+                        <div class="no-results">
+                            <p>GitHub API is not configured. Please set a GitHub token to view survey results.</p>
+                            <button class="btn primary-btn" onclick="showTokenModal()">Set GitHub Token</button>
+                        </div>
+                    `;
+                    showLoading(false);
+                    return;
+                }
+                
                 let results = [];
                 
                 // If GitHub API is configured, try to load results from GitHub

@@ -9,8 +9,7 @@ const config = {
         repo: 'candidate-values-survey',    // Repository name
         branch: 'main',                     // Branch name
         resultsPath: 'data/results',        // Path to store results
-        token: '',                          // GitHub Personal Access Token (to be set)
-        defaultToken: 'YOUR_GITHUB_TOKEN'   // Default token (replace with actual token)
+        token: ''                           // GitHub Personal Access Token (to be set from localStorage)
     },
     
     // Admin configuration
@@ -19,8 +18,16 @@ const config = {
     },
     
     // Application version
-    version: 'v1.0.5'
+    version: 'v1.0.6'
 };
 
 // Export the configuration
 const appConfig = config;
+
+// Try to load GitHub token from localStorage if in browser environment
+if (typeof window !== 'undefined' && window.localStorage) {
+    const storedToken = localStorage.getItem('wildZora_githubToken');
+    if (storedToken) {
+        appConfig.github.token = storedToken;
+    }
+}
