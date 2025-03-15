@@ -255,11 +255,11 @@ class GitHubAPI {
     }
     
     /**
-     * Remove an in-progress survey from GitHub
-     * @param {string} id - ID of the in-progress survey to remove
+     * Delete an in-progress survey from GitHub
+     * @param {string} id - ID of the in-progress survey to delete
      * @returns {Promise<Object>} - Promise resolving to the API response
      */
-    async removeInProgressSurvey(id) {
+    async deleteInProgressSurvey(id) {
         if (!this.isConfigured()) {
             throw new Error('GitHub API is not configured. Please set a token.');
         }
@@ -342,6 +342,125 @@ class GitHubAPI {
                 })
             });
         }
+    }
+    
+    /**
+     * Get survey data from GitHub
+     * @returns {Promise<Object>} - Promise resolving to the survey data
+     */
+    async getSurveyData() {
+        try {
+            const response = await this.getFileContent('data/survey.json');
+            return JSON.parse(atob(response.content));
+        } catch (error) {
+            console.error('Error getting survey data from GitHub:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get values data from GitHub
+     * @returns {Promise<Object>} - Promise resolving to the values data
+     */
+    async getValuesData() {
+        try {
+            const response = await this.getFileContent('data/values.json');
+            return JSON.parse(atob(response.content));
+        } catch (error) {
+            console.error('Error getting values data from GitHub:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Save values data to GitHub
+     * @param {Object} valuesData - Values data to save
+     * @returns {Promise<Object>} - Promise resolving to the API response
+     */
+    async saveValuesData(valuesData) {
+        try {
+            // Get current file to get the SHA
+            let sha = null;
+            try {
+                const currentFile = await this.getFileContent('data/values.json');
+                sha = currentFile.sha;
+            } catch (error) {
+                // File might not exist yet, which is fine
+                console.warn('Could not get current values.json file:', error);
+            }
+
+            // Prepare the file content
+            const content = btoa(JSON.stringify(valuesData, null, 2));
+            
+            // Create or update the file
+            const response = await this.createOrUpdateFile(
+                'data/values.json',
+                'Update values data',
+                content,
+                sha
+            );
+            
+            return response;
+        } catch (error) {
+            console.error('Error saving values data to GitHub:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get file content from GitHub
+     * @param {string} path - Path to the file
+     * @returns {Promise<Object>} - Promise resolving to the file content
+     */
+    async getFileContent(path) {
+        const response = await fetch(`${this.baseUrl}/${path}?ref=${this.branch}`, {
+            headers: {
+                'Authorization': `token ${this.token}`
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`GitHub API error: ${errorData.message}`);
+        }
+        
+        return await response.json();
+    }
+
+    /**
+     * Create or update a file on GitHub
+     * @param {string} path - Path to the file
+     * @param {string} message - Commit message
+     * @param {string} content - File content (base64 encoded)
+     * @param {string} sha - SHA of the file (optional)
+     * @returns {Promise<Object>} - Promise resolving to the API response
+     */
+    async createOrUpdateFile(path, message, content, sha) {
+        const data = {
+            message,
+            content,
+            branch: this.branch
+        };
+        
+        if (sha) {
+            data.sha = sha;
+        }
+        
+        const response = await fetch(`${this.baseUrl}/${path}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${this.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`GitHub API error: ${errorData.message}`);
+        }
+        
+        return await response.json();
     }
 }
 

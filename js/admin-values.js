@@ -4,11 +4,12 @@
  * This script handles the functionality for viewing and editing company values
  * in the admin interface, including statistics and question management.
  * 
- * Version: v1.1.1
+ * Version: v1.1.2
  */
 
 // Global variables
 let valuesData = null;
+let surveyData = null;
 let surveyQuestions = null;
 let surveyResults = [];
 
@@ -22,8 +23,8 @@ async function initializeValuesManagement() {
         // Load values data
         await loadValuesData();
         
-        // Load survey questions
-        await loadSurveyQuestions();
+        // Load survey data
+        await loadSurveyData();
         
         // Calculate statistics if we have survey results
         if (surveyResults && surveyResults.length > 0) {
@@ -72,20 +73,40 @@ async function loadValuesData() {
 }
 
 /**
- * Load survey questions from the server
+ * Load survey data from the server
  */
-async function loadSurveyQuestions() {
+async function loadSurveyData() {
     try {
-        console.log('Loading survey questions...');
-        const response = await fetch('./data/survey.json');
-        if (!response.ok) {
-            throw new Error(`Failed to load survey questions: ${response.status} ${response.statusText}`);
+        console.log('Loading survey data...');
+        
+        // First try to load from GitHub
+        if (githubAPI && githubAPI.isConfigured()) {
+            try {
+                surveyData = await githubAPI.getSurveyData();
+                console.log('Survey data loaded from GitHub:', surveyData);
+            } catch (error) {
+                console.warn('Could not load survey data from GitHub, falling back to local file:', error);
+            }
         }
-        const surveyData = await response.json();
+        
+        // Fall back to local file if needed
+        if (!surveyData) {
+            const response = await fetch('./data/survey.json');
+            if (!response.ok) {
+                throw new Error(`Failed to load survey data: ${response.status} ${response.statusText}`);
+            }
+            surveyData = await response.json();
+            console.log('Survey data loaded from local file:', surveyData);
+        }
+        
+        // Store survey data in localStorage for later use
+        localStorage.setItem('surveyData', JSON.stringify(surveyData));
+        
+        // Extract questions from survey data
         surveyQuestions = surveyData.questions;
         console.log('Survey questions loaded successfully:', surveyQuestions);
     } catch (error) {
-        console.error('Error loading survey questions:', error);
+        console.error('Error loading survey data:', error);
         throw error;
     }
 }
@@ -300,8 +321,7 @@ function showEditQuestionsModal(valueId) {
     questionsContainer.innerHTML = '';
     
     // Find questions for this value
-    const surveyData = JSON.parse(localStorage.getItem('surveyData') || '{}');
-    const valueCategory = surveyData.categories?.find(c => c.id === valueId);
+    const valueCategory = surveyData.categories.find(c => c.id === valueId);
     
     if (valueCategory && valueCategory.questions && surveyQuestions) {
         // Create accordion for each question
