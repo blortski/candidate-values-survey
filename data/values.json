@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-03-15T23:49:35.208Z",
+  "lastUpdated": "2025-03-15T23:50:23.025Z",
   "values": [
     {
       "id": "optimism",
@@ -15,7 +15,7 @@
       "id": "productivity",
       "name": "Productivity & Continuous Improvement",
       "description": "Your work habits and improvement approaches",
-      "enabled": true,
+      "enabled": false,
       "stats": {
         "candidatesTested": 0,
         "averageAlignment": 0
