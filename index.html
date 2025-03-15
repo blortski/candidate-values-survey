@@ -346,14 +346,22 @@
         </main>
         
         <footer>
-            <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-            <span class="version">v1.0.4</span>
+            <div class="footer-content">
+                <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
+                <span class="version" id="app-version">v1.0.6</span>
+            </div>
         </footer>
     </div>
     
     <!-- Load configuration and GitHub API -->
     <script src="js/lib/config.js"></script>
     <script src="js/lib/github-api.js"></script>
+    
+    <script>
+        // Set version from config
+        document.getElementById('app-version').textContent = appConfig.version;
+    </script>
+    
     <script src="js/survey.js"></script>
 </body>
 </html>
