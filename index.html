@@ -3,36 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wild Zora Potential Hire Survey</title>
+    <title>Wild Zora Candidate Values Survey</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        :root {
+            --primary-color: #0d5e2f;
+            --secondary-color: #c4161c;
+            --accent-color: #b1c800;
+            --light-bg: #f5f5f5;
+            --dark-text: #333;
+            --light-text: #fff;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--accent-color);
+            margin-bottom: 30px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            height: 60px;
+            margin-right: 15px;
+        }
+        
+        .header-text {
+            flex: 1;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: var(--secondary-color);
+            margin-top: 5px;
+            font-size: 1.1rem;
+        }
+        
+        main {
+            flex: 1;
+        }
+        
+        footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+            position: relative;
+        }
+        
+        .version {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            font-size: 0.8rem;
+            color: #999;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .primary-btn {
+            background-color: var(--primary-color);
+        }
+        
+        .primary-btn:hover {
+            background-color: #094023;
+        }
+        
+        .secondary-btn {
+            background-color: var(--secondary-color);
+        }
+        
+        .secondary-btn:hover {
+            background-color: #a31216;
+        }
+        
+        .intro-text {
+            max-width: 800px;
+            margin: 0 auto 30px;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .candidate-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .progress-container {
+            margin-bottom: 20px;
+        }
+        
+        .progress-text {
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+        
+        .question {
+            margin-bottom: 20px;
+        }
+        
+        .question-text {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .option {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .option:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .option label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .option input {
+            margin-right: 10px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .results-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .result-category {
+            background-color: var(--light-bg);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .result-title {
+            color: var(--primary-color);
+            margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+        
+        .result-description {
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+        
+        .interpretation {
+            margin-top: 15px;
+        }
+        
+        .result-summary {
+            grid-column: 1 / -1;
+            background-color: var(--light-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .overall-result {
+            grid-column: 1 / -1;
+            background-color: var(--light-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alignment-level {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .alignment-level.high {
+            color: #2e7d32;
+        }
+        
+        .alignment-level.medium {
+            color: #ff8f00;
+        }
+        
+        .alignment-level.low {
+            color: #c62828;
+        }
+        
+        .result-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        @media print {
+            .btn {
+                display: none;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+            
+            .result-category, .result-summary, .overall-result {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Wild Zora Potential Hire Survey</h1>
-            <p class="subtitle">Evaluating alignment with our company values</p>
+            <div class="logo-container">
+                <img src="https://wildzora.com/cdn/shop/files/Wild_Zora_Logo_Horizontal_RGB_600x.png" alt="Wild Zora Logo" class="logo">
+                <div class="header-text">
+                    <h1>Candidate Values Survey</h1>
+                    <p class="subtitle">Evaluate alignment with Wild Zora's core values</p>
+                </div>
+            </div>
         </header>
         
-        <main id="survey-container">
-            <!-- Survey content will be loaded here dynamically -->
+        <main>
             <div id="intro-section">
-                <p>Welcome to the Wild Zora values alignment survey. This assessment helps us understand how your personal values align with our company culture.</p>
-                <p>Please answer each question honestly. There are no right or wrong answers.</p>
-                <p>The survey consists of 30 questions and should take approximately 10-15 minutes to complete.</p>
-                <button id="start-survey" class="btn primary-btn">Start Survey</button>
+                <div class="intro-text">
+                    <p>Welcome to the Wild Zora Candidate Values Survey. This assessment is designed to evaluate your alignment with our company's core values and work culture.</p>
+                    <p>The survey consists of 30 multiple-choice questions and should take approximately 15-20 minutes to complete.</p>
+                    <p>Your responses will help us understand your natural tendencies and preferences in a work environment.</p>
+                </div>
+                <div style="text-align: center;">
+                    <button id="start-survey" class="btn primary-btn">Start Survey</button>
+                </div>
             </div>
             
             <div id="questions-section" class="hidden">
-                <!-- Questions will be inserted here by JavaScript -->
+                <!-- Questions will be loaded here -->
             </div>
             
             <div id="results-section" class="hidden">
-                <!-- Results will be displayed here by JavaScript -->
+                <!-- Results will be displayed here -->
             </div>
         </main>
         
         <footer>
             <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
+            <span class="version">v1.0.1</span>
         </footer>
     </div>
     
