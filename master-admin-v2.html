@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ValuesAlign - Master Admin Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <style>
+        .customer-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .customer-card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .customer-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .customer-stats {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+        
+        .stat-item {
+            background-color: #fff;
+            border-radius: 4px;
+            padding: 10px;
+            flex: 1;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
+                <h1>ValuesAlign Master Admin</h1>
+            </div>
+            <div class="user-controls">
+                <span id="user-display"></span>
+                <button id="logout-btn" class="btn">Logout</button>
+            </div>
+        </header>
+        
+        <main>
+            <!-- Login Section -->
+            <section id="login-section">
+                <div class="auth-container">
+                    <h2>Login to Master Admin Dashboard</h2>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="username">Username:</label>
+                            <input type="text" id="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="github-token">GitHub Token:</label>
+                            <input type="password" id="github-token" required>
+                            <small>Your personal GitHub token with repo access</small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn primary-btn">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+            
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="hidden">
+                <div class="dashboard-header">
+                    <h2>Customer Management</h2>
+                    <button id="add-customer-btn" class="btn primary-btn">Add New Customer</button>
+                </div>
+                
+                <!-- Add Customer Form -->
+                <div id="add-customer-form" class="hidden">
+                    <h3>Add New Customer</h3>
+                    <form id="customer-form">
+                        <div class="form-group">
+                            <label for="customer-name">Company Name:</label>
+                            <input type="text" id="customer-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-email">Admin Email:</label>
+                            <input type="email" id="admin-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-password">Admin Password:</label>
+                            <input type="password" id="admin-password" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn primary-btn">Save Customer</button>
+                            <button type="button" id="cancel-add-customer" class="btn secondary-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Customers List -->
+                <div id="customers-container">
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading customers...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 ValuesAlign. All rights reserved.</p>
+            <p>Version: <span id="app-version"></span></p>
+        </footer>
+    </div>
+    
+    <!-- Customer Template (for JavaScript use) -->
+    <template id="customer-template">
+        <div class="customer-card">
+            <h3 class="customer-name">Company Name</h3>
+            <div class="customer-stats">
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Values</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Questions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Surveys</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Employees</div>
+                </div>
+            </div>
+            <div class="customer-actions">
+                <button class="btn small-btn view-customer-btn">View Dashboard</button>
+                <button class="btn small-btn edit-customer-btn">Edit</button>
+                <button class="btn small-btn delete-customer-btn">Delete</button>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Modal Templates -->
+    <div id="edit-customer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Edit Customer</h2>
+            <div class="form-group">
+                <label for="edit-customer-name">Company Name:</label>
+                <input type="text" id="edit-customer-name">
+            </div>
+            <div class="form-group">
+                <label for="edit-admin-email">Admin Email:</label>
+                <input type="email" id="edit-admin-email">
+            </div>
+            <div class="form-group">
+                <label for="edit-admin-password">Reset Admin Password:</label>
+                <input type="password" id="edit-admin-password" placeholder="Leave blank to keep current password">
+            </div>
+            <div class="form-actions">
+                <button id="save-edit-customer-btn" class="btn primary-btn">Save Changes</button>
+                <button class="btn secondary-btn close-modal-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirm-delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete this customer? This action cannot be undone.</p>
+            <div class="form-actions">
+                <button id="confirm-delete-btn" class="btn danger-btn">Delete</button>
+                <button class="btn secondary-btn close-modal-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/lib/config.js?v=1.5.8&t=20250316101345"></script>
+    <script src="js/lib/github-api.js?v=1.5.8&t=20250316101345"></script>
+    <script src="js/master-admin.js?v=1.5.8&t=20250316101345"></script>
+</body>
+</html>
