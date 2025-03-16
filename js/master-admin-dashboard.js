@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.9
+ * Version: v1.8.0
  */
 
 // Global variables
@@ -27,14 +27,14 @@ const goToLoginButton = document.getElementById('go-to-login-btn');
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard v1.6.9...');
+    console.log('Initializing master admin dashboard v1.8.0...');
     console.log('Config loaded:', config);
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.6.9';
-        console.log('Set version to:', 'v1.6.9');
+        versionElement.textContent = 'v1.8.0';
+        console.log('Set version to:', 'v1.8.0');
     }
     
     // Set up event listeners
@@ -216,9 +216,10 @@ function loadCustomers() {
  */
 function getCustomersData() {
     return new Promise((resolve, reject) => {
-        githubAPI.getFile('data/customers.json')
-            .then(content => {
+        githubAPI.getFileContent('data/customers.json')
+            .then(fileData => {
                 try {
+                    const content = atob(fileData.content);
                     const customersData = JSON.parse(content);
                     resolve(customersData);
                 } catch (error) {

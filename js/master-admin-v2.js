@@ -299,9 +299,10 @@ function loadCustomers() {
  */
 function getCustomersData() {
     return new Promise((resolve, reject) => {
-        githubAPI.getFile('data/customers.json')
-            .then(content => {
+        githubAPI.getFileContent('data/customers.json')
+            .then(fileData => {
                 try {
+                    const content = atob(fileData.content);
                     const customersData = JSON.parse(content);
                     resolve(customersData);
                 } catch (error) {
