@@ -861,7 +861,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.3</span>
+                <span class="version" id="app-version">v1.2.5</span>
             </div>
         </footer>
     </div>
@@ -1079,18 +1079,34 @@
             
             try {
                 let inProgressSurveys = [];
+                let completedSurveys = [];
                 
-                // If GitHub API is configured, try to load in-progress surveys from GitHub
+                // If GitHub API is configured, try to load surveys from GitHub
                 if (githubAPI && config.github.token) {
                     githubAPI.setToken(config.github.token);
-                    inProgressSurveys = await githubAPI.getInProgressSurveys();
-                    console.log('Loaded in-progress surveys from GitHub:', inProgressSurveys.length);
+                    
+                    try {
+                        const result = await githubAPI.getInProgressAndCompletedSurveys();
+                        inProgressSurveys = result.inProgressSurveys || [];
+                        completedSurveys = result.completedSurveys || [];
+                        console.log('Loaded surveys from GitHub:', 
+                            inProgressSurveys.length + ' in progress, ' + 
+                            completedSurveys.length + ' completed');
+                    } catch (error) {
+                        console.warn('Could not load surveys index, falling back to default behavior:', error);
+                        // Continue with empty arrays, will show "No surveys" message
+                    }
                 }
                 
                 // Display in-progress surveys
                 displayInProgressSurveys(inProgressSurveys);
+                
+                // Display completed surveys if we have them
+                if (completedSurveys.length > 0) {
+                    displayCompletedSurveys(completedSurveys);
+                }
             } catch (error) {
-                console.error('Error loading in-progress surveys:', error);
+                console.error('Error loading surveys:', error);
                 inProgressContent.innerHTML = `
                     <div class="error-message">
                         <p>Error loading in-progress surveys. Please try again.</p>
@@ -1191,6 +1207,94 @@
                         timeElements[index].textContent = timeDisplay;
                     }
                 });
+            }, 1000);
+        }
+        
+        // Display completed surveys
+        function displayCompletedSurveys(surveys) {
+            const resultsContainer = document.getElementById('results-container');
+            
+            if (!surveys || surveys.length === 0) {
+                resultsContainer.innerHTML = '<p class="no-results">No completed surveys found.</p>';
+                return;
+            }
+            
+            // Sort by completion time (newest first)
+            surveys.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            let html = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Email</th>
+                            <th>Completion Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            surveys.forEach(survey => {
+                // Format date
+                const completionDate = new Date(survey.timestamp);
+                const formattedDate = completionDate.toLocaleDateString() + ' ' + 
+                                     completionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                html += `
+                    <tr>
+                        <td>${survey.candidateName}</td>
+                        <td>${survey.candidateEmail}</td>
+                        <td>${formattedDate}</td>
+                        <td>
+                            <button class="btn view-details-btn" data-candidate="${survey.candidateName}" data-email="${survey.candidateEmail}">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            resultsContainer.innerHTML = html;
+            
+            // Add event listeners to view details buttons
+            const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
+            viewDetailsButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const candidateName = this.getAttribute('data-candidate');
+                    const candidateEmail = this.getAttribute('data-email');
+                    loadCandidateDetails(candidateName, candidateEmail);
+                });
+            });
+        }
+        
+        // Load candidate details
+        function loadCandidateDetails(candidateName, candidateEmail) {
+            showLoading(true);
+            
+            // Show modal with loading indicator
+            const detailsModal = document.getElementById('details-modal');
+            const candidateDetailsContainer = document.getElementById('candidate-details-container');
+            candidateDetailsContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>Loading candidate details...</p></div>';
+            detailsModal.style.display = 'block';
+            
+            // TODO: Implement loading candidate details from GitHub
+            // For now, just show a placeholder
+            setTimeout(() => {
+                candidateDetailsContainer.innerHTML = `
+                    <h2>${candidateName}</h2>
+                    <p>${candidateEmail}</p>
+                    <p>Survey completed on ${new Date().toLocaleDateString()}</p>
+                    <div class="placeholder-message">
+                        <p>Detailed results will be available in a future update.</p>
+                    </div>
+                `;
+                showLoading(false);
             }, 1000);
         }
         

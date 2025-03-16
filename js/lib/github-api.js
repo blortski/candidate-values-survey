@@ -462,6 +462,26 @@ class GitHubAPI {
         
         return await response.json();
     }
+
+    /**
+     * Get in-progress and completed surveys from the surveys index file
+     * @returns {Promise<Object>} - Promise resolving to an object with inProgressSurveys and completedSurveys
+     */
+    async getInProgressAndCompletedSurveys() {
+        try {
+            const response = await this.getFileContent('data/surveys_index.json');
+            const surveysIndex = JSON.parse(atob(response.content));
+            
+            // Separate into in-progress and completed surveys
+            const inProgressSurveys = surveysIndex.filter(survey => !survey.completed);
+            const completedSurveys = surveysIndex.filter(survey => survey.completed);
+            
+            return { inProgressSurveys, completedSurveys };
+        } catch (error) {
+            console.error('Error getting surveys index:', error);
+            throw error;
+        }
+    }
 }
 
 // Create GitHub API instance if in browser environment

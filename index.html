@@ -377,6 +377,9 @@
                         <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
                     </div>
                 </div>
+                <div class="candidate-info">
+                    <p>Candidate: <span id="candidate-name-display"></span></p>
+                </div>
                 <div id="question-container">
                     <!-- Questions will be loaded here -->
                 </div>
@@ -390,9 +393,15 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.3</span>
+                <span class="version" id="app-version">v1.2.5</span>
             </div>
         </footer>
+        
+        <!-- Debug container -->
+        <div id="debug-container" class="hidden" style="display: none;">
+            <h3>Debug Information</h3>
+            <div id="debug-log"></div>
+        </div>
     </div>
     
     <!-- Load configuration and GitHub API -->
@@ -597,6 +606,12 @@
                     userResponses.candidateName = candidateName;
                     userResponses.candidateEmail = candidateEmail;
                     
+                    // Display candidate name
+                    const candidateNameDisplay = document.getElementById('candidate-name-display');
+                    if (candidateNameDisplay) {
+                        candidateNameDisplay.textContent = candidateName;
+                    }
+                    
                     // Show questions directly
                     directShowQuestions();
                 });
@@ -638,6 +653,9 @@
                         <div class="progress-bar">
                             <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
                         </div>
+                    </div>
+                    <div class="candidate-info">
+                        <p>Candidate: <span id="candidate-name-display"></span></p>
                     </div>
                     <div id="question-container">
                         <!-- Questions will be loaded here -->
@@ -834,6 +852,20 @@
                                 <button id="return-home" class="btn primary-btn">Return to Home</button>
                             </div>
                         `;
+                        
+                        // Save survey responses with completion status
+                        const surveyData = {
+                            candidateName: userResponses.candidateName,
+                            candidateEmail: userResponses.candidateEmail,
+                            responses: userResponses,
+                            timestamp: new Date().toISOString(),
+                            completed: true
+                        };
+                        
+                        // Call the function from survey.js to save responses
+                        if (typeof saveSurveyResponses === 'function') {
+                            saveSurveyResponses(surveyData);
+                        }
                         
                         // Add event listener to return home button
                         const returnHomeButton = document.getElementById('return-home');

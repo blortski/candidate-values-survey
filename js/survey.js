@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.2.3
+ * Version: v1.2.5
  */
 
 // Global variables
@@ -520,6 +520,9 @@ function calculateResults() {
         }
     }
     
+    // Save survey completion status
+    saveSurveyCompletionStatus(finalResults);
+    
     // Display the results
     showResults(finalResults);
     
@@ -529,6 +532,103 @@ function calculateResults() {
     } catch (error) {
         console.warn('Failed to save results to localStorage:', error);
     }
+}
+
+/**
+ * Saves survey responses to GitHub
+ * @param {Object} responses - The survey responses to save
+ */
+function saveSurveyResponses(responses) {
+    if (!responses || !responses.candidateName) {
+        console.error('Invalid responses object');
+        return;
+    }
+    
+    // Add timestamp and completion status
+    responses.timestamp = new Date().toISOString();
+    responses.completed = true;
+    
+    // Create a unique filename based on candidate name and timestamp
+    const timestamp = new Date().getTime();
+    const sanitizedName = responses.candidateName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const filename = `${sanitizedName}_${timestamp}.json`;
+    
+    // Convert responses to JSON
+    const content = JSON.stringify(responses, null, 2);
+    
+    // Save to GitHub
+    githubAPI.saveFile('wildzora', 'candidate-values-survey', `results/${filename}`, content, 'Save survey responses', function(err, result) {
+        if (err) {
+            console.error('Error saving survey responses:', err);
+            alert('There was an error saving your responses. Please try again.');
+            return;
+        }
+        
+        console.log('Survey responses saved successfully');
+        
+        // Also update the surveys index file to show completion status
+        updateSurveysIndex(responses);
+    });
+}
+
+/**
+ * Updates the surveys index file with completion status
+ * @param {Object} responses - The survey responses
+ */
+function updateSurveysIndex(responses) {
+    // First, load the current surveys index
+    githubAPI.getFile('wildzora', 'candidate-values-survey', 'data/surveys_index.json', function(err, result) {
+        let surveysIndex = [];
+        
+        // If the file exists, parse it
+        if (!err && result) {
+            try {
+                surveysIndex = JSON.parse(atob(result.content));
+            } catch (e) {
+                console.error('Error parsing surveys index:', e);
+            }
+        }
+        
+        // Check if this candidate already exists in the index
+        const existingIndex = surveysIndex.findIndex(s => 
+            s.candidateName === responses.candidateName && 
+            s.candidateEmail === responses.candidateEmail
+        );
+        
+        // Create survey entry
+        const surveyEntry = {
+            candidateName: responses.candidateName,
+            candidateEmail: responses.candidateEmail,
+            timestamp: responses.timestamp,
+            completed: true
+        };
+        
+        // Update or add the entry
+        if (existingIndex >= 0) {
+            surveysIndex[existingIndex] = surveyEntry;
+        } else {
+            surveysIndex.push(surveyEntry);
+        }
+        
+        // Save the updated index
+        const content = JSON.stringify(surveysIndex, null, 2);
+        githubAPI.saveFile('wildzora', 'candidate-values-survey', 'data/surveys_index.json', content, 'Update surveys index', function(err, result) {
+            if (err) {
+                console.error('Error updating surveys index:', err);
+                return;
+            }
+            
+            console.log('Surveys index updated successfully');
+        });
+    });
+}
+
+/**
+ * Saves survey completion status
+ * @param {Object} results - The survey results
+ */
+function saveSurveyCompletionStatus(results) {
+    saveSurveyResponses(results);
 }
 
 /**
