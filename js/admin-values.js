@@ -4,7 +4,7 @@
  * This script handles the functionality for viewing and editing company values
  * in the admin interface, including statistics and question management.
  * 
- * Version: v1.3.3
+ * Version: v1.4.0
  */
 
 // Global variables
@@ -153,99 +153,46 @@ function calculateValueStatistics() {
  * Display values in the UI
  */
 function displayValues() {
-    console.log('Displaying values...');
+    console.log('Displaying values:', valuesData.values);
+    const container = document.getElementById('values-container');
     
-    const valuesContainer = document.getElementById('values-container');
-    if (!valuesContainer) {
+    if (!container) {
         console.error('Values container not found');
         return;
     }
     
-    // Clear container
-    valuesContainer.innerHTML = '';
+    if (!valuesData.values || !valuesData.values.length) {
+        container.innerHTML = '<p>No values found. Please add some values.</p>';
+        return;
+    }
     
-    // Create values table
-    const table = document.createElement('table');
-    table.className = 'values-table';
+    let html = '<div class="values-list">';
     
-    // Create table header
-    const thead = document.createElement('thead');
-    thead.innerHTML = `
-        <tr>
-            <th>Value</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th>Candidates Tested</th>
-            <th>Average Alignment</th>
-            <th>Actions</th>
-        </tr>
-    `;
-    table.appendChild(thead);
-    
-    // Create table body
-    const tbody = document.createElement('tbody');
-    
-    // Add rows for each value
-    valuesData.values.forEach(value => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${value.name}</td>
-            <td>${value.description}</td>
-            <td>
-                <label class="switch">
-                    <input type="checkbox" class="value-toggle" data-value-id="${value.id}" ${value.enabled ? 'checked' : ''}>
-                    <span class="slider round"></span>
-                </label>
-                <span class="status-text">${value.enabled ? 'Enabled' : 'Disabled'}</span>
-            </td>
-            <td>${value.stats.candidatesTested}</td>
-            <td>
-                <div class="alignment-bar">
-                    <div class="alignment-fill ${getScoreClass(value.stats.averageAlignment)}" style="width: ${value.stats.averageAlignment}%"></div>
-                    <span>${value.stats.averageAlignment}%</span>
+    valuesData.values.forEach((value, index) => {
+        const questionCount = value.questions ? value.questions.length : 0;
+        const activeClass = value.enabled ? 'active' : 'inactive';
+        
+        html += `
+            <div class="value-item ${activeClass}">
+                <div class="value-header">
+                    <h4>${value.name}</h4>
+                    <div class="value-actions">
+                        <button class="btn small-btn" onclick="window.adminValues.editValue(${index})">Edit</button>
+                        <button class="btn small-btn" onclick="window.adminValues.toggleValueStatus(${index})">
+                            ${value.enabled ? 'Disable' : 'Enable'}
+                        </button>
+                        <button class="btn small-btn" onclick="window.adminValues.showEditQuestionsModal(${index})">
+                            Questions (${questionCount})
+                        </button>
+                    </div>
                 </div>
-            </td>
-            <td>
-                <button class="btn edit-value-btn" data-value-id="${value.id}">Edit</button>
-                <button class="btn edit-questions-btn" data-value-id="${value.id}">Questions</button>
-            </td>
+                <p class="value-description">${value.description}</p>
+            </div>
         `;
-        tbody.appendChild(row);
     });
     
-    table.appendChild(tbody);
-    valuesContainer.appendChild(table);
-    
-    // Add event listeners to toggle switches
-    document.querySelectorAll('.value-toggle').forEach(toggle => {
-        toggle.addEventListener('change', function() {
-            const valueId = this.getAttribute('data-value-id');
-            const enabled = this.checked;
-            toggleValueStatus(valueId, enabled);
-            
-            // Update status text
-            const statusText = this.parentElement.nextElementSibling;
-            statusText.textContent = enabled ? 'Enabled' : 'Disabled';
-        });
-    });
-    
-    // Add event listeners to edit buttons
-    document.querySelectorAll('.edit-value-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const valueId = this.getAttribute('data-value-id');
-            showEditValueModal(valueId);
-        });
-    });
-    
-    // Add event listeners to edit questions buttons
-    document.querySelectorAll('.edit-questions-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const valueId = this.getAttribute('data-value-id');
-            showEditQuestionsModal(valueId);
-        });
-    });
-    
-    console.log('Values displayed successfully');
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 /**

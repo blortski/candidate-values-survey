@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.3.3
+ * Version: v1.4.0
  */
 
 // Global variables
@@ -218,73 +218,57 @@ function startSurvey() {
  * Save in-progress survey information to GitHub
  */
 async function saveInProgressSurvey() {
-    if (!githubAPI || !githubAPI.isConfigured()) {
-        console.warn('GitHub API not configured, in-progress survey will not be saved');
-        return;
-    }
+    console.log('Saving in-progress survey...');
     
     try {
-        const inProgressData = {
+        // Get GitHub token from localStorage
+        const token = localStorage.getItem('github_token');
+        
+        if (!token) {
+            console.error('GitHub token not found');
+            return false;
+        }
+        
+        // Create GitHub API instance
+        const github = new GitHubAPI({
+            token: token,
+            owner: config.github.owner,
+            repo: config.github.repo,
+            branch: config.github.branch,
+            resultsPath: config.github.resultsPath
+        });
+        
+        // Generate survey ID if not already set
+        if (!surveyId) {
+            const timestamp = new Date().toISOString().replace(/:/g, '-');
+            const email = candidateEmail ? candidateEmail.replace(/[@.]/g, '_') : 'anonymous';
+            surveyId = `${timestamp}_${email}`;
+        }
+        
+        // Prepare survey data
+        const surveyData = {
             id: surveyId,
             name: candidateName,
             email: candidateEmail,
-            startTime: new Date().toISOString(),
+            timestamp: new Date().toISOString(),
             currentQuestion: currentQuestion,
-            responses: userResponses,
-            status: 'in-progress'
+            answers: userResponses,
+            status: 'in_progress'
         };
         
-        console.log('Saving in-progress survey:', inProgressData);
+        // Save in-progress survey
+        const success = await github.saveSurvey(surveyData);
         
-        // First, update the surveys_index.json file
-        try {
-            // Get the current surveys index
-            const fileResponse = await githubAPI.getFileContent('data/surveys_index.json');
-            let surveysIndex = [];
-            
-            if (fileResponse && fileResponse.content) {
-                try {
-                    surveysIndex = JSON.parse(atob(fileResponse.content));
-                } catch (e) {
-                    console.error('Error parsing surveys index:', e);
-                }
-            }
-            
-            // Check if this candidate already exists in the index
-            const existingIndex = surveysIndex.findIndex(s => 
-                s.candidateEmail === candidateEmail
-            );
-            
-            // Create survey entry
-            const surveyEntry = {
-                candidateName: candidateName,
-                candidateEmail: candidateEmail,
-                timestamp: new Date().toISOString(),
-                completed: false
-            };
-            
-            // Update or add the entry
-            if (existingIndex >= 0) {
-                surveysIndex[existingIndex] = surveyEntry;
-            } else {
-                surveysIndex.push(surveyEntry);
-            }
-            
-            // Save the updated index
-            const content = JSON.stringify(surveysIndex, null, 2);
-            const message = 'Update surveys index with in-progress survey';
-            await githubAPI.createOrUpdateFile('data/surveys_index.json', message, btoa(content), fileResponse.sha);
-            
-            console.log('Surveys index updated successfully with in-progress survey');
-        } catch (error) {
-            console.error('Error updating surveys index:', error);
+        if (success) {
+            console.log('In-progress survey saved successfully');
+            return true;
+        } else {
+            console.error('Failed to save in-progress survey');
+            return false;
         }
-        
-        // Also save the in-progress survey details
-        await githubAPI.saveInProgressSurvey(inProgressData);
-        console.log('In-progress survey saved successfully');
     } catch (error) {
         console.error('Error saving in-progress survey:', error);
+        return false;
     }
 }
 
@@ -584,33 +568,69 @@ function calculateResults() {
  * Saves survey responses to GitHub
  * @param {Object} responses - The survey responses to save
  */
-async function saveSurveyResponses(responses) {
-    if (!githubAPI || !githubAPI.isConfigured()) {
-        console.warn('GitHub API not configured, survey responses will not be saved');
-        return;
-    }
+async function saveSurveyResponses() {
+    console.log('Saving survey results...');
+    showLoading(true);
     
     try {
-        // Create a unique filename based on candidate name and timestamp
-        const timestamp = new Date().getTime();
-        const sanitizedName = responses.candidateName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const filename = `${sanitizedName}_${timestamp}.json`;
+        // Get GitHub token from localStorage
+        const token = localStorage.getItem('github_token');
         
-        // Convert responses to JSON
-        const content = JSON.stringify(responses, null, 2);
+        if (!token) {
+            console.error('GitHub token not found');
+            showError('GitHub token not found. Please contact the administrator.');
+            showLoading(false);
+            return;
+        }
         
-        // Save to GitHub
-        const path = `results/${filename}`;
-        const message = 'Save survey responses';
-        await githubAPI.createOrUpdateFile(path, message, btoa(content));
+        // Create GitHub API instance
+        const github = new GitHubAPI({
+            token: token,
+            owner: config.github.owner,
+            repo: config.github.repo,
+            branch: config.github.branch,
+            resultsPath: config.github.resultsPath
+        });
         
-        console.log('Survey responses saved successfully');
+        // Prepare survey data
+        const surveyData = {
+            name: candidateName,
+            email: candidateEmail,
+            timestamp: new Date().toISOString(),
+            answers: userResponses,
+            value_scores: percentageResults,
+            final_score: overallScore,
+            status: 'completed'
+        };
         
-        // Also update the surveys index file to show completion status
-        await updateSurveysIndex(responses);
+        // Save survey results
+        const success = await github.saveSurvey(surveyData);
+        
+        if (success) {
+            console.log('Survey results saved successfully');
+            
+            // Try to delete in-progress survey if it exists
+            if (surveyId) {
+                try {
+                    // The in-progress survey is now saved as a completed survey
+                    console.log('Survey completed, no need to delete in-progress survey as we use a unified approach');
+                } catch (error) {
+                    console.warn('Error deleting in-progress survey:', error);
+                    // Continue anyway, as this is not critical
+                }
+            }
+            
+            showLoading(false);
+            showResults();
+        } else {
+            console.error('Failed to save survey results');
+            showError('Failed to save survey results. Please try again or contact the administrator.');
+            showLoading(false);
+        }
     } catch (error) {
-        console.error('Error saving survey responses:', error);
-        alert('There was an error saving your responses. Please try again.');
+        console.error('Error saving survey results:', error);
+        showError('Error saving survey results: ' + error.message);
+        showLoading(false);
     }
 }
 
