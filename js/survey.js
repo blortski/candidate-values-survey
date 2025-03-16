@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.2.5
+ * Version: v1.2.6
  */
 
 // Global variables
@@ -235,6 +235,52 @@ async function saveInProgressSurvey() {
         };
         
         console.log('Saving in-progress survey:', inProgressData);
+        
+        // First, update the surveys_index.json file
+        try {
+            // Get the current surveys index
+            const fileResponse = await githubAPI.getFileContent('data/surveys_index.json');
+            let surveysIndex = [];
+            
+            if (fileResponse && fileResponse.content) {
+                try {
+                    surveysIndex = JSON.parse(atob(fileResponse.content));
+                } catch (e) {
+                    console.error('Error parsing surveys index:', e);
+                }
+            }
+            
+            // Check if this candidate already exists in the index
+            const existingIndex = surveysIndex.findIndex(s => 
+                s.candidateEmail === candidateEmail
+            );
+            
+            // Create survey entry
+            const surveyEntry = {
+                candidateName: candidateName,
+                candidateEmail: candidateEmail,
+                timestamp: new Date().toISOString(),
+                completed: false
+            };
+            
+            // Update or add the entry
+            if (existingIndex >= 0) {
+                surveysIndex[existingIndex] = surveyEntry;
+            } else {
+                surveysIndex.push(surveyEntry);
+            }
+            
+            // Save the updated index
+            const content = JSON.stringify(surveysIndex, null, 2);
+            const message = 'Update surveys index with in-progress survey';
+            await githubAPI.createOrUpdateFile('data/surveys_index.json', message, btoa(content), fileResponse.sha);
+            
+            console.log('Surveys index updated successfully with in-progress survey');
+        } catch (error) {
+            console.error('Error updating surveys index:', error);
+        }
+        
+        // Also save the in-progress survey details
         await githubAPI.saveInProgressSurvey(inProgressData);
         console.log('In-progress survey saved successfully');
     } catch (error) {
@@ -538,52 +584,54 @@ function calculateResults() {
  * Saves survey responses to GitHub
  * @param {Object} responses - The survey responses to save
  */
-function saveSurveyResponses(responses) {
-    if (!responses || !responses.candidateName) {
-        console.error('Invalid responses object');
+async function saveSurveyResponses(responses) {
+    if (!githubAPI || !githubAPI.isConfigured()) {
+        console.warn('GitHub API not configured, survey responses will not be saved');
         return;
     }
     
-    // Add timestamp and completion status
-    responses.timestamp = new Date().toISOString();
-    responses.completed = true;
-    
-    // Create a unique filename based on candidate name and timestamp
-    const timestamp = new Date().getTime();
-    const sanitizedName = responses.candidateName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const filename = `${sanitizedName}_${timestamp}.json`;
-    
-    // Convert responses to JSON
-    const content = JSON.stringify(responses, null, 2);
-    
-    // Save to GitHub
-    githubAPI.saveFile('wildzora', 'candidate-values-survey', `results/${filename}`, content, 'Save survey responses', function(err, result) {
-        if (err) {
-            console.error('Error saving survey responses:', err);
-            alert('There was an error saving your responses. Please try again.');
-            return;
-        }
+    try {
+        // Create a unique filename based on candidate name and timestamp
+        const timestamp = new Date().getTime();
+        const sanitizedName = responses.candidateName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const filename = `${sanitizedName}_${timestamp}.json`;
+        
+        // Convert responses to JSON
+        const content = JSON.stringify(responses, null, 2);
+        
+        // Save to GitHub
+        const path = `results/${filename}`;
+        const message = 'Save survey responses';
+        await githubAPI.createOrUpdateFile(path, message, btoa(content));
         
         console.log('Survey responses saved successfully');
         
         // Also update the surveys index file to show completion status
-        updateSurveysIndex(responses);
-    });
+        await updateSurveysIndex(responses);
+    } catch (error) {
+        console.error('Error saving survey responses:', error);
+        alert('There was an error saving your responses. Please try again.');
+    }
 }
 
 /**
  * Updates the surveys index file with completion status
  * @param {Object} responses - The survey responses
  */
-function updateSurveysIndex(responses) {
-    // First, load the current surveys index
-    githubAPI.getFile('wildzora', 'candidate-values-survey', 'data/surveys_index.json', function(err, result) {
+async function updateSurveysIndex(responses) {
+    if (!githubAPI || !githubAPI.isConfigured()) {
+        console.warn('GitHub API not configured, survey completion status will not be saved');
+        return;
+    }
+    
+    try {
+        // Get the current surveys index
+        const fileResponse = await githubAPI.getFileContent('data/surveys_index.json');
         let surveysIndex = [];
         
-        // If the file exists, parse it
-        if (!err && result) {
+        if (fileResponse && fileResponse.content) {
             try {
-                surveysIndex = JSON.parse(atob(result.content));
+                surveysIndex = JSON.parse(atob(fileResponse.content));
             } catch (e) {
                 console.error('Error parsing surveys index:', e);
             }
@@ -591,7 +639,6 @@ function updateSurveysIndex(responses) {
         
         // Check if this candidate already exists in the index
         const existingIndex = surveysIndex.findIndex(s => 
-            s.candidateName === responses.candidateName && 
             s.candidateEmail === responses.candidateEmail
         );
         
@@ -599,7 +646,7 @@ function updateSurveysIndex(responses) {
         const surveyEntry = {
             candidateName: responses.candidateName,
             candidateEmail: responses.candidateEmail,
-            timestamp: responses.timestamp,
+            timestamp: new Date().toISOString(),
             completed: true
         };
         
@@ -612,23 +659,31 @@ function updateSurveysIndex(responses) {
         
         // Save the updated index
         const content = JSON.stringify(surveysIndex, null, 2);
-        githubAPI.saveFile('wildzora', 'candidate-values-survey', 'data/surveys_index.json', content, 'Update surveys index', function(err, result) {
-            if (err) {
-                console.error('Error updating surveys index:', err);
-                return;
-            }
-            
-            console.log('Surveys index updated successfully');
-        });
-    });
+        const message = 'Update surveys index with completed survey';
+        await githubAPI.createOrUpdateFile('data/surveys_index.json', message, btoa(content), fileResponse.sha);
+        
+        console.log('Surveys index updated successfully with completed survey');
+    } catch (error) {
+        console.error('Error updating surveys index:', error);
+    }
 }
 
 /**
  * Saves survey completion status
  * @param {Object} results - The survey results
  */
-function saveSurveyCompletionStatus(results) {
-    saveSurveyResponses(results);
+async function saveSurveyCompletionStatus(results) {
+    if (!results || !results.candidateName || !results.candidateEmail) {
+        console.error('Invalid results object for saving completion status');
+        return;
+    }
+    
+    // Add timestamp and completion status
+    results.timestamp = new Date().toISOString();
+    results.completed = true;
+    
+    // Save the full survey responses
+    await saveSurveyResponses(results);
 }
 
 /**
