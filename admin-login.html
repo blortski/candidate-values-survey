@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Login</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.1&t=20250316121546">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.2&t=20250316122652">
     <style>
         body {
             background-color: #f5f8fa;
@@ -100,7 +100,41 @@
             color: #666;
             font-size: 14px;
         }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2e7d32;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
+    
+    <!-- Check if user is already logged in and redirect -->
+    <script>
+        // Check if user is already logged in
+        const token = localStorage.getItem('github_token');
+        const username = localStorage.getItem('username');
+        
+        if (token && username) {
+            console.log('User already logged in, redirecting to dashboard...');
+            window.location.href = 'master-admin-dashboard.html';
+        } else {
+            console.log('User not logged in, showing login form');
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -134,24 +168,19 @@
         </div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.1</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.2</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.1&t=20250316121546"></script>
+    <script src="js/lib/config.js?v=1.7.2&t=20250316122652"></script>
     <script>
-        // Immediately clear any existing login data
-        localStorage.removeItem('github_token');
-        localStorage.removeItem('username');
-        console.log('Cleared existing login data');
-        
         document.addEventListener('DOMContentLoaded', function() {
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.1';
-                console.log('Set version to:', 'v1.7.1');
+                versionElement.textContent = 'v1.7.2';
+                console.log('Set version to:', 'v1.7.2');
             }
             
             // Handle login form submission

@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.1&t=20250316121546">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.2&t=20250316122652">
     <style>
         body {
             background-color: #f5f8fa;
@@ -278,12 +278,12 @@
         </div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.1</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.2</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.1&t=20250316121546"></script>
+    <script src="js/lib/config.js?v=1.7.2&t=20250316122652"></script>
     <script>
         // Global variables
         let customers = [];
@@ -303,13 +303,13 @@
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing master admin dashboard v1.7.1...');
+            console.log('Initializing master admin dashboard v1.7.2...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.1';
-                console.log('Set version to:', 'v1.7.1');
+                versionElement.textContent = 'v1.7.2';
+                console.log('Set version to:', 'v1.7.2');
             }
             
             // Make sure all modals are hidden
@@ -388,8 +388,13 @@
             localStorage.removeItem('github_token');
             localStorage.removeItem('username');
             
-            // Redirect to login page
-            window.location.href = 'admin-login.html';
+            // Show login prompt
+            showLoginPrompt();
+            
+            // Optionally redirect to login page after a short delay
+            setTimeout(function() {
+                window.location.href = 'admin-login.html';
+            }, 1000);
         }
         
         /**
