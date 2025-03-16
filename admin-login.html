@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Login</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.6.7&t=20250316114450">
-    <link rel="stylesheet" href="css/admin.css?v=1.6.7&t=20250316114450">
+    <link rel="stylesheet" href="css/styles.css?v=1.6.8&t=20250316120115">
+    <link rel="stylesheet" href="css/admin.css?v=1.6.8&t=20250316120115">
     <style>
         body {
             background-color: #f5f8fa;
@@ -124,30 +124,26 @@
         </div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.6.7</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.6.8</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.6.7&t=20250316114450"></script>
-    <script src="js/lib/github-api.js?v=1.6.7&t=20250316114450"></script>
+    <script src="js/lib/config.js?v=1.6.8&t=20250316120115"></script>
+    <script src="js/lib/github-api.js?v=1.6.8&t=20250316120115"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement && window.config) {
-                versionElement.textContent = 'v1.6.7';
-                console.log('Set version to:', 'v1.6.7');
+                versionElement.textContent = 'v1.6.8';
+                console.log('Set version to:', 'v1.6.8');
             }
             
-            // Check if already logged in
-            const token = localStorage.getItem('github_token');
-            const username = localStorage.getItem('username');
-            
-            if (token && username) {
-                // Redirect to dashboard
-                window.location.href = 'master-admin-dashboard.html';
-            }
+            // Clear any existing login data to force fresh login
+            localStorage.removeItem('github_token');
+            localStorage.removeItem('username');
+            console.log('Cleared existing login data');
             
             // Handle login form submission
             const loginForm = document.getElementById('login-form');

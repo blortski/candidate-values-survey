@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.7
+ * Version: v1.6.8
  */
 
 // Global variables
@@ -23,24 +23,25 @@ const confirmDeleteModal = document.getElementById('confirm-delete-modal');
 const logoutButton = document.getElementById('logout-btn');
 const userDisplay = document.getElementById('user-display');
 const addCustomerButton = document.getElementById('add-customer-btn');
+const goToLoginButton = document.getElementById('go-to-login-btn');
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard v1.6.7...');
+    console.log('Initializing master admin dashboard v1.6.8...');
     console.log('Config loaded:', config);
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.6.7';
-        console.log('Set version to:', 'v1.6.7');
+        versionElement.textContent = 'v1.6.8';
+        console.log('Set version to:', 'v1.6.8');
     }
-    
-    // Check if user is logged in
-    checkLoginStatus();
     
     // Set up event listeners
     setupEventListeners();
+    
+    // Check if user is logged in
+    checkLoginStatus();
 });
 
 /**
@@ -155,12 +156,31 @@ function showDashboard(username) {
  * Handle logout
  */
 function handleLogout() {
+    console.log('Logging out...');
+    
     // Clear credentials
     localStorage.removeItem('github_token');
     localStorage.removeItem('username');
     
     // Show login prompt
     showLoginPrompt();
+    
+    // Redirect to login page
+    window.location.href = 'admin-login.html';
+}
+
+/**
+ * Handle go to login button click
+ */
+function handleGoToLogin() {
+    console.log('Redirecting to login page...');
+    
+    // Clear credentials
+    localStorage.removeItem('github_token');
+    localStorage.removeItem('username');
+    
+    // Redirect to login page
+    window.location.href = 'admin-login.html';
 }
 
 /**
@@ -531,6 +551,13 @@ function setupEventListeners() {
     // Logout button
     if (logoutButton) {
         logoutButton.addEventListener('click', handleLogout);
+        console.log('Logout button event listener added');
+    }
+    
+    // Go to login button
+    if (goToLoginButton) {
+        goToLoginButton.addEventListener('click', handleGoToLogin);
+        console.log('Go to login button event listener added');
     }
     
     // Add customer button
@@ -538,33 +565,34 @@ function setupEventListeners() {
         addCustomerButton.addEventListener('click', showAddCustomerForm);
     }
     
-    // Cancel add customer button
-    const cancelAddCustomerBtn = document.getElementById('cancel-add-customer');
-    if (cancelAddCustomerBtn) {
-        cancelAddCustomerBtn.addEventListener('click', hideAddCustomerForm);
+    // Add customer form
+    if (addCustomerForm) {
+        const customerForm = document.getElementById('customer-form');
+        if (customerForm) {
+            customerForm.addEventListener('submit', saveNewCustomer);
+        }
+        
+        const cancelAddCustomerButton = document.getElementById('cancel-add-customer');
+        if (cancelAddCustomerButton) {
+            cancelAddCustomerButton.addEventListener('click', hideAddCustomerForm);
+        }
     }
     
-    // Customer form submission
-    const customerForm = document.getElementById('customer-form');
-    if (customerForm) {
-        customerForm.addEventListener('submit', saveNewCustomer);
-    }
+    // Modal close buttons
+    const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', closeAllModals);
+    });
     
     // Edit customer save button
-    const saveEditCustomerBtn = document.getElementById('save-edit-customer-btn');
-    if (saveEditCustomerBtn) {
-        saveEditCustomerBtn.addEventListener('click', saveEditedCustomer);
+    const saveEditButton = document.getElementById('save-edit-customer-btn');
+    if (saveEditButton) {
+        saveEditButton.addEventListener('click', saveEditedCustomer);
     }
     
     // Delete customer confirm button
-    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', deleteCustomer);
+    const confirmDeleteButton = document.getElementById('confirm-delete-btn');
+    if (confirmDeleteButton) {
+        confirmDeleteButton.addEventListener('click', deleteCustomer);
     }
-    
-    // Close modal buttons
-    const closeModalButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
-    closeModalButtons.forEach(button => {
-        button.addEventListener('click', closeAllModals);
-    });
 }
