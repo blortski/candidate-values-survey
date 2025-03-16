@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Customer Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.4&t=20250316125420">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.5&t=20250316130703">
     <style>
         body {
             background-color: #f5f8fa;
@@ -260,6 +260,19 @@
             content: '←';
             margin-right: 5px;
         }
+        
+        .customer-logo-container {
+            margin-right: 20px;
+        }
+        
+        .customer-logo {
+            max-width: 100px;
+            height: auto;
+        }
+        
+        .logo-preview {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -267,6 +280,7 @@
         <a href="master-admin-dashboard.html" class="back-link">Back to Master Admin Dashboard</a>
         
         <header>
+            <div id="customer-logo-container" class="customer-logo-container"></div>
             <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
             <div class="user-controls">
                 <div class="user-display">Customer: <span id="customer-name">Loading...</span></div>
@@ -285,6 +299,7 @@
                     <div class="tab" data-tab="questions">Questions</div>
                     <div class="tab" data-tab="surveys">Surveys</div>
                     <div class="tab" data-tab="admins">Admins</div>
+                    <div class="tab" data-tab="settings">Settings</div>
                 </div>
                 
                 <!-- Values Tab -->
@@ -343,6 +358,26 @@
                         <!-- Admins will be loaded here -->
                     </div>
                 </div>
+                
+                <!-- Settings Tab -->
+                <div id="settings-tab" class="tab-content">
+                    <div class="section-header">
+                        <h3>Logo Upload</h3>
+                    </div>
+                    
+                    <div id="logo-upload-container">
+                        <form id="logo-upload-form">
+                            <div class="form-group">
+                                <label for="logo-upload">Logo</label>
+                                <input type="file" id="logo-upload" name="logo-upload" required>
+                            </div>
+                            <div id="logo-preview" class="logo-preview"></div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">Upload Logo</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -395,12 +430,12 @@
         <div id="notification" class="notification"></div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.4</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.5</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.4&t=20250316125420"></script>
+    <script src="js/lib/config.js?v=1.7.5&t=20250316130703"></script>
     <script>
         // Global variables
         let customerId = null;
@@ -419,16 +454,17 @@
         const addAdminModal = document.getElementById('add-admin-modal');
         const resetPasswordModal = document.getElementById('reset-password-modal');
         const notification = document.getElementById('notification');
+        const logoUploadForm = document.getElementById('logo-upload-form');
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing customer admin dashboard v1.7.4...');
+            console.log('Initializing customer admin dashboard v1.7.5...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.4';
-                console.log('Set version to:', 'v1.7.4');
+                versionElement.textContent = 'v1.7.5';
+                console.log('Set version to:', 'v1.7.5');
             }
             
             // Get customer ID from URL
@@ -482,6 +518,9 @@
                         loadCustomerValues();
                         loadCustomerQuestions();
                         loadCustomerSurveys();
+                        
+                        // Load customer logo if exists
+                        loadCustomerLogo();
                     } else {
                         showNotification('Customer not found', 'error');
                     }
@@ -491,6 +530,48 @@
                 }
             } else {
                 showNotification('No customers found', 'error');
+            }
+        }
+        
+        /**
+         * Load customer logo
+         */
+        function loadCustomerLogo() {
+            if (customerData && customerData.logo) {
+                // Create or update logo element in header
+                let logoContainer = document.getElementById('customer-logo-container');
+                
+                if (!logoContainer) {
+                    logoContainer = document.createElement('div');
+                    logoContainer.id = 'customer-logo-container';
+                    logoContainer.className = 'customer-logo-container';
+                    
+                    // Insert before the customer header
+                    const headerContainer = document.querySelector('.dashboard-header');
+                    if (headerContainer) {
+                        headerContainer.insertBefore(logoContainer, customerNameElement);
+                    }
+                }
+                
+                logoContainer.innerHTML = `<img src="${customerData.logo}" alt="${customerData.name} Logo" class="customer-logo">`;
+                
+                // Also display in the settings tab
+                const settingsLogoPreview = document.getElementById('logo-preview');
+                if (settingsLogoPreview) {
+                    settingsLogoPreview.innerHTML = `<img src="${customerData.logo}" alt="${customerData.name} Logo" class="customer-logo">`;
+                } else {
+                    // Create preview element if it doesn't exist
+                    const previewContainer = document.createElement('div');
+                    previewContainer.id = 'logo-preview';
+                    previewContainer.className = 'logo-preview';
+                    previewContainer.innerHTML = `<img src="${customerData.logo}" alt="${customerData.name} Logo" class="customer-logo">`;
+                    
+                    // Insert after the form
+                    const logoUploadContainer = document.getElementById('logo-upload-container');
+                    if (logoUploadContainer) {
+                        logoUploadContainer.appendChild(previewContainer);
+                    }
+                }
             }
         }
         
@@ -784,9 +865,79 @@
                 button.addEventListener('click', closeAllModals);
             });
             
-            // Make functions available globally
-            window.resetAdminPassword = resetAdminPassword;
-            window.deleteAdmin = deleteAdmin;
+            // Logo upload form
+            if (logoUploadForm) {
+                logoUploadForm.addEventListener('submit', uploadLogo);
+            }
+        }
+        
+        /**
+         * Upload logo
+         * @param {Event} e - Form submit event
+         */
+        function uploadLogo(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('logo-upload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('Please select a file', 'error');
+                return;
+            }
+            
+            // Check file type
+            if (!file.type.match('image.*')) {
+                showNotification('Please select an image file', 'error');
+                return;
+            }
+            
+            // Check file size (max 1MB)
+            if (file.size > 1024 * 1024) {
+                showNotification('File size should be less than 1MB', 'error');
+                return;
+            }
+            
+            // Read file as data URL
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const logoDataUrl = e.target.result;
+                
+                // Update customer data
+                if (customerData) {
+                    customerData.logo = logoDataUrl;
+                    
+                    // Update in localStorage
+                    const storedCustomers = localStorage.getItem('customers');
+                    
+                    if (storedCustomers) {
+                        try {
+                            const customers = JSON.parse(storedCustomers);
+                            const customerIndex = customers.findIndex(customer => customer.id === customerId);
+                            
+                            if (customerIndex !== -1) {
+                                customers[customerIndex] = customerData;
+                                localStorage.setItem('customers', JSON.stringify(customers));
+                                
+                                // Update logo display
+                                loadCustomerLogo();
+                                
+                                showNotification('Logo uploaded successfully', 'success');
+                            }
+                        } catch (error) {
+                            console.error('Error updating customer data:', error);
+                            showNotification('Error updating customer data', 'error');
+                        }
+                    }
+                }
+            };
+            
+            reader.onerror = function() {
+                showNotification('Error reading file', 'error');
+            };
+            
+            reader.readAsDataURL(file);
         }
     </script>
 </body>

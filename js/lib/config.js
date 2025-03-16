@@ -18,7 +18,7 @@ const config = {
     },
     
     // Application version
-    version: 'v1.7.4'
+    version: 'v1.7.5'
 };
 
 // Export the configuration

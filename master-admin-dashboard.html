@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.4&t=20250316125420">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.5&t=20250316130703">
     <style>
         body {
             background-color: #f5f8fa;
@@ -136,10 +136,28 @@
         }
         
         .customer-card {
-            border: 1px solid #ddd;
+            background-color: white;
             border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            background-color: #f9f9f9;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .customer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .customer-logo-container {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .customer-logo {
+            max-width: 100px;
+            max-height: 60px;
+            object-fit: contain;
         }
         
         .customer-card h3 {
@@ -347,12 +365,12 @@
         <div id="notification" class="notification"></div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.4</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.5</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.4&t=20250316125420"></script>
+    <script src="js/lib/config.js?v=1.7.5&t=20250316130703"></script>
     <script>
         // Global variables
         let customers = [];
@@ -373,13 +391,13 @@
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing master admin dashboard v1.7.4...');
+            console.log('Initializing master admin dashboard v1.7.5...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.4';
-                console.log('Set version to:', 'v1.7.4');
+                versionElement.textContent = 'v1.7.5';
+                console.log('Set version to:', 'v1.7.5');
             }
             
             // Make sure all modals are hidden
@@ -495,9 +513,9 @@
          */
         function getDefaultCustomers() {
             return [
-                { id: '1', name: 'Wild Zora Foods', contact: 'Joshua Smith', email: 'joshua@wildzora.com' },
-                { id: '2', name: 'Acme Corporation', contact: 'Jane Doe', email: 'jane@acme.com' },
-                { id: '3', name: 'Tech Innovations', contact: 'John Smith', email: 'john@techinnovations.com' }
+                { id: '1', name: 'Wild Zora Foods', contact: 'Joshua Smith', email: 'joshua@wildzora.com', logo: 'img/wild-zora-logo.jpg' },
+                { id: '2', name: 'Acme Corporation', contact: 'Jane Doe', email: 'jane@acme.com', logo: 'img/acme-logo.jpg' },
+                { id: '3', name: 'Tech Innovations', contact: 'John Smith', email: 'john@techinnovations.com', logo: 'img/tech-innovations-logo.jpg' }
             ];
         }
         
@@ -532,7 +550,12 @@
                 // Generate customer dashboard URL
                 const customerDashboardUrl = `customer-admin-dashboard.html?id=${customer.id}`;
                 
+                // Create logo HTML if customer has a logo
+                const logoHtml = customer.logo ? 
+                    `<div class="customer-logo-container"><img src="${customer.logo}" alt="${customer.name} Logo" class="customer-logo"></div>` : '';
+                
                 customerCard.innerHTML = `
+                    ${logoHtml}
                     <h3>${customer.name}</h3>
                     <p><strong>Contact:</strong> ${customer.contact}</p>
                     <p><strong>Email:</strong> ${customer.email}</p>
