@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.8.6
+ * Version: v1.8.7
  */
 
 // Global variables
@@ -12,7 +12,7 @@ let githubAPI = null;
 let customers = [];
 let currentCustomerId = null;
 
-// DOM elements
+// DOM elements - initialized in initializeDashboard function
 let loginPrompt;
 let dashboardContent;
 let dashboardSection;
@@ -27,27 +27,26 @@ let goToLoginButton;
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard v1.8.6...');
-    console.log('Config loaded:', config);
+    console.log('Initializing master admin dashboard v1.8.7...');
     
-    // Initialize DOM elements
-    loginPrompt = document.getElementById('login-prompt');
-    dashboardContent = document.getElementById('dashboard-content');
-    dashboardSection = document.getElementById('dashboard-section');
-    customersContainer = document.getElementById('customers-container');
-    addCustomerForm = document.getElementById('add-customer-form');
-    editCustomerModal = document.getElementById('edit-customer-modal');
-    confirmDeleteModal = document.getElementById('confirm-delete-modal');
-    logoutButton = document.getElementById('logout-btn');
-    userDisplay = document.getElementById('user-display');
-    addCustomerButton = document.getElementById('add-customer-btn');
-    goToLoginButton = document.getElementById('go-to-login-btn');
+    // Initialize dashboard elements and functionality
+    initializeDashboard();
+});
+
+/**
+ * Initialize all dashboard elements and functionality
+ */
+function initializeDashboard() {
+    console.log('Initializing dashboard elements...');
+    
+    // Initialize DOM elements - MUST be done first before any other function calls
+    initializeDOMElements();
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.8.6';
-        console.log('Set version to:', 'v1.8.6');
+        versionElement.textContent = 'v1.8.7';
+        console.log('Set version to:', 'v1.8.7');
     }
     
     // Set up event listeners
@@ -55,7 +54,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if user is logged in
     checkLoginStatus();
-});
+}
+
+/**
+ * Initialize all DOM elements
+ */
+function initializeDOMElements() {
+    console.log('Initializing DOM elements...');
+    
+    // Main sections
+    loginPrompt = document.getElementById('login-prompt');
+    dashboardContent = document.getElementById('dashboard-content');
+    dashboardSection = document.getElementById('dashboard-section');
+    
+    // Check if elements exist
+    if (!loginPrompt) console.error('Error: login-prompt element not found');
+    if (!dashboardContent) console.error('Error: dashboard-content element not found');
+    if (!dashboardSection) console.error('Error: dashboard-section element not found');
+    
+    // Containers
+    customersContainer = document.getElementById('customers-container');
+    
+    // Modals
+    addCustomerForm = document.getElementById('add-customer-form');
+    editCustomerModal = document.getElementById('edit-customer-modal');
+    confirmDeleteModal = document.getElementById('confirm-delete-modal');
+    
+    // Buttons
+    logoutButton = document.getElementById('logout-btn');
+    userDisplay = document.getElementById('user-display');
+    addCustomerButton = document.getElementById('add-customer-btn');
+    goToLoginButton = document.getElementById('go-to-login-btn');
+    
+    console.log('DOM elements initialized successfully');
+}
 
 /**
  * Check if the user is logged in
@@ -117,6 +149,12 @@ function checkLoginStatus() {
 function showLoginPrompt() {
     console.log('Showing login prompt...');
     
+    // Verify elements exist before manipulating them
+    if (!loginPrompt || !dashboardContent) {
+        console.error('Error: Required DOM elements not initialized');
+        return;
+    }
+    
     // Show login prompt
     loginPrompt.classList.remove('hidden');
     
@@ -132,6 +170,12 @@ function showLoginPrompt() {
  */
 function showDashboard(username) {
     console.log('Showing dashboard for user:', username);
+    
+    // Verify elements exist before manipulating them
+    if (!loginPrompt || !dashboardContent || !userDisplay) {
+        console.error('Error: Required DOM elements not initialized');
+        return;
+    }
     
     // Set user display
     userDisplay.textContent = username;
@@ -163,19 +207,95 @@ function handleLogout() {
 }
 
 /**
- * Handle go to login button click
- * @param {Event} e - The click event
+ * Handle Go to Login button click
  */
 function handleGoToLogin(e) {
     e.preventDefault();
-    console.log('Redirecting to login page...');
-    
-    // Clear credentials
     localStorage.removeItem('github_token');
     localStorage.removeItem('username');
-    
-    // Redirect to login page
     window.location.href = 'admin-login.html';
+}
+
+/**
+ * Set up event listeners for dashboard
+ */
+function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // Verify elements exist before adding event listeners
+    if (!logoutButton) {
+        console.error('Error: logout-btn element not found');
+    } else {
+        logoutButton.addEventListener('click', handleLogout);
+        console.log('Logout button event listener added');
+    }
+    
+    if (!goToLoginButton) {
+        console.error('Error: go-to-login-btn element not found');
+    } else {
+        goToLoginButton.addEventListener('click', handleGoToLogin);
+        console.log('Go to login button event listener added');
+    }
+    
+    // Add customer button
+    if (!addCustomerButton) {
+        console.error('Error: add-customer-btn element not found');
+    } else {
+        addCustomerButton.addEventListener('click', showAddCustomerForm);
+        console.log('Add customer button event listener added');
+    }
+    
+    // Add customer form
+    if (addCustomerForm) {
+        const customerForm = document.getElementById('customer-form');
+        if (customerForm) {
+            customerForm.addEventListener('submit', saveNewCustomer);
+            console.log('Customer form submit event listener added');
+        } else {
+            console.error('Error: customer-form element not found');
+        }
+        
+        const cancelAddCustomerButton = document.getElementById('cancel-add-customer');
+        if (cancelAddCustomerButton) {
+            cancelAddCustomerButton.addEventListener('click', hideAddCustomerForm);
+            console.log('Cancel add customer button event listener added');
+        } else {
+            console.error('Error: cancel-add-customer element not found');
+        }
+    } else {
+        console.error('Error: add-customer-form element not found');
+    }
+    
+    // Modal close buttons
+    const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
+    if (closeButtons.length > 0) {
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closeAllModals);
+        });
+        console.log('Modal close buttons event listeners added');
+    } else {
+        console.error('Error: No close-modal buttons found');
+    }
+    
+    // Edit customer save button
+    const saveEditButton = document.getElementById('save-edit-customer-btn');
+    if (saveEditButton) {
+        saveEditButton.addEventListener('click', saveEditedCustomer);
+        console.log('Save edit button event listener added');
+    } else {
+        console.error('Error: save-edit-customer-btn element not found');
+    }
+    
+    // Delete customer confirm button
+    const confirmDeleteButton = document.getElementById('confirm-delete-btn');
+    if (confirmDeleteButton) {
+        confirmDeleteButton.addEventListener('click', deleteCustomer);
+        console.log('Confirm delete button event listener added');
+    } else {
+        console.error('Error: confirm-delete-btn element not found');
+    }
+    
+    console.log('Event listeners set up successfully');
 }
 
 /**
@@ -538,57 +658,4 @@ function closeAllModals() {
     
     // Clear current customer ID
     currentCustomerId = null;
-}
-
-/**
- * Set up event listeners
- */
-function setupEventListeners() {
-    // Logout button
-    if (logoutButton) {
-        logoutButton.addEventListener('click', handleLogout);
-        console.log('Logout button event listener added');
-    }
-    
-    // Go to login button
-    if (goToLoginButton) {
-        goToLoginButton.addEventListener('click', handleGoToLogin);
-        console.log('Go to login button event listener added');
-    }
-    
-    // Add customer button
-    if (addCustomerButton) {
-        addCustomerButton.addEventListener('click', showAddCustomerForm);
-    }
-    
-    // Add customer form
-    if (addCustomerForm) {
-        const customerForm = document.getElementById('customer-form');
-        if (customerForm) {
-            customerForm.addEventListener('submit', saveNewCustomer);
-        }
-        
-        const cancelAddCustomerButton = document.getElementById('cancel-add-customer');
-        if (cancelAddCustomerButton) {
-            cancelAddCustomerButton.addEventListener('click', hideAddCustomerForm);
-        }
-    }
-    
-    // Modal close buttons
-    const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
-    closeButtons.forEach(button => {
-        button.addEventListener('click', closeAllModals);
-    });
-    
-    // Edit customer save button
-    const saveEditButton = document.getElementById('save-edit-customer-btn');
-    if (saveEditButton) {
-        saveEditButton.addEventListener('click', saveEditedCustomer);
-    }
-    
-    // Delete customer confirm button
-    const confirmDeleteButton = document.getElementById('confirm-delete-btn');
-    if (confirmDeleteButton) {
-        confirmDeleteButton.addEventListener('click', deleteCustomer);
-    }
 }
