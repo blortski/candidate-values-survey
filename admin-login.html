@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Login</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.8.8&t=20250316172300">
+    <link rel="stylesheet" href="css/styles.css?v=1.8.9&t=20250316172800">
     <style>
         body {
             background-color: #f5f8fa;
@@ -168,19 +168,19 @@
         </div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.8.8</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.8.9</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.8.8&t=20250316172300"></script>
+    <script src="js/lib/config.js?v=1.8.9&t=20250316172800"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.8.8';
-                console.log('Set version to:', 'v1.8.8');
+                versionElement.textContent = 'v1.8.9';
+                console.log('Set version to:', 'v1.8.9');
             }
             
             // Handle login form submission
@@ -198,8 +198,15 @@
                 const password = passwordInput.value.trim();
                 const token = tokenInput.value.trim();
                 
+                console.log('Login attempt with:', { 
+                    username, 
+                    password: password ? '****' : 'empty', 
+                    token: token ? token.substring(0, 4) + '...' : 'empty'
+                });
+                
                 // Validate inputs
                 if (!username || !password || !token) {
+                    console.error('Missing required fields');
                     errorMessage.textContent = 'Please fill in all fields';
                     errorMessage.style.display = 'block';
                     return;
@@ -207,18 +214,37 @@
                 
                 // Check username and password against config
                 if (username !== 'Admin' || password !== 'WildZora2025') {
+                    console.error('Invalid credentials');
                     errorMessage.textContent = 'Invalid username or password';
                     errorMessage.style.display = 'block';
                     return;
                 }
                 
                 // Store credentials in localStorage
-                localStorage.setItem('github_token', token);
-                localStorage.setItem('username', username);
-                console.log('Credentials stored in localStorage');
-                
-                // Redirect to dashboard
-                window.location.href = 'master-admin-dashboard.html';
+                try {
+                    localStorage.setItem('github_token', token);
+                    localStorage.setItem('username', username);
+                    console.log('Credentials stored in localStorage successfully');
+                    
+                    // Double-check storage
+                    const storedToken = localStorage.getItem('github_token');
+                    const storedUsername = localStorage.getItem('username');
+                    console.log('Verification - stored values:', {
+                        username: storedUsername,
+                        tokenStored: !!storedToken,
+                        tokenMatches: storedToken === token
+                    });
+                    
+                    // Redirect to dashboard with a slight delay to ensure storage is complete
+                    console.log('Redirecting to dashboard...');
+                    setTimeout(function() {
+                        window.location.href = 'master-admin-dashboard.html';
+                    }, 500);
+                } catch (error) {
+                    console.error('Error storing credentials:', error);
+                    errorMessage.textContent = 'Error storing credentials. Please try again.';
+                    errorMessage.style.display = 'block';
+                }
             });
         });
     </script>

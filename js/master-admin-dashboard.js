@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.8.8
+ * Version: v1.8.9
  */
 
 // Global variables
@@ -14,15 +14,21 @@ let currentCustomerId = null;
 
 // Wait for the DOM to be fully loaded before executing any code
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Master Admin Dashboard v1.8.8 initializing...');
+    console.log('=== MASTER ADMIN DASHBOARD INITIALIZATION ===');
+    console.log('Master Admin Dashboard v1.8.9 initializing...');
+    console.log('Time:', new Date().toISOString());
     
     // Update version in the footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.8.8';
+        versionElement.textContent = 'v1.8.9';
+        console.log('Version set to v1.8.9');
+    } else {
+        console.error('Version element not found in the DOM');
     }
     
     // Get DOM elements
+    console.log('Getting DOM elements...');
     const loginPrompt = document.getElementById('login-prompt');
     const dashboardContent = document.getElementById('dashboard-content');
     const userDisplay = document.getElementById('user-display');
@@ -30,49 +36,87 @@ document.addEventListener('DOMContentLoaded', function() {
     const goToLoginButton = document.getElementById('go-to-login-btn');
     
     // Check if elements exist
+    console.log('DOM elements found:', {
+        loginPrompt: !!loginPrompt,
+        dashboardContent: !!dashboardContent,
+        userDisplay: !!userDisplay,
+        logoutButton: !!logoutButton,
+        goToLoginButton: !!goToLoginButton
+    });
+    
     if (!loginPrompt) console.error('Error: login-prompt element not found');
     if (!dashboardContent) console.error('Error: dashboard-content element not found');
     if (!userDisplay) console.error('Error: user-display element not found');
     
     // Check login status
+    console.log('Checking localStorage for credentials...');
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('github_token');
     
-    console.log('Checking login status...');
-    console.log('Username exists:', !!username);
-    console.log('Token exists:', !!token);
+    console.log('Credentials found:', {
+        username: username || 'not found',
+        token: token ? token.substring(0, 4) + '...' : 'not found'
+    });
     
     // Set up event listeners
+    console.log('Setting up event listeners...');
     if (logoutButton) {
         logoutButton.addEventListener('click', function() {
-            console.log('Logging out...');
+            console.log('Logout button clicked');
             localStorage.removeItem('github_token');
             localStorage.removeItem('username');
+            console.log('Credentials removed from localStorage');
             window.location.href = 'admin-login.html';
         });
+        console.log('Logout button event listener added');
     }
     
     if (goToLoginButton) {
         goToLoginButton.addEventListener('click', function(e) {
+            console.log('Go to login button clicked');
             e.preventDefault();
-            console.log('Going to login page...');
             localStorage.removeItem('github_token');
             localStorage.removeItem('username');
+            console.log('Credentials removed from localStorage');
             window.location.href = 'admin-login.html';
         });
+        console.log('Go to login button event listener added');
     }
     
     // Simple login check - if credentials exist, show dashboard
+    console.log('Performing login check...');
+    console.log('Username === Admin:', username === 'Admin');
+    console.log('Token exists:', !!token);
+    
     if (username && username === 'Admin' && token) {
         console.log('User is logged in as:', username);
         
         // Show dashboard
-        if (loginPrompt) loginPrompt.classList.add('hidden');
-        if (dashboardContent) dashboardContent.classList.remove('hidden');
-        if (userDisplay) userDisplay.textContent = username;
+        console.log('Showing dashboard...');
+        if (loginPrompt) {
+            loginPrompt.classList.add('hidden');
+            console.log('Login prompt hidden');
+        }
+        if (dashboardContent) {
+            dashboardContent.classList.remove('hidden');
+            console.log('Dashboard content shown');
+        }
+        if (userDisplay) {
+            userDisplay.textContent = username;
+            console.log('User display updated with username');
+        }
         
         // Initialize GitHub API
+        console.log('Initializing GitHub API...');
         try {
+            console.log('GitHub API config:', {
+                owner: config.github.owner,
+                repo: config.github.repo,
+                branch: config.github.branch,
+                resultsPath: config.github.resultsPath,
+                token: token ? token.substring(0, 4) + '...' : 'not available'
+            });
+            
             githubAPI = new GitHubAPI({
                 owner: config.github.owner,
                 repo: config.github.repo,
@@ -80,23 +124,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultsPath: config.github.resultsPath,
                 token: token
             });
-            console.log('GitHub API initialized');
+            console.log('GitHub API initialized successfully');
             
             // Load customers
+            console.log('Loading customers...');
             loadCustomers();
             
             // Set up remaining event listeners for dashboard functionality
+            console.log('Setting up dashboard event listeners...');
             setupDashboardEventListeners();
         } catch (error) {
             console.error('Error initializing GitHub API:', error);
         }
     } else {
         console.log('User is not logged in, showing login prompt');
+        console.log('Reason:', !username ? 'No username' : (username !== 'Admin' ? 'Username not Admin' : 'No token'));
         
         // Show login prompt
-        if (loginPrompt) loginPrompt.classList.remove('hidden');
-        if (dashboardContent) dashboardContent.classList.add('hidden');
+        if (loginPrompt) {
+            loginPrompt.classList.remove('hidden');
+            console.log('Login prompt shown');
+        }
+        if (dashboardContent) {
+            dashboardContent.classList.add('hidden');
+            console.log('Dashboard content hidden');
+        }
     }
+    
+    console.log('=== INITIALIZATION COMPLETE ===');
 });
 
 /**
@@ -109,6 +164,9 @@ function setupDashboardEventListeners() {
     const addCustomerButton = document.getElementById('add-customer-btn');
     if (addCustomerButton) {
         addCustomerButton.addEventListener('click', showAddCustomerForm);
+        console.log('Add customer button event listener added');
+    } else {
+        console.error('Add customer button not found');
     }
     
     // Add customer form
@@ -117,31 +175,52 @@ function setupDashboardEventListeners() {
         const customerForm = document.getElementById('customer-form');
         if (customerForm) {
             customerForm.addEventListener('submit', saveNewCustomer);
+            console.log('Customer form submit event listener added');
+        } else {
+            console.error('Customer form not found');
         }
         
         const cancelAddCustomerButton = document.getElementById('cancel-add-customer');
         if (cancelAddCustomerButton) {
             cancelAddCustomerButton.addEventListener('click', hideAddCustomerForm);
+            console.log('Cancel add customer button event listener added');
+        } else {
+            console.error('Cancel add customer button not found');
         }
+    } else {
+        console.error('Add customer form not found');
     }
     
     // Modal close buttons
     const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
-    closeButtons.forEach(button => {
-        button.addEventListener('click', closeAllModals);
-    });
+    if (closeButtons.length > 0) {
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closeAllModals);
+        });
+        console.log('Modal close buttons event listeners added');
+    } else {
+        console.error('No modal close buttons found');
+    }
     
     // Edit customer save button
     const saveEditButton = document.getElementById('save-edit-customer-btn');
     if (saveEditButton) {
         saveEditButton.addEventListener('click', saveEditedCustomer);
+        console.log('Save edit button event listener added');
+    } else {
+        console.error('Save edit button not found');
     }
     
     // Delete customer confirm button
     const confirmDeleteButton = document.getElementById('confirm-delete-btn');
     if (confirmDeleteButton) {
         confirmDeleteButton.addEventListener('click', deleteCustomer);
+        console.log('Confirm delete button event listener added');
+    } else {
+        console.error('Confirm delete button not found');
     }
+    
+    console.log('Dashboard event listeners setup complete');
 }
 
 /**
@@ -152,6 +231,9 @@ function showAddCustomerForm() {
     const addCustomerForm = document.getElementById('add-customer-form');
     if (addCustomerForm) {
         addCustomerForm.classList.remove('hidden');
+        console.log('Add customer form shown');
+    } else {
+        console.error('Add customer form not found');
     }
 }
 
@@ -163,6 +245,9 @@ function hideAddCustomerForm() {
     const addCustomerForm = document.getElementById('add-customer-form');
     if (addCustomerForm) {
         addCustomerForm.classList.add('hidden');
+        console.log('Add customer form hidden');
+    } else {
+        console.error('Add customer form not found');
     }
 }
 
@@ -173,9 +258,14 @@ function closeAllModals() {
     console.log('Closing all modals...');
     
     const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => {
-        modal.classList.add('hidden');
-    });
+    if (modals.length > 0) {
+        modals.forEach(modal => {
+            modal.classList.add('hidden');
+        });
+        console.log('All modals closed');
+    } else {
+        console.error('No modals found');
+    }
 }
 
 /**
@@ -197,14 +287,17 @@ function loadCustomers() {
     
     // Clear customers container
     customersContainer.innerHTML = '<div class="loading">Loading customers...</div>';
+    console.log('Customers container cleared and loading message displayed');
     
     // Mock data for now - in a real app, this would fetch from GitHub
+    console.log('Loading mock customer data...');
     setTimeout(() => {
         customers = [
             { id: '1', name: 'Wild Zora Foods', contact: 'Joshua Tabin', email: 'joshua@wildzora.com' },
             { id: '2', name: 'Acme Corporation', contact: 'John Doe', email: 'john@acme.com' },
             { id: '3', name: 'XYZ Industries', contact: 'Jane Smith', email: 'jane@xyz.com' }
         ];
+        console.log('Mock customer data loaded:', customers.length, 'customers');
         
         displayCustomers();
     }, 1000);
@@ -224,13 +317,16 @@ function displayCustomers() {
     
     // Clear customers container
     customersContainer.innerHTML = '';
+    console.log('Customers container cleared');
     
     if (customers.length === 0) {
         customersContainer.innerHTML = '<div class="no-data">No customers found</div>';
+        console.log('No customers to display');
         return;
     }
     
     // Add customer cards
+    console.log('Creating customer cards for', customers.length, 'customers');
     customers.forEach(customer => {
         const customerCard = document.createElement('div');
         customerCard.className = 'customer-card';
@@ -258,6 +354,8 @@ function displayCustomers() {
             deleteButton.addEventListener('click', () => showDeleteConfirmation(customer.id));
         }
     });
+    
+    console.log('Customer cards created and added to container');
 }
 
 /**
@@ -294,6 +392,7 @@ function showEditCustomerForm(customerId) {
     
     // Show modal
     editCustomerModal.classList.remove('hidden');
+    console.log('Edit customer modal shown');
 }
 
 /**
@@ -324,6 +423,7 @@ function saveEditedCustomer() {
     // Validate inputs
     if (!name || !contact || !email) {
         alert('Please fill in all fields');
+        console.error('Missing required fields');
         return;
     }
     
@@ -340,6 +440,8 @@ function saveEditedCustomer() {
         contact,
         email
     };
+    
+    console.log('Customer updated:', customers[customerIndex]);
     
     // Close modal
     closeAllModals();
@@ -382,13 +484,14 @@ function showDeleteConfirmation(customerId) {
     
     // Show modal
     confirmDeleteModal.classList.remove('hidden');
+    console.log('Delete confirmation modal shown');
 }
 
 /**
  * Delete the customer
  */
 function deleteCustomer() {
-    console.log('Deleting customer...');
+    console.log('Deleting customer:', currentCustomerId);
     
     if (!currentCustomerId) {
         console.error('No customer ID set');
@@ -397,6 +500,7 @@ function deleteCustomer() {
     
     // Remove customer
     customers = customers.filter(c => c.id !== currentCustomerId);
+    console.log('Customer deleted, remaining customers:', customers.length);
     
     // Close modal
     closeAllModals();
@@ -436,6 +540,7 @@ function saveNewCustomer(e) {
     // Validate inputs
     if (!name || !contact || !email) {
         alert('Please fill in all fields');
+        console.error('Missing required fields');
         return;
     }
     
@@ -447,13 +552,17 @@ function saveNewCustomer(e) {
         email
     };
     
+    console.log('New customer created:', newCustomer);
+    
     // Add to customers array
     customers.push(newCustomer);
+    console.log('Customer added to array, total customers:', customers.length);
     
     // Reset form
     nameInput.value = '';
     contactInput.value = '';
     emailInput.value = '';
+    console.log('Form reset');
     
     // Close modal
     closeAllModals();
@@ -483,9 +592,11 @@ function showNotification(message) {
     
     // Show notification
     notification.classList.add('show');
+    console.log('Notification shown');
     
     // Hide after 3 seconds
     setTimeout(() => {
         notification.classList.remove('show');
+        console.log('Notification hidden');
     }, 3000);
 }
