@@ -337,7 +337,15 @@
             </div>
             
             <div id="questions-section" class="hidden">
-                <!-- Questions will be loaded here -->
+                <div class="progress-container">
+                    <div class="progress-text">Question <span id="current-question-num">1</span> of <span id="total-questions">30</span></div>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="question-container">
+                    <!-- Questions will be loaded here -->
+                </div>
             </div>
             
             <div id="results-section" class="hidden">
@@ -348,7 +356,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.1.9</span>
+                <span class="version" id="app-version">v1.2.0</span>
             </div>
         </footer>
     </div>
@@ -477,51 +485,161 @@
             }
             
             // Show survey section
-            const surveySection = document.getElementById('questions-section');
-            if (surveySection) {
-                surveySection.style.display = 'block';
+            const questionsSection = document.getElementById('questions-section');
+            if (questionsSection) {
+                questionsSection.style.display = 'block';
+                
+                // Update total questions count
+                const totalQuestionsElement = document.getElementById('total-questions');
+                if (totalQuestionsElement) {
+                    totalQuestionsElement.textContent = directSurveyData.questions.length;
+                }
                 
                 // Show the first question
-                const questionContainer = document.getElementById('question-container');
-                if (questionContainer) {
-                    const firstQuestion = directSurveyData.questions[0];
-                    questionContainer.innerHTML = `
-                        <div class="question">
-                            <h3>${firstQuestion.text}</h3>
-                            <div class="rating-container">
-                                <div class="rating-scale">
-                                    <span class="rating-label">Strongly Disagree</span>
-                                    <div class="rating-options">
-                                        <label>
-                                            <input type="radio" name="rating" value="1">
-                                            <span>1</span>
-                                        </label>
-                                        <label>
-                                            <input type="radio" name="rating" value="2">
-                                            <span>2</span>
-                                        </label>
-                                        <label>
-                                            <input type="radio" name="rating" value="3">
-                                            <span>3</span>
-                                        </label>
-                                        <label>
-                                            <input type="radio" name="rating" value="4">
-                                            <span>4</span>
-                                        </label>
-                                        <label>
-                                            <input type="radio" name="rating" value="5">
-                                            <span>5</span>
-                                        </label>
-                                    </div>
-                                    <span class="rating-label">Strongly Agree</span>
-                                </div>
+                showDirectQuestion(0);
+            } else {
+                console.error('Questions section not found');
+            }
+        }
+        
+        // Function to show a specific question
+        function showDirectQuestion(questionIndex) {
+            console.log('Showing question at index:', questionIndex);
+            
+            // Check if the question index is valid
+            if (!directSurveyData || !directSurveyData.questions || questionIndex >= directSurveyData.questions.length) {
+                console.error('Invalid question index or survey data not loaded');
+                return;
+            }
+            
+            // Update current question number
+            const currentQuestionNumElement = document.getElementById('current-question-num');
+            if (currentQuestionNumElement) {
+                currentQuestionNumElement.textContent = questionIndex + 1;
+            }
+            
+            // Update progress bar
+            const progressFill = document.getElementById('progress-fill');
+            if (progressFill) {
+                const progressPercentage = ((questionIndex + 1) / directSurveyData.questions.length) * 100;
+                progressFill.style.width = `${progressPercentage}%`;
+            }
+            
+            // Get the question
+            const question = directSurveyData.questions[questionIndex];
+            
+            // Get the question container
+            const questionContainer = document.getElementById('question-container');
+            if (!questionContainer) {
+                console.error('Question container not found');
+                return;
+            }
+            
+            // Create the question HTML
+            questionContainer.innerHTML = `
+                <div class="question">
+                    <h3>${question.text}</h3>
+                    <div class="rating-container">
+                        <div class="rating-scale">
+                            <span class="rating-label">Strongly Disagree</span>
+                            <div class="rating-options">
+                                <label>
+                                    <input type="radio" name="rating" value="1">
+                                    <span>1</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="rating" value="2">
+                                    <span>2</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="rating" value="3">
+                                    <span>3</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="rating" value="4">
+                                    <span>4</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="rating" value="5">
+                                    <span>5</span>
+                                </label>
                             </div>
+                            <span class="rating-label">Strongly Agree</span>
                         </div>
-                        <div class="navigation-buttons">
-                            <button id="next-question" class="btn primary-btn">Next</button>
-                        </div>
-                    `;
-                }
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    ${questionIndex > 0 ? 
+                        `<button id="prev-question" class="btn secondary-btn">Previous</button>` : 
+                        `<div></div>`}
+                    ${questionIndex < directSurveyData.questions.length - 1 ? 
+                        `<button id="next-question" class="btn primary-btn">Next</button>` : 
+                        `<button id="submit-survey" class="btn primary-btn">Submit</button>`}
+                </div>
+            `;
+            
+            // Add event listeners to navigation buttons
+            const nextButton = document.getElementById('next-question');
+            if (nextButton) {
+                nextButton.addEventListener('click', function() {
+                    // Check if a rating is selected
+                    const selectedRating = document.querySelector('input[name="rating"]:checked');
+                    if (!selectedRating) {
+                        alert('Please select a rating before proceeding.');
+                        return;
+                    }
+                    
+                    // Store the response
+                    const response = parseInt(selectedRating.value);
+                    console.log(`Question ${questionIndex + 1} response:`, response);
+                    
+                    // Show the next question
+                    showDirectQuestion(questionIndex + 1);
+                });
+            }
+            
+            const prevButton = document.getElementById('prev-question');
+            if (prevButton) {
+                prevButton.addEventListener('click', function() {
+                    showDirectQuestion(questionIndex - 1);
+                });
+            }
+            
+            const submitButton = document.getElementById('submit-survey');
+            if (submitButton) {
+                submitButton.addEventListener('click', function() {
+                    // Check if a rating is selected
+                    const selectedRating = document.querySelector('input[name="rating"]:checked');
+                    if (!selectedRating) {
+                        alert('Please select a rating before submitting.');
+                        return;
+                    }
+                    
+                    // Store the response
+                    const response = parseInt(selectedRating.value);
+                    console.log(`Question ${questionIndex + 1} response:`, response);
+                    
+                    // Show completion message
+                    const questionsSection = document.getElementById('questions-section');
+                    if (questionsSection) {
+                        questionsSection.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <h2>Thank You!</h2>
+                                <p>Your survey has been submitted successfully.</p>
+                                <p>We appreciate your time and thoughtful responses.</p>
+                                <button id="return-home" class="btn primary-btn">Return to Home</button>
+                            </div>
+                        `;
+                        
+                        // Add event listener to return home button
+                        const returnHomeButton = document.getElementById('return-home');
+                        if (returnHomeButton) {
+                            returnHomeButton.addEventListener('click', function() {
+                                window.location.reload();
+                            });
+                        }
+                    }
+                });
             }
         }
         
