@@ -4,7 +4,7 @@
  * This script handles the functionality for viewing and editing company values
  * in the admin interface, including statistics and question management.
  * 
- * Version: v1.4.0
+ * Version: v1.5.2
  */
 
 // Global variables
@@ -178,10 +178,10 @@ function displayValues() {
                     <h4>${value.name}</h4>
                     <div class="value-actions">
                         <button class="btn small-btn" onclick="window.adminValues.editValue(${index})">Edit</button>
-                        <button class="btn small-btn" onclick="window.adminValues.toggleValueStatus(${index})">
+                        <button class="btn small-btn" onclick="window.adminValues.toggleValueStatus(${value.id}, ${!value.enabled})">
                             ${value.enabled ? 'Disable' : 'Enable'}
                         </button>
-                        <button class="btn small-btn" onclick="window.adminValues.showEditQuestionsModal(${index})">
+                        <button class="btn small-btn" onclick="window.adminValues.editQuestions(${value.id})">
                             Questions (${questionCount})
                         </button>
                     </div>
@@ -243,8 +243,8 @@ function showEditValueModal(valueId) {
 }
 
 /**
- * Show modal for editing questions for a value
- * @param {string} valueId - ID of the value to edit questions for
+ * Show modal for editing questions for a specific value
+ * @param {number} valueId - ID of the value to edit questions for
  */
 function showEditQuestionsModal(valueId) {
     console.log(`Showing questions modal for value ${valueId}`);
@@ -258,72 +258,74 @@ function showEditQuestionsModal(valueId) {
     
     // Get modal elements
     const editQuestionsModal = document.getElementById('edit-questions-modal');
-    const questionsContainer = document.getElementById('questions-container');
     const valueNameDisplay = document.getElementById('value-name-display');
+    const questionsContainer = document.getElementById('questions-container');
     
-    // Set value name
+    // Set value name in modal
     valueNameDisplay.textContent = value.name;
+    
+    // Show loading indicator
+    questionsContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>Loading questions...</p></div>';
+    
+    // Get questions for this value
+    const valueQuestions = surveyQuestions.filter(q => q.valueId === valueId);
+    console.log(`Found ${valueQuestions.length} questions for value ${valueId}:`, valueQuestions);
     
     // Clear questions container
     questionsContainer.innerHTML = '';
     
-    // Find questions for this value
-    const valueCategory = surveyData.categories.find(c => c.id === valueId);
-    
-    if (valueCategory && valueCategory.questions && surveyQuestions) {
-        // Create accordion for each question
-        valueCategory.questions.forEach(questionId => {
-            const question = surveyQuestions.find(q => q.id === questionId);
-            if (question) {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'question-accordion';
-                questionDiv.innerHTML = `
-                    <div class="question-header">
-                        <span>Question ${question.id}: ${question.text}</span>
-                        <button class="btn edit-question-btn" data-question-id="${question.id}">Edit</button>
-                        <span class="accordion-toggle">▼</span>
-                    </div>
-                    <div class="question-content">
-                        <div class="options-list">
-                            ${question.options.map(option => `
-                                <div class="option-item">
-                                    <span class="option-id">${option.id}</span>
-                                    <span class="option-text">${option.text}</span>
-                                    <span class="option-score">Score: ${option.score}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                questionsContainer.appendChild(questionDiv);
+    // Add questions to container
+    if (valueQuestions && valueQuestions.length > 0) {
+        valueQuestions.forEach(question => {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-item';
+            questionDiv.innerHTML = `
+                <div class="question-header">
+                    <span class="accordion-toggle">▼</span>
+                    <span class="question-text">${question.text}</span>
+                    <button class="btn small-btn edit-question-btn">Edit</button>
+                </div>
+                <div class="question-content" style="display: none;">
+                    <h4>Options:</h4>
+                    <ul class="options-list">
+                        ${question.options.map(option => `
+                            <li>
+                                <strong>Option ${option.id}:</strong> ${option.text}
+                                <span class="option-score">(Score: ${option.score})</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            questionsContainer.appendChild(questionDiv);
+            
+            // Add event listeners for accordion functionality
+            const header = questionDiv.querySelector('.question-header');
+            const content = questionDiv.querySelector('.question-content');
+            const toggle = questionDiv.querySelector('.accordion-toggle');
+            
+            header.addEventListener('click', function(e) {
+                // Don't toggle if edit button was clicked
+                if (e.target.classList.contains('edit-question-btn')) {
+                    return;
+                }
                 
-                // Add event listener to accordion toggle
-                const header = questionDiv.querySelector('.question-header');
-                const content = questionDiv.querySelector('.question-content');
-                const toggle = questionDiv.querySelector('.accordion-toggle');
-                
-                header.addEventListener('click', function(e) {
-                    // Don't toggle if edit button was clicked
-                    if (e.target.classList.contains('edit-question-btn')) {
-                        return;
-                    }
-                    
-                    // Toggle content visibility
-                    if (content.style.display === 'block') {
-                        content.style.display = 'none';
-                        toggle.textContent = '▼';
-                    } else {
-                        content.style.display = 'block';
-                        toggle.textContent = '▲';
-                    }
-                });
-                
-                // Add event listener to edit button
-                const editBtn = questionDiv.querySelector('.edit-question-btn');
-                editBtn.addEventListener('click', function() {
-                    showEditQuestionModal(question.id);
-                });
-            }
+                // Toggle content visibility
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                    toggle.textContent = '▼';
+                } else {
+                    content.style.display = 'block';
+                    toggle.textContent = '▲';
+                }
+            });
+            
+            // Add event listener to edit button
+            const editBtn = questionDiv.querySelector('.edit-question-btn');
+            editBtn.addEventListener('click', function() {
+                showEditQuestionModal(question.id);
+            });
         });
     } else {
         questionsContainer.innerHTML = '<p>No questions found for this value.</p>';
@@ -557,9 +559,25 @@ function showError(message) {
     }
 }
 
-// Export functions for use in admin.html
+// Create a namespace for admin values functions
 window.adminValues = {
-    initialize: initializeValuesManagement,
-    saveEditedValue: saveEditedValue,
-    saveEditedQuestion: saveEditedQuestion
+    initialize: function() {
+        console.log('Initializing admin values management...');
+        initializeValuesManagement();
+    },
+    
+    editValue: function(index) {
+        console.log('Editing value with index:', index);
+        showEditValueModal(index);
+    },
+    
+    toggleValueStatus: function(valueId, enabled) {
+        console.log(`Toggling value ${valueId} to ${enabled ? 'enabled' : 'disabled'}`);
+        toggleValueStatus(valueId, enabled);
+    },
+    
+    editQuestions: function(valueId) {
+        console.log('Editing questions for value with ID:', valueId);
+        showEditQuestionsModal(valueId);
+    }
 };

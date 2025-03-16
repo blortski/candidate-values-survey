@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.5.2
+ * Version: v1.5.3
  */
 
 // Global variables
