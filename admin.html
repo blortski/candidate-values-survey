@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Wild Zora Candidate Values Survey</title>
+    <title>ValuesAlign - Candidate Values Survey</title>
     <style>
         :root {
             --primary-color: #0d5e2f;
@@ -718,11 +718,14 @@
     <div class="container">
         <header>
             <div class="logo-container">
-                <img src="./images/Wild Zora Logo.png" alt="Wild Zora Logo" class="logo">
+                <img src="./images/Wild Zora Logo.png" alt="ValuesAlign Logo" class="logo">
                 <div class="header-text">
-                    <h1>Admin Dashboard</h1>
-                    <p class="subtitle">Wild Zora Candidate Values Survey</p>
+                    <h1>ValuesAlign</h1>
+                    <h2>Candidate Values Survey - Admin Dashboard</h2>
                 </div>
+            </div>
+            <div class="auth-container" id="auth-container">
+                <!-- Auth content will be loaded here -->
             </div>
         </header>
         
@@ -752,7 +755,7 @@
                 <!-- Client Survey Link Section -->
                 <div class="client-link-container">
                     <h3>Share Survey Link</h3>
-                    <p>Share this link with candidates to take the Wild Zora Values Survey:</p>
+                    <p>Share this link with candidates to take the ValuesAlign Values Survey:</p>
                     <div class="link-box">
                         <input type="text" id="survey-link" value="https://blortski.github.io/candidate-values-survey/" readonly>
                         <button id="copy-link-btn" class="btn primary-btn">Copy Link</button>
@@ -765,25 +768,25 @@
                     <p>Loading data...</p>
                 </div>
                 
-                <!-- In-Progress Surveys Section -->
-                <div id="in-progress-container" class="in-progress-container">
-                    <div class="in-progress-header">
-                        <h3 class="in-progress-title"><span class="pulse"></span>In-Progress Surveys</h3>
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Surveys</h2>
+                        <div class="refresh-container">
+                            <button id="refresh-btn" class="btn secondary-btn">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <span id="last-refreshed">Last refreshed: Never</span>
+                        </div>
                     </div>
-                    <div id="in-progress-content">
-                        <!-- In-progress surveys will be loaded here -->
+                    <div id="results-container" class="results-container">
+                        <!-- Survey results will be displayed here -->
                     </div>
-                </div>
-                
-                <h3>Completed Surveys</h3>
-                <div id="results-container" class="results-container">
-                    <!-- Results will be loaded here -->
                 </div>
                 
                 <!-- Values Management Section -->
-                <div class="values-section">
-                    <div class="values-header">
-                        <h3>Company Values Management</h3>
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Company Values Management</h2>
                     </div>
                     <p>Manage the company values that are being tested in the survey. You can enable or disable values, edit their descriptions, and manage the assessment questions.</p>
                     <div id="values-error" class="error-message"></div>
@@ -877,8 +880,8 @@
         
         <footer>
             <div class="footer-content">
-                <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.3.3</span>
+                <p>&copy; 2025 ValuesAlign LLC. All rights reserved.</p>
+                <span class="version" id="app-version">v1.4.0</span>
             </div>
         </footer>
     </div>
@@ -910,8 +913,6 @@
         const detailsModal = document.getElementById('details-modal');
         const closeModal = document.querySelector('.close-modal');
         const candidateDetailsContainer = document.getElementById('candidate-details-container');
-        const inProgressContainer = document.getElementById('in-progress-container');
-        const inProgressContent = document.getElementById('in-progress-content');
         
         // Token modal elements
         const tokenModal = document.getElementById('token-modal');
@@ -985,7 +986,6 @@
                         setTimeout(() => {
                             console.log('Loading data after short delay...');
                             loadResults();
-                            loadInProgressSurveys();
                             
                             // Set up auto-refresh every 60 seconds
                             startAutoRefresh();
@@ -1078,7 +1078,6 @@
                     
                     // Load data with new token
                     loadResults();
-                    loadInProgressSurveys();
                 } else {
                     console.warn('GitHub API not properly configured with new token');
                     tokenError.textContent = 'GitHub API not properly configured. Please check your token.';
@@ -1102,26 +1101,21 @@
         // Load survey results
         async function loadResults() {
             console.log('Loading survey results...');
-            showLoading(true);
+            
+            // Show loading indicator
+            const resultsContainer = document.getElementById('results-container');
+            showLoadingIndicator(resultsContainer);
             
             try {
                 // Get token from localStorage
                 const token = localStorage.getItem('github_token');
                 
                 if (!token) {
-                    console.warn('No GitHub token found in loadResults');
-                    resultsContainer.innerHTML = `
-                        <div class="no-results">
-                            <p>GitHub API is not configured. Please set a GitHub token to view survey results.</p>
-                            <button class="btn primary-btn" onclick="showTokenModal()">Set GitHub Token</button>
-                        </div>
-                    `;
-                    showLoading(false);
+                    resultsContainer.innerHTML = '<div class="default-message">Please set a GitHub token to access survey results.</div>';
                     return;
                 }
                 
-                console.log('Creating new GitHub API instance for loading results');
-                // Always create a fresh instance to ensure we're using the latest token
+                // Initialize GitHub API with token
                 const github = new GitHubAPI({
                     token: token,
                     owner: config.github.owner,
@@ -1130,454 +1124,133 @@
                     resultsPath: config.github.resultsPath
                 });
                 
-                // Check if GitHub API is configured
-                if (!github.isConfigured()) {
-                    console.warn('GitHub API not properly configured in loadResults');
-                    resultsContainer.innerHTML = `
-                        <div class="no-results">
-                            <p>GitHub API is not properly configured. Please check your token.</p>
-                            <button class="btn primary-btn" onclick="showTokenModal()">Set GitHub Token</button>
-                        </div>
-                    `;
-                    showLoading(false);
-                    return;
+                // Get all surveys
+                const surveys = await github.getAllSurveys();
+                
+                // Update last refreshed timestamp
+                const lastRefreshedElement = document.getElementById('last-refreshed');
+                if (lastRefreshedElement) {
+                    const now = new Date();
+                    lastRefreshedElement.textContent = `Last refreshed: ${now.toLocaleTimeString()}`;
                 }
                 
-                console.log('Fetching survey results from GitHub...');
-                // Load results from GitHub
-                const results = await github.getAllSurveyResults();
-                console.log('Loaded results from GitHub:', results.length);
+                // Display surveys
+                displaySurveys(surveys);
                 
-                if (results.length === 0) {
-                    console.log('No survey results found');
-                    resultsContainer.innerHTML = `
-                        <div class="no-results">
-                            <p>No survey results found.</p>
-                        </div>
-                    `;
-                    showLoading(false);
-                    return;
-                }
-                
-                // Sort results by timestamp (newest first)
-                results.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-                
-                // Display results
-                displayResults(results);
             } catch (error) {
                 console.error('Error loading results:', error);
-                resultsContainer.innerHTML = `
-                    <div class="error-message">
-                        <p>Error loading results: ${error.message}</p>
-                    </div>
-                `;
-            } finally {
-                showLoading(false);
+                resultsContainer.innerHTML = `<div class="error-message">Error loading results: ${error.message}</div>`;
             }
         }
         
-        // Load in-progress surveys
-        async function loadInProgressSurveys() {
-            console.log('Loading in-progress surveys...');
+        // Display surveys in the results container
+        function displaySurveys(surveys) {
+            console.log('Displaying surveys:', surveys);
             
-            try {
-                // Get token from localStorage
-                const token = localStorage.getItem('github_token');
-                
-                if (!token) {
-                    console.warn('No GitHub token found in loadInProgressSurveys');
-                    inProgressContent.innerHTML = `
-                        <div class="no-results">
-                            <p>GitHub API is not configured. Please set a GitHub token to view in-progress surveys.</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                console.log('Creating new GitHub API instance for loading in-progress surveys');
-                // Always create a fresh instance to ensure we're using the latest token
-                const github = new GitHubAPI({
-                    token: token,
-                    owner: config.github.owner,
-                    repo: config.github.repo,
-                    branch: config.github.branch,
-                    resultsPath: config.github.resultsPath
-                });
-                
-                // Check if GitHub API is configured
-                if (!github.isConfigured()) {
-                    console.warn('GitHub API not properly configured in loadInProgressSurveys');
-                    inProgressContent.innerHTML = `
-                        <div class="no-results">
-                            <p>GitHub API is not properly configured. Please check your token.</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                console.log('Fetching in-progress surveys from GitHub...');
-                // Get in-progress surveys
-                const inProgressSurveys = await github.getInProgressSurveys();
-                console.log('Loaded in-progress surveys from GitHub:', inProgressSurveys.length);
-                
-                // Display in-progress surveys
-                displayInProgressSurveys(inProgressSurveys);
-            } catch (error) {
-                console.error('Error loading in-progress surveys:', error);
-                inProgressContent.innerHTML = `
-                    <div class="error-message">
-                        <p>Error loading in-progress surveys: ${error.message}</p>
-                    </div>
-                `;
-            }
-        }
-        
-        // Display in-progress surveys
-        function displayInProgressSurveys(surveys) {
+            const resultsContainer = document.getElementById('results-container');
+            
             if (!surveys || surveys.length === 0) {
-                inProgressContent.innerHTML = '<p>No in-progress surveys found.</p>';
+                resultsContainer.innerHTML = '<div class="default-message">No surveys found.</div>';
                 return;
             }
             
-            console.log('Displaying in-progress surveys:', surveys);
+            // Sort surveys by timestamp (newest first)
+            surveys.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
-            let html = '<div class="in-progress-list">';
-            
-            surveys.forEach(survey => {
-                const timestamp = survey.timestamp ? new Date(survey.timestamp).toLocaleString() : 'Unknown';
-                const name = survey.candidateName || 'Anonymous';
-                const email = survey.candidateEmail || 'No email provided';
-                const progress = survey.currentQuestion ? `Question ${survey.currentQuestion}` : 'Started';
-                
-                html += `
-                    <div class="in-progress-item">
-                        <div class="in-progress-info">
-                            <h4>${name}</h4>
-                            <p><strong>Email:</strong> ${email}</p>
-                            <p><strong>Started:</strong> ${timestamp}</p>
-                            <p><strong>Progress:</strong> ${progress}</p>
-                        </div>
-                        <div class="in-progress-actions">
-                            <button class="btn danger-btn" onclick="removeSurvey('${survey.id}')">Remove</button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            inProgressContent.innerHTML = html;
-        }
-        
-        // Display results in the table
-        function displayResults(results) {
-            if (results.length === 0) {
-                resultsContainer.innerHTML = '<div class="no-results"><p>No survey results found.</p></div>';
-                return;
-            }
-            
-            // Sort results by date (newest first)
-            results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            let tableHTML = `
+            // Create table for surveys
+            let html = `
                 <table class="results-table">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Date</th>
-                            <th>Optimism</th>
-                            <th>Productivity</th>
-                            <th>Value Orientation</th>
-                            <th>Collaboration</th>
-                            <th>Overall</th>
-                            <th>Action</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
             
-            results.forEach((result, index) => {
-                const date = new Date(result.timestamp).toLocaleDateString();
-                const overallScore = result.overallScore ? result.overallScore.percentage : calculateOverallScore(result.scores);
+            // Add rows for each survey
+            surveys.forEach(survey => {
+                const timestamp = new Date(survey.timestamp).toLocaleDateString();
+                const statusClass = survey.status === 'completed' ? 'status-completed' : 'status-in-progress';
+                const statusText = survey.status === 'completed' ? 'Completed' : 'In Progress';
                 
-                tableHTML += `
+                html += `
                     <tr>
-                        <td>${result.candidateName}</td>
-                        <td>${result.candidateEmail}</td>
-                        <td>${date}</td>
-                        <td class="score-cell ${getScoreClass(result.scores.optimism)}">${result.scores.optimism}</td>
-                        <td class="score-cell ${getScoreClass(result.scores.productivity)}">${result.scores.productivity}</td>
-                        <td class="score-cell ${getScoreClass(result.scores.valueOrientation)}">${result.scores.valueOrientation}</td>
-                        <td class="score-cell ${getScoreClass(result.scores.collaboration)}">${result.scores.collaboration}</td>
-                        <td class="score-cell ${getScoreClass(overallScore)}">${overallScore}%</td>
-                        <td><button class="btn view-details-btn" data-index="${index}">View Details</button></td>
+                        <td>${survey.name || 'Unknown'}</td>
+                        <td>${survey.email || 'Unknown'}</td>
+                        <td>${timestamp}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                        <td>
+                            <button class="btn small-btn view-btn" data-id="${survey.id}">View</button>
+                            <button class="btn small-btn remove-btn" data-id="${survey.id}">Remove</button>
+                        </td>
                     </tr>
                 `;
             });
             
-            tableHTML += `
+            html += `
                     </tbody>
                 </table>
             `;
             
-            resultsContainer.innerHTML = tableHTML;
+            resultsContainer.innerHTML = html;
             
-            // Add event listeners to view details buttons
-            document.querySelectorAll('.view-details-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    const index = parseInt(button.getAttribute('data-index'));
-                    showCandidateDetails(results[index]);
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    viewSurveyDetails(id);
+                });
+            });
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.remove-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    removeSurvey(id);
                 });
             });
         }
         
-        // Calculate overall score as percentage
-        function calculateOverallScore(scores) {
-            const maxPossibleScore = 21 * 4; // 7 questions per category * 3 points max * 4 categories
-            const totalScore = scores.optimism + scores.productivity + scores.valueOrientation + scores.collaboration;
-            return Math.round((totalScore / maxPossibleScore) * 100);
-        }
-        
-        // Get CSS class based on score
-        function getScoreClass(score) {
-            if (typeof score === 'number') {
-                if (score >= 75) return 'high-score';
-                if (score >= 50) return 'medium-score';
-                return 'low-score';
-            } else {
-                if (score >= 15) return 'high-score';
-                if (score >= 10) return 'medium-score';
-                return 'low-score';
-            }
-        }
-        
-        // Show candidate details in modal
-        function showCandidateDetails(result) {
-            const overallScore = result.overallScore ? result.overallScore.percentage : calculateOverallScore(result.scores);
-            let alignmentLevel = '';
-            
-            if (overallScore >= 75) {
-                alignmentLevel = 'High alignment with Wild Zora values';
-            } else if (overallScore >= 50) {
-                alignmentLevel = 'Moderate alignment with Wild Zora values';
-            } else {
-                alignmentLevel = 'Low alignment with Wild Zora values';
+        // Remove survey
+        async function removeSurvey(surveyId) {
+            if (!confirm(`Are you sure you want to remove this survey?`)) {
+                return;
             }
             
-            let detailsHTML = `
-                <div class="candidate-details">
-                    <h2 class="candidate-name">${result.candidateName}</h2>
-                    <p class="candidate-email">${result.candidateEmail}</p>
-                    <p>Completed on: ${new Date(result.timestamp).toLocaleString()}</p>
-                </div>
-                
-                <div class="overall-result">
-                    <h3>Overall Values Alignment</h3>
-                    <p><strong>Score:</strong> <span class="${getScoreClass(overallScore)}">${overallScore}%</span></p>
-                    <p><strong>Interpretation:</strong> ${alignmentLevel}</p>
-                </div>
-                
-                <h3>Category Scores</h3>
-                <div class="category-scores">
-                    <div class="category-score">
-                        <h4 class="category-name">Optimism</h4>
-                        <div class="score-display ${getScoreClass(result.scores.optimism)}">${result.scores.optimism}</div>
-                        <p>${getCategoryInterpretation('optimism', result.scores.optimism)}</p>
-                    </div>
-                    
-                    <div class="category-score">
-                        <h4 class="category-name">Productivity</h4>
-                        <div class="score-display ${getScoreClass(result.scores.productivity)}">${result.scores.productivity}</div>
-                        <p>${getCategoryInterpretation('productivity', result.scores.productivity)}</p>
-                    </div>
-                    
-                    <div class="category-score">
-                        <h4 class="category-name">Value Orientation</h4>
-                        <div class="score-display ${getScoreClass(result.scores.valueOrientation)}">${result.scores.valueOrientation}</div>
-                        <p>${getCategoryInterpretation('valueOrientation', result.scores.valueOrientation)}</p>
-                    </div>
-                    
-                    <div class="category-score">
-                        <h4 class="category-name">Collaboration</h4>
-                        <div class="score-display ${getScoreClass(result.scores.collaboration)}">${result.scores.collaboration}</div>
-                        <p>${getCategoryInterpretation('collaboration', result.scores.collaboration)}</p>
-                    </div>
-                </div>
-                
-                <h3>Question Responses</h3>
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Question</th>
-                            <th>Response</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            result.responses.forEach(response => {
-                detailsHTML += `
-                    <tr>
-                        <td>${response.question}</td>
-                        <td>${response.answer}</td>
-                        <td class="score-cell">${response.score}</td>
-                    </tr>
-                `;
-            });
-            
-            detailsHTML += `
-                    </tbody>
-                </table>
-            `;
-            
-            candidateDetailsContainer.innerHTML = detailsHTML;
-            detailsModal.style.display = 'block';
-        }
-        
-        // Get interpretation based on category and score
-        function getCategoryInterpretation(category, score) {
-            const interpretations = {
-                optimism: {
-                    high: 'Strongly optimistic approach to challenges',
-                    medium: 'Moderately optimistic approach',
-                    low: 'May struggle with maintaining optimism'
-                },
-                productivity: {
-                    high: 'Highly focused on efficiency and improvement',
-                    medium: 'Balanced approach to productivity',
-                    low: 'May need support with productivity systems'
-                },
-                valueOrientation: {
-                    high: 'Strong focus on business value and ROI',
-                    medium: 'Moderate focus on value creation',
-                    low: 'May need guidance on value orientation'
-                },
-                collaboration: {
-                    high: 'Excellent team player and communicator',
-                    medium: 'Effective collaborator in most contexts',
-                    low: 'May prefer independent work over collaboration'
-                }
-            };
-            
-            if (score >= 15) {
-                return interpretations[category].high;
-            } else if (score >= 10) {
-                return interpretations[category].medium;
-            } else {
-                return interpretations[category].low;
-            }
-        }
-        
-        // Get survey results from localStorage
-        function getResultsFromLocalStorage() {
             try {
-                const storedResults = localStorage.getItem('surveyResults');
-                return storedResults ? JSON.parse(storedResults) : [];
+                // Get token from localStorage
+                const token = localStorage.getItem('github_token');
+                
+                if (!token) {
+                    alert('GitHub token not found. Please set your GitHub token first.');
+                    return;
+                }
+                
+                // Initialize GitHub API with token
+                const github = new GitHubAPI({
+                    token: token,
+                    owner: config.github.owner,
+                    repo: config.github.repo,
+                    branch: config.github.branch,
+                    resultsPath: config.github.resultsPath
+                });
+                
+                // Delete the survey
+                await github.deleteSurvey(surveyId);
+                
+                // Reload surveys
+                loadResults();
+                
+                // Show success message
+                alert('Survey removed successfully!');
             } catch (error) {
-                console.error('Error retrieving results from localStorage:', error);
-                return [];
-            }
-        }
-        
-        // Close modal when clicking the X
-        closeModal.addEventListener('click', () => {
-            detailsModal.style.display = 'none';
-        });
-        
-        // Close modal when clicking outside the content
-        window.addEventListener('click', (event) => {
-            if (event.target === detailsModal) {
-                detailsModal.style.display = 'none';
-            }
-            if (event.target === tokenModal) {
-                tokenModal.style.display = 'none';
-            }
-        });
-        
-        // Set up event listeners
-        function setupEventListeners() {
-            console.log('Setting up event listeners');
-            
-            // Login button
-            loginBtn.addEventListener('click', handleLogin);
-            
-            // Enter key in password field
-            adminPasswordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-            
-            // Logout button
-            logoutBtn.addEventListener('click', handleLogout);
-            
-            // GitHub token button
-            githubTokenBtn.addEventListener('click', showTokenModal);
-            
-            // Save token button
-            saveTokenBtn.addEventListener('click', saveGitHubToken);
-            
-            // Clear token button
-            clearTokenBtn.addEventListener('click', clearGitHubToken);
-            
-            // Close token modal
-            closeTokenModal.addEventListener('click', () => {
-                tokenModal.style.display = 'none';
-            });
-            
-            // Close modals when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === detailsModal) {
-                    detailsModal.style.display = 'none';
-                }
-                if (e.target === tokenModal) {
-                    tokenModal.style.display = 'none';
-                }
-            });
-            
-            // Copy link button
-            copyLinkBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(surveyLinkInput.value);
-                copyConfirmation.style.display = 'block';
-                setTimeout(() => {
-                    copyConfirmation.style.display = 'none';
-                }, 2000);
-            });
-            
-            // Values management event listeners
-            if (saveValueBtn) {
-                saveValueBtn.addEventListener('click', function() {
-                    if (window.adminValues) {
-                        window.adminValues.saveEditedValue();
-                    }
-                });
-            }
-            
-            if (closeEditValueModal) {
-                closeEditValueModal.addEventListener('click', function() {
-                    editValueModal.style.display = 'none';
-                });
-            }
-            
-            if (closeEditQuestionsModal) {
-                closeEditQuestionsModal.addEventListener('click', function() {
-                    editQuestionsModal.style.display = 'none';
-                });
-            }
-            
-            if (closeEditQuestionModal) {
-                closeEditQuestionModal.addEventListener('click', function() {
-                    editQuestionModal.style.display = 'none';
-                });
-            }
-            
-            if (saveQuestionBtn) {
-                saveQuestionBtn.addEventListener('click', function() {
-                    if (window.adminValues) {
-                        window.adminValues.saveEditedQuestion();
-                    }
-                });
+                console.error('Error removing survey:', error);
+                alert(`Error removing survey: ${error.message}`);
             }
         }
         
@@ -1636,8 +1309,8 @@
             // But it's here for completeness
         }
         
-        // View in-progress survey details
-        async function viewInProgressSurvey(surveyPath, candidateName) {
+        // View survey details
+        async function viewSurveyDetails(id) {
             try {
                 // Get token from localStorage
                 const token = localStorage.getItem('github_token');
@@ -1656,7 +1329,7 @@
                 });
                 
                 // Get survey data
-                const surveyData = await github.getFileContent(surveyPath);
+                const surveyData = await github.getFileContent(id);
                 
                 // Create modal for displaying survey details
                 const modal = document.createElement('div');
@@ -1664,7 +1337,7 @@
                 modal.innerHTML = `
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h2>In-Progress Survey: ${candidateName}</h2>
+                            <h2>Survey Details: ${surveyData.name}</h2>
                             <span class="close-modal">&times;</span>
                         </div>
                         <div class="modal-body">
@@ -1695,56 +1368,23 @@
                     }
                 });
             } catch (error) {
-                console.error('Error viewing in-progress survey:', error);
+                console.error('Error viewing survey:', error);
                 alert(`Error viewing survey: ${error.message}`);
             }
         }
         
-        // Remove in-progress survey
-        async function removeSurvey(surveyId) {
-            if (!confirm(`Are you sure you want to remove this in-progress survey?`)) {
-                return;
+        // Set up auto-refresh
+        let autoRefreshInterval;
+        function startAutoRefresh() {
+            // Clear any existing interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
             }
             
-            try {
-                // Get token from localStorage
-                const token = localStorage.getItem('github_token');
-                
-                if (!token) {
-                    alert('GitHub token not found. Please set your GitHub token first.');
-                    return;
-                }
-                
-                // Initialize GitHub API with token
-                const github = new GitHubAPI({
-                    token: token,
-                    owner: config.github.owner,
-                    repo: config.github.repo,
-                    branch: config.github.branch,
-                    resultsPath: config.github.resultsPath
-                });
-                
-                // Delete the survey
-                await github.deleteInProgressSurvey(surveyId);
-                
-                // Reload in-progress surveys
-                loadInProgressSurveys();
-                
-                // Show success message
-                alert('Survey removed successfully!');
-            } catch (error) {
-                console.error('Error removing survey:', error);
-                alert(`Error removing survey: ${error.message}`);
-            }
-        }
-        
-        // Auto-refresh functionality
-        let autoRefreshInterval;
-        
-        function startAutoRefresh() {
+            // Set up new interval (refresh every 60 seconds)
             autoRefreshInterval = setInterval(() => {
+                console.log('Auto-refreshing data...');
                 loadResults();
-                loadInProgressSurveys();
             }, 60000); // 60 seconds
         }
         

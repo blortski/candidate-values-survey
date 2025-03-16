@@ -30,390 +30,211 @@ class GitHubAPI {
     }
     
     /**
-     * Save survey results to GitHub
-     * @param {Object} results - Survey results object
-     * @returns {Promise<Object>} - Promise resolving to the API response
+     * Get all surveys from GitHub
+     * @returns {Promise<Array>} Array of survey results
      */
-    async saveSurveyResults(results) {
-        if (!this.isConfigured()) {
-            throw new Error('GitHub API is not configured. Please set a token.');
-        }
-        
-        // Create a unique filename based on timestamp and email
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const email = results.candidateEmail.replace(/[^a-zA-Z0-9]/g, '_');
-        const filename = `${timestamp}_${email}.json`;
-        const path = `${this.resultsPath}/${filename}`;
-        
-        // Convert results to JSON string
-        const content = JSON.stringify(results, null, 2);
-        
-        // Encode content to base64
-        const base64Content = btoa(unescape(encodeURIComponent(content)));
-        
-        // Prepare request data
-        const data = {
-            message: `Add survey results for ${results.candidateName}`,
-            content: base64Content,
-            branch: this.branch
-        };
-        
-        // Send request to GitHub API
-        try {
-            const response = await fetch(`${this.baseUrl}/${path}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${this.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`GitHub API error: ${errorData.message}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Error saving survey results to GitHub:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * Get all survey results from GitHub
-     * @returns {Promise<Array>} - Promise resolving to an array of survey results
-     */
-    async getAllSurveyResults() {
-        if (!this.isConfigured()) {
-            throw new Error('GitHub API is not configured. Please set a token.');
-        }
+    async getAllSurveys() {
+        console.log('GitHubAPI.getAllSurveys: Fetching all surveys...');
         
         try {
-            console.log('Getting all survey results from GitHub...');
-            console.log('Base URL:', this.baseUrl);
-            console.log('Results Path:', this.resultsPath);
-            console.log('Branch:', this.branch);
-            
-            // Get directory contents
+            // Get all files in the results directory
             const response = await fetch(`${this.baseUrl}/${this.resultsPath}?ref=${this.branch}`, {
                 headers: {
                     'Authorization': `token ${this.token}`
                 }
             });
             
-            console.log('Directory response status:', response.status);
-            
             if (!response.ok) {
-                // If directory doesn't exist, return empty array
-                if (response.status === 404) {
-                    console.warn('Results directory not found. Returning empty array.');
-                    return [];
-                }
-                
-                const errorData = await response.json();
-                console.error('GitHub API error:', errorData);
-                throw new Error(`GitHub API error: ${errorData.message}`);
-            }
-            
-            const files = await response.json();
-            console.log('Files found in results directory:', files.length);
-            
-            // Filter out non-JSON files and README
-            const jsonFiles = files.filter(file => 
-                file.type === 'file' && 
-                file.name.endsWith('.json') && 
-                file.name !== 'README.md'
-            );
-            
-            console.log('JSON files found:', jsonFiles.length);
-            
-            if (jsonFiles.length === 0) {
-                console.log('No JSON files found in results directory.');
+                console.error(`GitHubAPI.getAllSurveys: Failed to fetch surveys. Status: ${response.status}`);
                 return [];
             }
             
-            // Get content of each file
-            const resultsPromises = jsonFiles.map(async file => {
-                console.log('Downloading file:', file.name, 'from URL:', file.download_url);
+            const data = await response.json();
+            console.log(`GitHubAPI.getAllSurveys: Found ${data.length} files in the results directory`);
+            
+            // Filter out non-JSON files and directories
+            const jsonFiles = data.filter(file => 
+                file.type === 'file' && 
+                file.name.endsWith('.json') && 
+                file.name !== 'values.json'
+            );
+            
+            console.log(`GitHubAPI.getAllSurveys: Found ${jsonFiles.length} JSON files (excluding values.json)`);
+            
+            // Get content of each JSON file
+            const surveys = [];
+            for (const file of jsonFiles) {
                 try {
-                    const fileResponse = await fetch(file.download_url);
+                    console.log(`GitHubAPI.getAllSurveys: Fetching content for ${file.name}...`);
+                    
+                    const fileResponse = await fetch(file.download_url, {
+                        headers: {
+                            'Authorization': `token ${this.token}`
+                        }
+                    });
                     
                     if (!fileResponse.ok) {
-                        console.error(`Failed to download file: ${file.name}, status: ${fileResponse.status}`);
-                        return null;
+                        console.error(`GitHubAPI.getAllSurveys: Failed to fetch content for ${file.name}. Status: ${fileResponse.status}`);
+                        continue;
                     }
                     
-                    const surveyData = await fileResponse.json();
-                    // Add filename as id for reference
-                    surveyData.id = file.name.replace('.json', '');
-                    return surveyData;
+                    const survey = await fileResponse.json();
+                    
+                    // Add file name (without .json extension) as id
+                    survey.id = file.name.replace('.json', '');
+                    
+                    // If status is not defined, determine it based on final_score
+                    if (!survey.status) {
+                        survey.status = survey.final_score !== undefined && survey.final_score !== null 
+                            ? 'completed' 
+                            : 'in_progress';
+                    }
+                    
+                    surveys.push(survey);
                 } catch (error) {
-                    console.error(`Error processing file ${file.name}:`, error);
-                    return null;
+                    console.error(`GitHubAPI.getAllSurveys: Error processing ${file.name}:`, error);
                 }
-            });
-            
-            const results = await Promise.all(resultsPromises);
-            // Filter out any null results from failed downloads
-            const validResults = results.filter(result => result !== null);
-            
-            console.log('Successfully loaded survey results:', validResults.length);
-            return validResults;
-        } catch (error) {
-            console.error('Error getting survey results from GitHub:', error);
-            return []; // Return empty array instead of throwing
-        }
-    }
-    
-    /**
-     * Save in-progress survey information to GitHub
-     * @param {Object} surveyInfo - Information about the in-progress survey
-     * @returns {Promise<Object>} - Promise resolving to the API response
-     */
-    async saveInProgressSurvey(surveyInfo) {
-        if (!this.isConfigured()) {
-            throw new Error('GitHub API is not configured. Please set a token.');
-        }
-        
-        // Create a unique identifier for the in-progress survey
-        const id = surveyInfo.id || `${Date.now()}_${surveyInfo.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-        surveyInfo.id = id;
-        
-        // Path for in-progress surveys
-        const path = `${this.resultsPath}/in-progress/${id}.json`;
-        
-        // Convert data to JSON string
-        const content = JSON.stringify(surveyInfo, null, 2);
-        
-        // Encode content to base64
-        const base64Content = btoa(unescape(encodeURIComponent(content)));
-        
-        // Prepare request data
-        const data = {
-            message: `Update in-progress survey for ${surveyInfo.name}`,
-            content: base64Content,
-            branch: this.branch
-        };
-        
-        // Check if file already exists
-        try {
-            const checkResponse = await fetch(`${this.baseUrl}/${path}?ref=${this.branch}`, {
-                headers: {
-                    'Authorization': `token ${this.token}`
-                }
-            });
-            
-            // If file exists, include its SHA in the request
-            if (checkResponse.ok) {
-                const fileData = await checkResponse.json();
-                data.sha = fileData.sha;
             }
             
-            // Send request to GitHub API
-            const response = await fetch(`${this.baseUrl}/${path}`, {
+            console.log(`GitHubAPI.getAllSurveys: Successfully processed ${surveys.length} surveys`);
+            return surveys;
+        } catch (error) {
+            console.error('GitHubAPI.getAllSurveys: Error fetching surveys:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Save survey to GitHub
+     * @param {Object} survey Survey data
+     * @returns {Promise<boolean>} Success status
+     */
+    async saveSurvey(survey) {
+        console.log('GitHubAPI.saveSurvey: Saving survey...');
+        
+        try {
+            // Generate a unique ID for the survey if not provided
+            if (!survey.id) {
+                const timestamp = new Date().toISOString().replace(/:/g, '-');
+                const email = survey.email ? survey.email.replace(/[@.]/g, '_') : 'anonymous';
+                survey.id = `${timestamp}_${email}`;
+            }
+            
+            // Set the status based on whether the survey is completed
+            survey.status = survey.final_score !== undefined && survey.final_score !== null 
+                ? 'completed' 
+                : 'in_progress';
+            
+            // Set timestamp if not already set
+            if (!survey.timestamp) {
+                survey.timestamp = new Date().toISOString();
+            }
+            
+            // Convert survey to JSON
+            const content = JSON.stringify(survey, null, 2);
+            const encodedContent = btoa(unescape(encodeURIComponent(content)));
+            
+            // Check if file already exists
+            let sha = null;
+            try {
+                const fileResponse = await fetch(`${this.baseUrl}/${this.resultsPath}/${survey.id}.json?ref=${this.branch}`, {
+                    headers: {
+                        'Authorization': `token ${this.token}`
+                    }
+                });
+                
+                if (fileResponse.ok) {
+                    const fileData = await fileResponse.json();
+                    sha = fileData.sha;
+                    console.log(`GitHubAPI.saveSurvey: Existing file found with SHA: ${sha}`);
+                }
+            } catch (error) {
+                console.log('GitHubAPI.saveSurvey: File does not exist yet, will create new file');
+            }
+            
+            // Prepare request body
+            const body = {
+                message: `${survey.status === 'completed' ? 'Completed' : 'In-progress'} survey: ${survey.id}`,
+                content: encodedContent,
+                branch: this.branch
+            };
+            
+            // Add SHA if file exists (update instead of create)
+            if (sha) {
+                body.sha = sha;
+            }
+            
+            // Save the file
+            const saveResponse = await fetch(`${this.baseUrl}/${this.resultsPath}/${survey.id}.json`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `token ${this.token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(body)
             });
             
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`GitHub API error: ${errorData.message}`);
+            if (!saveResponse.ok) {
+                console.error(`GitHubAPI.saveSurvey: Failed to save survey. Status: ${saveResponse.status}`);
+                return false;
             }
             
-            return await response.json();
+            console.log(`GitHubAPI.saveSurvey: Survey saved successfully with status: ${survey.status}`);
+            return true;
         } catch (error) {
-            console.error('Error saving in-progress survey to GitHub:', error);
-            throw error;
+            console.error('GitHubAPI.saveSurvey: Error saving survey:', error);
+            return false;
         }
     }
     
     /**
-     * Get in-progress surveys from GitHub
-     * @returns {Promise<Array>} - Promise resolving to an array of in-progress surveys
+     * Delete a survey from GitHub
+     * @param {string} surveyId - ID of the survey to delete
+     * @returns {Promise<boolean>} Success status
      */
-    async getInProgressSurveys() {
-        if (!this.isConfigured()) {
-            throw new Error('GitHub API is not configured. Please set a token.');
-        }
+    async deleteSurvey(surveyId) {
+        console.log(`GitHubAPI.deleteSurvey: Deleting survey with ID: ${surveyId}`);
         
         try {
-            console.log('Getting in-progress surveys from GitHub...');
-            console.log('Base URL:', this.baseUrl);
-            console.log('In-Progress Path:', `${this.resultsPath}/in-progress`);
-            
-            // Create in-progress directory if it doesn't exist
-            try {
-                await this.ensureInProgressDirectory();
-                console.log('In-progress directory ensured');
-            } catch (error) {
-                console.warn('Error ensuring in-progress directory exists:', error);
-                // Continue anyway, as the directory might already exist
-            }
-            
-            // Get directory contents
-            const response = await fetch(`${this.baseUrl}/${this.resultsPath}/in-progress?ref=${this.branch}`, {
-                headers: {
-                    'Authorization': `token ${this.token}`
-                }
-            });
-            
-            console.log('In-progress directory response status:', response.status);
-            
-            if (!response.ok) {
-                // If directory doesn't exist, return empty array
-                if (response.status === 404) {
-                    console.warn('In-progress directory not found. Returning empty array.');
-                    return [];
-                }
-                
-                const errorData = await response.json();
-                console.error('GitHub API error:', errorData);
-                throw new Error(`GitHub API error: ${errorData.message}`);
-            }
-            
-            const files = await response.json();
-            console.log('Files found in in-progress directory:', files.length);
-            
-            // Filter out non-JSON files and README
-            const jsonFiles = files.filter(file => 
-                file.type === 'file' && 
-                file.name.endsWith('.json') &&
-                file.name !== 'README.md'
-            );
-            
-            console.log('JSON files found in in-progress directory:', jsonFiles.length);
-            
-            if (jsonFiles.length === 0) {
-                console.log('No in-progress surveys found.');
-                return [];
-            }
-            
-            // Get content of each file
-            const surveysPromises = jsonFiles.map(async file => {
-                console.log('Downloading in-progress file:', file.name, 'from URL:', file.download_url);
-                try {
-                    const fileResponse = await fetch(file.download_url);
-                    
-                    if (!fileResponse.ok) {
-                        console.error(`Failed to download in-progress file: ${file.name}, status: ${fileResponse.status}`);
-                        return null;
-                    }
-                    
-                    const surveyData = await fileResponse.json();
-                    // Add filename as id for reference
-                    surveyData.id = file.name.replace('.json', '');
-                    return surveyData;
-                } catch (error) {
-                    console.error(`Error processing in-progress file ${file.name}:`, error);
-                    return null;
-                }
-            });
-            
-            const surveys = await Promise.all(surveysPromises);
-            // Filter out any null results from failed downloads
-            const validSurveys = surveys.filter(survey => survey !== null);
-            
-            console.log('Successfully loaded in-progress surveys:', validSurveys.length);
-            return validSurveys;
-        } catch (error) {
-            console.error('Error getting in-progress surveys from GitHub:', error);
-            return []; // Return empty array in case of error
-        }
-    }
-    
-    /**
-     * Delete an in-progress survey from GitHub
-     * @param {string} id - ID of the in-progress survey to delete
-     * @returns {Promise<Object>} - Promise resolving to the API response
-     */
-    async deleteInProgressSurvey(id) {
-        if (!this.isConfigured()) {
-            throw new Error('GitHub API is not configured. Please set a token.');
-        }
-        
-        const path = `${this.resultsPath}/in-progress/${id}.json`;
-        
-        try {
-            // Get file SHA
-            const fileResponse = await fetch(`${this.baseUrl}/${path}?ref=${this.branch}`, {
+            // Check if file exists and get its SHA
+            const fileResponse = await fetch(`${this.baseUrl}/${this.resultsPath}/${surveyId}.json?ref=${this.branch}`, {
                 headers: {
                     'Authorization': `token ${this.token}`
                 }
             });
             
             if (!fileResponse.ok) {
-                if (fileResponse.status === 404) {
-                    // File doesn't exist, nothing to delete
-                    return { deleted: false, message: 'File not found' };
-                }
-                
-                const errorData = await fileResponse.json();
-                throw new Error(`GitHub API error: ${errorData.message}`);
+                console.error(`GitHubAPI.deleteSurvey: Survey not found. Status: ${fileResponse.status}`);
+                return false;
             }
             
             const fileData = await fileResponse.json();
+            const sha = fileData.sha;
             
-            // Delete file
-            const deleteResponse = await fetch(`${this.baseUrl}/${path}`, {
+            // Delete the file
+            const deleteResponse = await fetch(`${this.baseUrl}/${this.resultsPath}/${surveyId}.json`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `token ${this.token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    message: `Remove in-progress survey ${id}`,
-                    sha: fileData.sha,
+                    message: `Delete survey: ${surveyId}`,
+                    sha: sha,
                     branch: this.branch
                 })
             });
             
             if (!deleteResponse.ok) {
-                const errorData = await deleteResponse.json();
-                throw new Error(`GitHub API error: ${errorData.message}`);
+                console.error(`GitHubAPI.deleteSurvey: Failed to delete survey. Status: ${deleteResponse.status}`);
+                return false;
             }
             
-            return await deleteResponse.json();
+            console.log(`GitHubAPI.deleteSurvey: Survey deleted successfully: ${surveyId}`);
+            return true;
         } catch (error) {
-            console.error('Error removing in-progress survey from GitHub:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * Ensure the in-progress directory exists
-     * @returns {Promise<void>}
-     */
-    async ensureInProgressDirectory() {
-        // Check if directory exists
-        const response = await fetch(`${this.baseUrl}/${this.resultsPath}/in-progress?ref=${this.branch}`, {
-            headers: {
-                'Authorization': `token ${this.token}`
-            }
-        });
-        
-        // If directory doesn't exist, create it with a README
-        if (response.status === 404) {
-            const readmeContent = `# In-Progress Surveys\n\nThis directory contains information about surveys that are currently in progress.\n\nFiles are automatically managed by the application.`;
-            const base64Content = btoa(unescape(encodeURIComponent(readmeContent)));
-            
-            await fetch(`${this.baseUrl}/${this.resultsPath}/in-progress/README.md`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${this.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: 'Create in-progress surveys directory',
-                    content: base64Content,
-                    branch: this.branch
-                })
-            });
+            console.error('GitHubAPI.deleteSurvey: Error deleting survey:', error);
+            return false;
         }
     }
     
@@ -551,26 +372,6 @@ class GitHubAPI {
         
         return await response.json();
     }
-
-    /**
-     * Get in-progress and completed surveys from the surveys index file
-     * @returns {Promise<Object>} - Promise resolving to an object with inProgressSurveys and completedSurveys
-     */
-    async getInProgressAndCompletedSurveys() {
-        try {
-            const response = await this.getFileContent('data/surveys_index.json');
-            const surveysIndex = JSON.parse(atob(response.content));
-            
-            // Separate into in-progress and completed surveys
-            const inProgressSurveys = surveysIndex.filter(survey => !survey.completed);
-            const completedSurveys = surveysIndex.filter(survey => survey.completed);
-            
-            return { inProgressSurveys, completedSurveys };
-        } catch (error) {
-            console.error('Error getting surveys index:', error);
-            throw error;
-        }
-    }
 }
 
 // Create GitHub API instance if in browser environment
@@ -579,7 +380,7 @@ const githubAPI = typeof window !== 'undefined' ? new GitHubAPI(appConfig.github
 // If in browser environment, add a method to check localStorage for token on initialization
 if (typeof window !== 'undefined' && githubAPI) {
     // Initialize token from localStorage if available
-    const storedToken = localStorage.getItem('wildZora_githubToken');
+    const storedToken = localStorage.getItem('github_token');
     if (storedToken) {
         githubAPI.setToken(storedToken);
     }

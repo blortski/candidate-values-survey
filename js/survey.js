@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.4.0
+ * Version: v1.5.0
  */
 
 // Global variables
@@ -18,6 +18,8 @@ let candidateEmail = '';
 let surveyId = null;
 let githubAPI = null;
 let filteredQuestions = [];
+let percentageResults = {};
+let overallScore = 0;
 
 // Initialize the survey when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -29,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('GitHub API initialized');
         
         // Check if token is set in localStorage
-        const token = localStorage.getItem('wildZora_githubToken');
+        const token = localStorage.getItem('github_token');
         if (token) {
             githubAPI.setToken(token);
             console.log('GitHub token set from localStorage');
@@ -494,7 +496,7 @@ function calculateResults() {
         }
     });
     
-    const percentageResults = {};
+    percentageResults = {};
     Object.keys(results).forEach(category => {
         if (maxScores[category] && maxScores[category] > 0) {
             percentageResults[category] = Math.round((results[category] / maxScores[category]) * 100);
@@ -504,7 +506,7 @@ function calculateResults() {
     });
     
     // Calculate overall score (average of all categories)
-    const overallScore = Object.keys(percentageResults).length > 0 
+    overallScore = Object.keys(percentageResults).length > 0 
         ? Math.round(
             Object.values(percentageResults).reduce((sum, score) => sum + score, 0) / 
             Object.keys(percentageResults).length
@@ -540,18 +542,8 @@ function calculateResults() {
     
     console.log('Final results:', finalResults);
     
-    // Remove in-progress survey if it exists
-    if (surveyId && githubAPI && githubAPI.isConfigured()) {
-        try {
-            githubAPI.deleteInProgressSurvey(surveyId);
-            console.log('In-progress survey deleted');
-        } catch (error) {
-            console.error('Error deleting in-progress survey:', error);
-        }
-    }
-    
-    // Save survey completion status
-    saveSurveyCompletionStatus(finalResults);
+    // Save survey results to GitHub
+    saveSurveyResponses();
     
     // Display the results
     showResults(finalResults);
@@ -632,78 +624,6 @@ async function saveSurveyResponses() {
         showError('Error saving survey results: ' + error.message);
         showLoading(false);
     }
-}
-
-/**
- * Updates the surveys index file with completion status
- * @param {Object} responses - The survey responses
- */
-async function updateSurveysIndex(responses) {
-    if (!githubAPI || !githubAPI.isConfigured()) {
-        console.warn('GitHub API not configured, survey completion status will not be saved');
-        return;
-    }
-    
-    try {
-        // Get the current surveys index
-        const fileResponse = await githubAPI.getFileContent('data/surveys_index.json');
-        let surveysIndex = [];
-        
-        if (fileResponse && fileResponse.content) {
-            try {
-                surveysIndex = JSON.parse(atob(fileResponse.content));
-            } catch (e) {
-                console.error('Error parsing surveys index:', e);
-            }
-        }
-        
-        // Check if this candidate already exists in the index
-        const existingIndex = surveysIndex.findIndex(s => 
-            s.candidateEmail === responses.candidateEmail
-        );
-        
-        // Create survey entry
-        const surveyEntry = {
-            candidateName: responses.candidateName,
-            candidateEmail: responses.candidateEmail,
-            timestamp: new Date().toISOString(),
-            completed: true
-        };
-        
-        // Update or add the entry
-        if (existingIndex >= 0) {
-            surveysIndex[existingIndex] = surveyEntry;
-        } else {
-            surveysIndex.push(surveyEntry);
-        }
-        
-        // Save the updated index
-        const content = JSON.stringify(surveysIndex, null, 2);
-        const message = 'Update surveys index with completed survey';
-        await githubAPI.createOrUpdateFile('data/surveys_index.json', message, btoa(content), fileResponse.sha);
-        
-        console.log('Surveys index updated successfully with completed survey');
-    } catch (error) {
-        console.error('Error updating surveys index:', error);
-    }
-}
-
-/**
- * Saves survey completion status
- * @param {Object} results - The survey results
- */
-async function saveSurveyCompletionStatus(results) {
-    if (!results || !results.candidateName || !results.candidateEmail) {
-        console.error('Invalid results object for saving completion status');
-        return;
-    }
-    
-    // Add timestamp and completion status
-    results.timestamp = new Date().toISOString();
-    results.completed = true;
-    
-    // Save the full survey responses
-    await saveSurveyResponses(results);
 }
 
 /**

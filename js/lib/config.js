@@ -18,7 +18,7 @@ const config = {
     },
     
     // Application version
-    version: 'v1.3.3'
+    version: 'v1.5.0'
 };
 
 // Export the configuration
@@ -26,7 +26,7 @@ const appConfig = config;
 
 // Try to load GitHub token from localStorage if in browser environment
 if (typeof window !== 'undefined' && window.localStorage) {
-    const storedToken = localStorage.getItem('wildZora_githubToken');
+    const storedToken = localStorage.getItem('github_token');
     if (storedToken) {
         appConfig.github.token = storedToken;
     }
