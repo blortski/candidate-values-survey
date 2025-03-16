@@ -348,7 +348,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.1.6</span>
+                <span class="version" id="app-version">v1.1.7</span>
             </div>
         </footer>
     </div>
@@ -363,6 +363,25 @@
     <script>
         // Set version from config
         document.getElementById('app-version').textContent = config.version;
+        
+        // Directly attach event listener to start button without waiting for DOMContentLoaded
+        console.log('Inline script: Adding direct event listener to start button');
+        var startBtn = document.getElementById('start-survey');
+        if (startBtn) {
+            startBtn.onclick = function(e) {
+                console.log('Start button clicked from inline script');
+                if (typeof startSurvey === 'function') {
+                    startSurvey();
+                } else {
+                    console.error('startSurvey function not found');
+                    alert('Error: Survey functionality not loaded properly. Please refresh the page.');
+                }
+                return false;
+            };
+            console.log('Inline script: Event listener attached successfully');
+        } else {
+            console.error('Inline script: Start button not found');
+        }
     </script>
 </body>
 </html>
