@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.8.4
+ * Version: v1.8.5
  */
 
 // Global variables
@@ -27,14 +27,14 @@ const goToLoginButton = document.getElementById('go-to-login-btn');
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard v1.8.4...');
+    console.log('Initializing master admin dashboard v1.8.5...');
     console.log('Config loaded:', config);
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.8.4';
-        console.log('Set version to:', 'v1.8.4');
+        versionElement.textContent = 'v1.8.5';
+        console.log('Set version to:', 'v1.8.5');
     }
     
     // Set up event listeners
@@ -87,27 +87,11 @@ function checkLoginStatus() {
         
         console.log('GitHub API initialized successfully');
         
-        // Test GitHub API access to ensure token is valid
-        console.log('Testing GitHub API access...');
-        githubAPI.testAccess()
-            .then(success => {
-                console.log('GitHub API access test result:', success);
-                if (success) {
-                    // Show dashboard
-                    showDashboard(username);
-                    
-                    // Load customers
-                    loadCustomers();
-                } else {
-                    // Token is invalid, show login prompt
-                    console.error('GitHub token is invalid');
-                    showLoginPrompt();
-                }
-            })
-            .catch(error => {
-                console.error('Error testing GitHub access:', error);
-                showLoginPrompt();
-            });
+        // Show dashboard immediately without testing API access
+        showDashboard(username);
+        
+        // Load customers
+        loadCustomers();
     } catch (error) {
         console.error('Error initializing GitHub API:', error);
         showLoginPrompt();
