@@ -692,6 +692,26 @@
             margin-bottom: 15px;
             display: none;
         }
+        
+        /* Status badge styles */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.in-progress {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .status-badge.completed {
+            background-color: #2ecc71;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -861,7 +881,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.6</span>
+                <span class="version" id="app-version">v1.2.7</span>
             </div>
         </footer>
     </div>
@@ -1075,44 +1095,33 @@
         
         // Load in-progress surveys
         async function loadInProgressSurveys() {
-            inProgressContent.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>Loading in-progress surveys...</p></div>';
+            showLoadingIndicator(inProgressContent);
             
             try {
-                let inProgressSurveys = [];
-                let completedSurveys = [];
+                // Get GitHub API instance
+                const github = new GitHubAPI({
+                    token: localStorage.getItem('github_token'),
+                    owner: config.github.owner,
+                    repo: config.github.repo,
+                    branch: config.github.branch,
+                    resultsPath: config.github.resultsPath
+                });
                 
-                // If GitHub API is configured, try to load surveys from GitHub
-                if (githubAPI && config.github.token) {
-                    githubAPI.setToken(config.github.token);
-                    
-                    try {
-                        const result = await githubAPI.getInProgressAndCompletedSurveys();
-                        inProgressSurveys = result.inProgressSurveys || [];
-                        completedSurveys = result.completedSurveys || [];
-                        console.log('Loaded surveys from GitHub:', 
-                            inProgressSurveys.length + ' in progress, ' + 
-                            completedSurveys.length + ' completed');
-                    } catch (error) {
-                        console.warn('Could not load surveys index, falling back to default behavior:', error);
-                        // Continue with empty arrays, will show "No surveys" message
-                    }
-                }
+                // Get in-progress surveys
+                const surveys = await github.getInProgressSurveys();
+                console.log('Loaded in-progress surveys:', surveys);
                 
-                // Display in-progress surveys
-                displayInProgressSurveys(inProgressSurveys);
-                
-                // Display completed surveys if we have them
-                if (completedSurveys.length > 0) {
-                    displayCompletedSurveys(completedSurveys);
-                }
+                // Display surveys
+                displayInProgressSurveys(surveys);
             } catch (error) {
-                console.error('Error loading surveys:', error);
+                console.error('Error loading in-progress surveys:', error);
                 inProgressContent.innerHTML = `
                     <div class="error-message">
-                        <p>Error loading in-progress surveys. Please try again.</p>
-                        <p>Error details: ${error.message}</p>
+                        <p>Error loading in-progress surveys: ${error.message}</p>
                     </div>
                 `;
+            } finally {
+                hideLoadingIndicator(inProgressContent);
             }
         }
         
@@ -1123,8 +1132,12 @@
                 return;
             }
             
-            // Sort by start time (newest first)
-            surveys.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            // Sort by timestamp (newest first)
+            surveys.sort((a, b) => {
+                const dateA = a.timestamp || a.startTime || new Date().toISOString();
+                const dateB = b.timestamp || b.startTime || new Date().toISOString();
+                return new Date(dateB) - new Date(dateA);
+            });
             
             let html = `
                 <table class="in-progress-table">
@@ -1132,36 +1145,44 @@
                         <tr>
                             <th>Candidate</th>
                             <th>Email</th>
-                            <th>Time Elapsed</th>
-                            <th>Progress</th>
+                            <th>Started</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
             
             surveys.forEach(survey => {
-                // Calculate current elapsed time
-                const startTime = new Date(survey.startTime);
+                // Get candidate name and email
+                const candidateName = survey.candidateName || survey.name || 'Unknown';
+                const candidateEmail = survey.candidateEmail || survey.email || 'Unknown';
+                
+                // Calculate time since start
+                const startTime = new Date(survey.timestamp || survey.startTime || new Date());
                 const now = new Date();
                 const elapsedMs = now - startTime;
                 const elapsedMinutes = Math.floor(elapsedMs / 60000);
-                const elapsedSeconds = Math.floor((elapsedMs % 60000) / 1000);
+                const elapsedHours = Math.floor(elapsedMinutes / 60);
                 
-                // Format time as MM:SS
-                const timeDisplay = `${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`;
+                // Format time as HH:MM or MM minutes
+                let timeDisplay;
+                if (elapsedHours > 0) {
+                    timeDisplay = `${elapsedHours}h ${elapsedMinutes % 60}m ago`;
+                } else {
+                    timeDisplay = `${elapsedMinutes}m ago`;
+                }
+                
+                // Format date
+                const formattedDate = startTime.toLocaleDateString() + ' ' + 
+                                    startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
                 html += `
                     <tr>
-                        <td>${survey.name}</td>
-                        <td>${survey.email}</td>
-                        <td class="time-elapsed">${timeDisplay}</td>
+                        <td>${candidateName}</td>
+                        <td>${candidateEmail}</td>
+                        <td title="${formattedDate}">${timeDisplay}</td>
                         <td>
-                            <div class="progress-indicator">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${survey.progress}%"></div>
-                                </div>
-                                <span class="progress-text">${survey.progress}% (Q${survey.currentQuestion}/${survey.totalQuestions})</span>
-                            </div>
+                            <span class="status-badge in-progress">In Progress</span>
                         </td>
                     </tr>
                 `;
@@ -1173,135 +1194,6 @@
             `;
             
             inProgressContent.innerHTML = html;
-            
-            // Start auto-refresh timer for elapsed time
-            startInProgressTimeUpdater(surveys);
-        }
-        
-        // Update elapsed time for in-progress surveys
-        let timeUpdateInterval;
-        function startInProgressTimeUpdater(surveys) {
-            // Clear any existing interval
-            if (timeUpdateInterval) {
-                clearInterval(timeUpdateInterval);
-            }
-            
-            // Update every second
-            timeUpdateInterval = setInterval(() => {
-                const timeElements = document.querySelectorAll('.in-progress-table .time-elapsed');
-                if (timeElements.length === 0) {
-                    clearInterval(timeUpdateInterval);
-                    return;
-                }
-                
-                surveys.forEach((survey, index) => {
-                    if (index < timeElements.length) {
-                        const startTime = new Date(survey.startTime);
-                        const now = new Date();
-                        const elapsedMs = now - startTime;
-                        const elapsedMinutes = Math.floor(elapsedMs / 60000);
-                        const elapsedSeconds = Math.floor((elapsedMs % 60000) / 1000);
-                        
-                        // Format time as MM:SS
-                        const timeDisplay = `${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`;
-                        timeElements[index].textContent = timeDisplay;
-                    }
-                });
-            }, 1000);
-        }
-        
-        // Display completed surveys
-        function displayCompletedSurveys(surveys) {
-            const resultsContainer = document.getElementById('results-container');
-            
-            if (!surveys || surveys.length === 0) {
-                resultsContainer.innerHTML = '<p class="no-results">No completed surveys found.</p>';
-                return;
-            }
-            
-            // Sort by completion time (newest first)
-            surveys.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            let html = `
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Candidate</th>
-                            <th>Email</th>
-                            <th>Completion Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            surveys.forEach(survey => {
-                // Format date
-                const completionDate = new Date(survey.timestamp);
-                const formattedDate = completionDate.toLocaleDateString() + ' ' + 
-                                     completionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                html += `
-                    <tr>
-                        <td>${survey.candidateName}</td>
-                        <td>${survey.candidateEmail}</td>
-                        <td>${formattedDate}</td>
-                        <td>
-                            <button class="btn view-details-btn" data-candidate="${survey.candidateName}" data-email="${survey.candidateEmail}">
-                                View Details
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            html += `
-                    </tbody>
-                </table>
-            `;
-            
-            resultsContainer.innerHTML = html;
-            
-            // Add event listeners to view details buttons
-            const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
-            viewDetailsButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const candidateName = this.getAttribute('data-candidate');
-                    const candidateEmail = this.getAttribute('data-email');
-                    loadCandidateDetails(candidateName, candidateEmail);
-                });
-            });
-        }
-        
-        // Load candidate details
-        function loadCandidateDetails(candidateName, candidateEmail) {
-            showLoading(true);
-            
-            // Show modal with loading indicator
-            const detailsModal = document.getElementById('details-modal');
-            const candidateDetailsContainer = document.getElementById('candidate-details-container');
-            candidateDetailsContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>Loading candidate details...</p></div>';
-            detailsModal.style.display = 'block';
-            
-            // TODO: Implement loading candidate details from GitHub
-            // For now, just show a placeholder
-            setTimeout(() => {
-                candidateDetailsContainer.innerHTML = `
-                    <h2>${candidateName}</h2>
-                    <p>${candidateEmail}</p>
-                    <p>Survey completed on ${new Date().toLocaleDateString()}</p>
-                    <div class="placeholder-message">
-                        <p>Detailed results will be available in a future update.</p>
-                    </div>
-                `;
-                showLoading(false);
-            }, 1000);
-        }
-        
-        // Show or hide loading indicator
-        function showLoading(show) {
-            loadingIndicator.style.display = show ? 'flex' : 'none';
-            resultsContainer.style.display = show ? 'none' : 'block';
         }
         
         // Display results in the table
@@ -1634,6 +1526,16 @@
                 });
             }
         });
+        
+        // Helper functions for loading indicators
+        function showLoadingIndicator(container) {
+            container.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>Loading data...</p></div>';
+        }
+        
+        function hideLoadingIndicator(container) {
+            // This doesn't actually do anything as the container will be replaced with content
+            // But it's here for completeness
+        }
     </script>
 </body>
 </html>
