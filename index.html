@@ -393,7 +393,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.9</span>
+                <span class="version" id="app-version">v1.3.0</span>
             </div>
         </footer>
         
@@ -420,43 +420,7 @@
                 } else {
                     console.log(message);
                 }
-                
-                // Add visible debug message to page
-                const debugContainer = document.getElementById('debug-container');
-                if (debugContainer) {
-                    const msgElement = document.createElement('div');
-                    msgElement.textContent = message;
-                    msgElement.style.color = isError ? 'red' : 'blue';
-                    msgElement.style.margin = '5px 0';
-                    debugContainer.appendChild(msgElement);
-                }
             }
-            
-            // Add debug container to page
-            function addDebugContainer() {
-                const container = document.querySelector('.container');
-                if (container) {
-                    const debugContainer = document.createElement('div');
-                    debugContainer.id = 'debug-container';
-                    debugContainer.style.position = 'fixed';
-                    debugContainer.style.bottom = '10px';
-                    debugContainer.style.right = '10px';
-                    debugContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-                    debugContainer.style.padding = '10px';
-                    debugContainer.style.border = '1px solid #ccc';
-                    debugContainer.style.maxHeight = '200px';
-                    debugContainer.style.overflow = 'auto';
-                    debugContainer.style.zIndex = '1000';
-                    debugContainer.style.fontSize = '12px';
-                    debugContainer.style.fontFamily = 'monospace';
-                    container.appendChild(debugContainer);
-                    
-                    debugLog('Debug container added');
-                }
-            }
-            
-            // Add debug container immediately
-            addDebugContainer();
             
             // Load data directly with synchronous XMLHttpRequest to ensure it's loaded
             function loadSurveyDataDirectly() {

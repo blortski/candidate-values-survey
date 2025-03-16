@@ -881,7 +881,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.9</span>
+                <span class="version" id="app-version">v1.3.0</span>
             </div>
         </footer>
     </div>
@@ -1136,6 +1136,15 @@
                     throw new Error('GitHub API configuration failed. Token may be invalid.');
                 }
                 
+                // First, ensure the in-progress directory exists
+                try {
+                    await github.ensureInProgressDirectory();
+                    console.log('In-progress directory ensured');
+                } catch (error) {
+                    console.warn('Error ensuring in-progress directory exists:', error);
+                    // Continue anyway, as the directory might already exist
+                }
+                
                 // Get in-progress surveys
                 const surveys = await github.getInProgressSurveys();
                 console.log('Loaded in-progress surveys:', surveys);
@@ -1157,72 +1166,55 @@
         // Display in-progress surveys
         function displayInProgressSurveys(surveys) {
             if (!surveys || surveys.length === 0) {
-                inProgressContent.innerHTML = '<p class="no-in-progress">No surveys currently in progress.</p>';
+                inProgressContent.innerHTML = '<p>No in-progress surveys found.</p>';
                 return;
             }
             
-            // Sort by timestamp (newest first)
-            surveys.sort((a, b) => {
-                const dateA = a.timestamp || a.startTime || new Date().toISOString();
-                const dateB = b.timestamp || b.startTime || new Date().toISOString();
-                return new Date(dateB) - new Date(dateA);
-            });
+            console.log('Displaying in-progress surveys:', surveys);
             
-            let html = `
-                <table class="in-progress-table">
-                    <thead>
-                        <tr>
-                            <th>Candidate</th>
-                            <th>Email</th>
-                            <th>Started</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+            let html = '<div class="survey-list">';
             
             surveys.forEach(survey => {
-                // Get candidate name and email
-                const candidateName = survey.candidateName || survey.name || 'Unknown';
-                const candidateEmail = survey.candidateEmail || survey.email || 'Unknown';
-                
-                // Calculate time since start
-                const startTime = new Date(survey.timestamp || survey.startTime || new Date());
-                const now = new Date();
-                const elapsedMs = now - startTime;
-                const elapsedMinutes = Math.floor(elapsedMs / 60000);
-                const elapsedHours = Math.floor(elapsedMinutes / 60);
-                
-                // Format time as HH:MM or MM minutes
-                let timeDisplay;
-                if (elapsedHours > 0) {
-                    timeDisplay = `${elapsedHours}h ${elapsedMinutes % 60}m ago`;
-                } else {
-                    timeDisplay = `${elapsedMinutes}m ago`;
+                try {
+                    // Extract candidate name from the filename (format: candidate-name.json)
+                    const candidateName = survey.name.replace('.json', '');
+                    
+                    // Format date from survey.created or survey.updated
+                    const date = survey.updated || survey.created || 'Unknown date';
+                    const formattedDate = new Date(date).toLocaleString();
+                    
+                    html += `
+                        <div class="survey-item">
+                            <div class="survey-info">
+                                <h3>${candidateName}</h3>
+                                <p>Started: ${formattedDate}</p>
+                            </div>
+                            <div class="survey-actions">
+                                <button class="btn secondary-btn view-in-progress-btn" data-survey="${survey.path}" data-name="${candidateName}">
+                                    View Details
+                                </button>
+                                <button class="btn danger-btn remove-in-progress-btn" data-survey="${survey.path}" data-name="${candidateName}">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Error formatting survey item:', error, survey);
                 }
-                
-                // Format date
-                const formattedDate = startTime.toLocaleDateString() + ' ' + 
-                                    startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                html += `
-                    <tr>
-                        <td>${candidateName}</td>
-                        <td>${candidateEmail}</td>
-                        <td title="${formattedDate}">${timeDisplay}</td>
-                        <td>
-                            <span class="status-badge in-progress">In Progress</span>
-                        </td>
-                    </tr>
-                `;
             });
             
-            html += `
-                    </tbody>
-                </table>
-            `;
-            
+            html += '</div>';
             inProgressContent.innerHTML = html;
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.view-in-progress-btn').forEach(btn => {
+                btn.addEventListener('click', () => viewInProgressSurvey(btn.dataset.survey, btn.dataset.name));
+            });
+            
+            document.querySelectorAll('.remove-in-progress-btn').forEach(btn => {
+                btn.addEventListener('click', () => removeInProgressSurvey(btn.dataset.survey, btn.dataset.name));
+            });
         }
         
         // Display results in the table
@@ -1591,6 +1583,108 @@
         function hideLoadingIndicator(container) {
             // This doesn't actually do anything as the container will be replaced with content
             // But it's here for completeness
+        }
+        
+        // View in-progress survey details
+        async function viewInProgressSurvey(surveyPath, candidateName) {
+            try {
+                // Get token from localStorage
+                const token = localStorage.getItem('github_token');
+                
+                if (!token) {
+                    throw new Error('GitHub token not found. Please configure your GitHub token in the settings.');
+                }
+                
+                // Get GitHub API instance
+                const github = new GitHubAPI({
+                    token: token,
+                    owner: config.github.owner,
+                    repo: config.github.repo,
+                    branch: config.github.branch,
+                    resultsPath: config.github.resultsPath
+                });
+                
+                // Get survey data
+                const surveyData = await github.getFileContent(surveyPath);
+                
+                // Create modal for displaying survey details
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>In-Progress Survey: ${candidateName}</h2>
+                            <span class="close-modal">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <pre>${JSON.stringify(surveyData, null, 2)}</pre>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn primary-btn close-btn">Close</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add modal to body
+                document.body.appendChild(modal);
+                
+                // Add event listeners
+                modal.querySelector('.close-modal').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+                
+                modal.querySelector('.close-btn').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+                
+                // Close when clicking outside
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                    }
+                });
+            } catch (error) {
+                console.error('Error viewing in-progress survey:', error);
+                alert(`Error viewing survey: ${error.message}`);
+            }
+        }
+        
+        // Remove in-progress survey
+        async function removeInProgressSurvey(surveyPath, candidateName) {
+            // Confirm deletion
+            if (!confirm(`Are you sure you want to remove the in-progress survey for ${candidateName}?`)) {
+                return;
+            }
+            
+            try {
+                // Get token from localStorage
+                const token = localStorage.getItem('github_token');
+                
+                if (!token) {
+                    throw new Error('GitHub token not found. Please configure your GitHub token in the settings.');
+                }
+                
+                // Get GitHub API instance
+                const github = new GitHubAPI({
+                    token: token,
+                    owner: config.github.owner,
+                    repo: config.github.repo,
+                    branch: config.github.branch,
+                    resultsPath: config.github.resultsPath
+                });
+                
+                // Remove survey
+                await github.removeInProgressSurvey(surveyPath);
+                
+                // Reload in-progress surveys
+                loadInProgressSurveys();
+                
+                // Show success message
+                alert(`Successfully removed in-progress survey for ${candidateName}`);
+            } catch (error) {
+                console.error('Error removing in-progress survey:', error);
+                alert(`Error removing survey: ${error.message}`);
+            }
         }
     </script>
 </body>
