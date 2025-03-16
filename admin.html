@@ -881,7 +881,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.7</span>
+                <span class="version" id="app-version">v1.2.8</span>
             </div>
         </footer>
     </div>
@@ -1098,14 +1098,28 @@
             showLoadingIndicator(inProgressContent);
             
             try {
+                // Get token from localStorage
+                const token = localStorage.getItem('github_token');
+                
+                if (!token) {
+                    throw new Error('GitHub token not found. Please configure your GitHub token in the settings.');
+                }
+                
+                console.log('GitHub token found:', token ? 'Yes (token exists)' : 'No');
+                
                 // Get GitHub API instance
                 const github = new GitHubAPI({
-                    token: localStorage.getItem('github_token'),
+                    token: token,
                     owner: config.github.owner,
                     repo: config.github.repo,
                     branch: config.github.branch,
                     resultsPath: config.github.resultsPath
                 });
+                
+                // Explicitly check if configured
+                if (!github.isConfigured()) {
+                    throw new Error('GitHub API configuration failed. Token may be invalid.');
+                }
                 
                 // Get in-progress surveys
                 const surveys = await github.getInProgressSurveys();
@@ -1425,6 +1439,37 @@
         
         // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize GitHub API on page load
+            const token = localStorage.getItem('github_token');
+            if (token) {
+                console.log('GitHub token found on page load');
+                
+                // Initialize GitHub API
+                try {
+                    const github = new GitHubAPI({
+                        token: token,
+                        owner: config.github.owner,
+                        repo: config.github.repo,
+                        branch: config.github.branch,
+                        resultsPath: config.github.resultsPath
+                    });
+                    
+                    if (github.isConfigured()) {
+                        console.log('GitHub API initialized successfully');
+                    } else {
+                        console.warn('GitHub API not properly configured');
+                    }
+                } catch (error) {
+                    console.error('Error initializing GitHub API:', error);
+                }
+            } else {
+                console.warn('No GitHub token found on page load');
+            }
+            
+            // Load initial data
+            loadInProgressSurveys();
+            loadCompletedSurveys();
+            
             // Check authentication on page load
             checkAuth();
             
