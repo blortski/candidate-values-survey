@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.8.5
+ * Version: v1.8.6
  */
 
 // Global variables
@@ -13,28 +13,41 @@ let customers = [];
 let currentCustomerId = null;
 
 // DOM elements
-const loginPrompt = document.getElementById('login-prompt');
-const dashboardContent = document.getElementById('dashboard-content');
-const dashboardSection = document.getElementById('dashboard-section');
-const customersContainer = document.getElementById('customers-container');
-const addCustomerForm = document.getElementById('add-customer-form');
-const editCustomerModal = document.getElementById('edit-customer-modal');
-const confirmDeleteModal = document.getElementById('confirm-delete-modal');
-const logoutButton = document.getElementById('logout-btn');
-const userDisplay = document.getElementById('user-display');
-const addCustomerButton = document.getElementById('add-customer-btn');
-const goToLoginButton = document.getElementById('go-to-login-btn');
+let loginPrompt;
+let dashboardContent;
+let dashboardSection;
+let customersContainer;
+let addCustomerForm;
+let editCustomerModal;
+let confirmDeleteModal;
+let logoutButton;
+let userDisplay;
+let addCustomerButton;
+let goToLoginButton;
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard v1.8.5...');
+    console.log('Initializing master admin dashboard v1.8.6...');
     console.log('Config loaded:', config);
+    
+    // Initialize DOM elements
+    loginPrompt = document.getElementById('login-prompt');
+    dashboardContent = document.getElementById('dashboard-content');
+    dashboardSection = document.getElementById('dashboard-section');
+    customersContainer = document.getElementById('customers-container');
+    addCustomerForm = document.getElementById('add-customer-form');
+    editCustomerModal = document.getElementById('edit-customer-modal');
+    confirmDeleteModal = document.getElementById('confirm-delete-modal');
+    logoutButton = document.getElementById('logout-btn');
+    userDisplay = document.getElementById('user-display');
+    addCustomerButton = document.getElementById('add-customer-btn');
+    goToLoginButton = document.getElementById('go-to-login-btn');
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.8.5';
-        console.log('Set version to:', 'v1.8.5');
+        versionElement.textContent = 'v1.8.6';
+        console.log('Set version to:', 'v1.8.6');
     }
     
     // Set up event listeners
