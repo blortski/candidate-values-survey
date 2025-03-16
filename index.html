@@ -310,6 +310,40 @@
                 page-break-inside: avoid;
             }
         }
+        
+        /* Multiple choice options */
+        .options-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .option {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .option:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .option label {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .option input[type="radio"] {
+            margin-right: 10px;
+            margin-top: 3px;
+        }
+        
+        .option-text {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -356,7 +390,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.2</span>
+                <span class="version" id="app-version">v1.2.3</span>
             </div>
         </footer>
     </div>
@@ -651,62 +685,108 @@
                 return;
             }
             
-            // Create the question HTML
-            questionContainer.innerHTML = `
-                <div class="question">
-                    <h3>${question.text}</h3>
-                    <div class="rating-container">
-                        <div class="rating-scale">
-                            <span class="rating-label">Strongly Disagree</span>
-                            <div class="rating-options">
-                                <label>
-                                    <input type="radio" name="rating" value="1" ${userResponses[questionIndex] === 1 ? 'checked' : ''}>
-                                    <span>1</span>
-                                </label>
-                                <label>
-                                    <input type="radio" name="rating" value="2" ${userResponses[questionIndex] === 2 ? 'checked' : ''}>
-                                    <span>2</span>
-                                </label>
-                                <label>
-                                    <input type="radio" name="rating" value="3" ${userResponses[questionIndex] === 3 ? 'checked' : ''}>
-                                    <span>3</span>
-                                </label>
-                                <label>
-                                    <input type="radio" name="rating" value="4" ${userResponses[questionIndex] === 4 ? 'checked' : ''}>
-                                    <span>4</span>
-                                </label>
-                                <label>
-                                    <input type="radio" name="rating" value="5" ${userResponses[questionIndex] === 5 ? 'checked' : ''}>
-                                    <span>5</span>
-                                </label>
-                            </div>
-                            <span class="rating-label">Strongly Agree</span>
+            // Check if the question has options (multiple choice)
+            if (question.options && question.options.length > 0) {
+                debugLog('Displaying multiple choice question with ' + question.options.length + ' options');
+                
+                // Create options HTML
+                let optionsHTML = '';
+                question.options.forEach(option => {
+                    const isChecked = userResponses[questionIndex] === option.id ? 'checked' : '';
+                    optionsHTML += `
+                        <div class="option">
+                            <label>
+                                <input type="radio" name="option" value="${option.id}" ${isChecked}>
+                                <span class="option-text">${option.id}. ${option.text}</span>
+                            </label>
+                        </div>
+                    `;
+                });
+                
+                // Create the question HTML for multiple choice
+                questionContainer.innerHTML = `
+                    <div class="question">
+                        <h3>${question.text}</h3>
+                        <div class="options-container">
+                            ${optionsHTML}
                         </div>
                     </div>
-                </div>
-                <div class="navigation-buttons">
-                    ${questionIndex > 0 ? 
-                        `<button id="prev-question" class="btn secondary-btn">Previous</button>` : 
-                        `<div></div>`}
-                    ${questionIndex < directSurveyData.questions.length - 1 ? 
-                        `<button id="next-question" class="btn primary-btn">Next</button>` : 
-                        `<button id="submit-survey" class="btn primary-btn">Submit</button>`}
-                </div>
-            `;
+                    <div class="navigation-buttons">
+                        ${questionIndex > 0 ? 
+                            `<button id="prev-question" class="btn secondary-btn">Previous</button>` : 
+                            `<div></div>`}
+                        ${questionIndex < directSurveyData.questions.length - 1 ? 
+                            `<button id="next-question" class="btn primary-btn">Next</button>` : 
+                            `<button id="submit-survey" class="btn primary-btn">Submit</button>`}
+                    </div>
+                `;
+            } else {
+                // Fallback to rating scale if no options are provided
+                debugLog('Displaying rating scale question (fallback)');
+                
+                // Create the question HTML for rating scale
+                questionContainer.innerHTML = `
+                    <div class="question">
+                        <h3>${question.text}</h3>
+                        <div class="rating-container">
+                            <div class="rating-scale">
+                                <span class="rating-label">Strongly Disagree</span>
+                                <div class="rating-options">
+                                    <label>
+                                        <input type="radio" name="rating" value="1" ${userResponses[questionIndex] === 1 ? 'checked' : ''}>
+                                        <span>1</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="rating" value="2" ${userResponses[questionIndex] === 2 ? 'checked' : ''}>
+                                        <span>2</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="rating" value="3" ${userResponses[questionIndex] === 3 ? 'checked' : ''}>
+                                        <span>3</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="rating" value="4" ${userResponses[questionIndex] === 4 ? 'checked' : ''}>
+                                        <span>4</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="rating" value="5" ${userResponses[questionIndex] === 5 ? 'checked' : ''}>
+                                        <span>5</span>
+                                    </label>
+                                </div>
+                                <span class="rating-label">Strongly Agree</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation-buttons">
+                        ${questionIndex > 0 ? 
+                            `<button id="prev-question" class="btn secondary-btn">Previous</button>` : 
+                            `<div></div>`}
+                        ${questionIndex < directSurveyData.questions.length - 1 ? 
+                            `<button id="next-question" class="btn primary-btn">Next</button>` : 
+                            `<button id="submit-survey" class="btn primary-btn">Submit</button>`}
+                    </div>
+                `;
+            }
             
             // Add event listeners to navigation buttons
             const nextButton = document.getElementById('next-question');
             if (nextButton) {
                 nextButton.addEventListener('click', function() {
-                    // Check if a rating is selected
-                    const selectedRating = document.querySelector('input[name="rating"]:checked');
-                    if (!selectedRating) {
-                        alert('Please select a rating before proceeding.');
+                    // Check if a rating or option is selected
+                    const selectedOption = question.options && question.options.length > 0 
+                        ? document.querySelector('input[name="option"]:checked')
+                        : document.querySelector('input[name="rating"]:checked');
+                    
+                    if (!selectedOption) {
+                        alert('Please select an option before proceeding.');
                         return;
                     }
                     
                     // Store the response
-                    const response = parseInt(selectedRating.value);
+                    const response = question.options && question.options.length > 0 
+                        ? selectedOption.value
+                        : parseInt(selectedOption.value);
+                    
                     userResponses[questionIndex] = response;
                     debugLog(`Question ${questionIndex + 1} response: ${response}`);
                     
@@ -725,15 +805,21 @@
             const submitButton = document.getElementById('submit-survey');
             if (submitButton) {
                 submitButton.addEventListener('click', function() {
-                    // Check if a rating is selected
-                    const selectedRating = document.querySelector('input[name="rating"]:checked');
-                    if (!selectedRating) {
-                        alert('Please select a rating before submitting.');
+                    // Check if a rating or option is selected
+                    const selectedOption = question.options && question.options.length > 0 
+                        ? document.querySelector('input[name="option"]:checked')
+                        : document.querySelector('input[name="rating"]:checked');
+                    
+                    if (!selectedOption) {
+                        alert('Please select an option before submitting.');
                         return;
                     }
                     
                     // Store the response
-                    const response = parseInt(selectedRating.value);
+                    const response = question.options && question.options.length > 0 
+                        ? selectedOption.value
+                        : parseInt(selectedOption.value);
+                    
                     userResponses[questionIndex] = response;
                     debugLog(`Question ${questionIndex + 1} response: ${response}`);
                     
