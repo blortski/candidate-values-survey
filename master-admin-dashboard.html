@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.2&t=20250316122652">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.3&t=20250316123541">
     <style>
         body {
             background-color: #f5f8fa;
@@ -62,6 +62,27 @@
         
         .btn:hover {
             background-color: #1b5e20;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        .btn-secondary {
+            background-color: #607d8b;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #455a64;
+        }
+        
+        .btn-copy {
+            background-color: #2196f3;
+        }
+        
+        .btn-copy:hover {
+            background-color: #0d47a1;
         }
         
         .login-prompt {
@@ -129,7 +150,8 @@
         
         .customer-actions {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-top: 20px;
         }
         
@@ -166,6 +188,50 @@
             font-size: 24px;
             cursor: pointer;
             color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #4caf50;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1100;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
         }
         
         footer {
@@ -230,7 +296,7 @@
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn">Save</button>
-                        <button type="button" id="cancel-add-customer" class="btn secondary-btn">Cancel</button>
+                        <button type="button" id="cancel-add-customer" class="btn btn-secondary">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -257,7 +323,7 @@
                     </div>
                     <div class="form-actions">
                         <button type="button" id="save-edit-customer-btn" class="btn">Save</button>
-                        <button type="button" class="btn secondary-btn close-modal-btn">Cancel</button>
+                        <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -272,18 +338,21 @@
                 <input type="hidden" id="delete-customer-id">
                 <div class="form-actions">
                     <button type="button" id="confirm-delete-btn" class="btn">Delete</button>
-                    <button type="button" class="btn secondary-btn close-modal-btn">Cancel</button>
+                    <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
                 </div>
             </div>
         </div>
         
+        <!-- Notification -->
+        <div id="notification" class="notification"></div>
+        
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.2</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.3</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.2&t=20250316122652"></script>
+    <script src="js/lib/config.js?v=1.7.3&t=20250316123541"></script>
     <script>
         // Global variables
         let customers = [];
@@ -300,16 +369,17 @@
         const logoutButton = document.getElementById('logout-btn');
         const userDisplay = document.getElementById('user-display');
         const addCustomerButton = document.getElementById('add-customer-btn');
+        const notification = document.getElementById('notification');
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing master admin dashboard v1.7.2...');
+            console.log('Initializing master admin dashboard v1.7.3...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.2';
-                console.log('Set version to:', 'v1.7.2');
+                versionElement.textContent = 'v1.7.3';
+                console.log('Set version to:', 'v1.7.3');
             }
             
             // Make sure all modals are hidden
@@ -341,7 +411,7 @@
             
             console.log('User is logged in:', username);
             showDashboard(username);
-            loadDummyCustomers(); // Load dummy data for demonstration
+            loadCustomers(); // Load stored customer data
         }
         
         /**
@@ -398,16 +468,50 @@
         }
         
         /**
-         * Load dummy customers for demonstration
+         * Load customers from localStorage
          */
-        function loadDummyCustomers() {
-            customers = [
+        function loadCustomers() {
+            const storedCustomers = localStorage.getItem('customers');
+            
+            if (storedCustomers) {
+                try {
+                    customers = JSON.parse(storedCustomers);
+                    console.log('Loaded customers from localStorage:', customers.length);
+                } catch (error) {
+                    console.error('Error parsing customers from localStorage:', error);
+                    customers = getDefaultCustomers();
+                }
+            } else {
+                console.log('No customers found in localStorage, loading defaults');
+                customers = getDefaultCustomers();
+                saveCustomers();
+            }
+            
+            renderCustomers();
+        }
+        
+        /**
+         * Get default customers for first-time users
+         */
+        function getDefaultCustomers() {
+            return [
                 { id: '1', name: 'Wild Zora Foods', contact: 'Joshua Smith', email: 'joshua@wildzora.com' },
                 { id: '2', name: 'Acme Corporation', contact: 'Jane Doe', email: 'jane@acme.com' },
                 { id: '3', name: 'Tech Innovations', contact: 'John Smith', email: 'john@techinnovations.com' }
             ];
-            
-            renderCustomers();
+        }
+        
+        /**
+         * Save customers to localStorage
+         */
+        function saveCustomers() {
+            try {
+                localStorage.setItem('customers', JSON.stringify(customers));
+                console.log('Saved customers to localStorage:', customers.length);
+            } catch (error) {
+                console.error('Error saving customers to localStorage:', error);
+                showNotification('Error saving customer data', 'error');
+            }
         }
         
         /**
@@ -424,17 +528,58 @@
             customers.forEach(customer => {
                 const customerCard = document.createElement('div');
                 customerCard.className = 'customer-card';
+                
+                // Generate customer dashboard URL
+                const customerDashboardUrl = `https://blortski.github.io/candidate-values-survey/customer-admin-dashboard.html?id=${customer.id}`;
+                
                 customerCard.innerHTML = `
                     <h3>${customer.name}</h3>
                     <p><strong>Contact:</strong> ${customer.contact}</p>
                     <p><strong>Email:</strong> ${customer.email}</p>
                     <div class="customer-actions">
-                        <button class="btn" onclick="editCustomer('${customer.id}')">Edit</button>
-                        <button class="btn secondary-btn" onclick="showDeleteConfirmation('${customer.id}')">Delete</button>
+                        <button class="btn btn-copy btn-small" onclick="copyCustomerUrl('${customerDashboardUrl}', '${customer.name}')">Copy Dashboard URL</button>
+                        <button class="btn btn-small" onclick="editCustomer('${customer.id}')">Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="showDeleteConfirmation('${customer.id}')">Delete</button>
                     </div>
                 `;
                 customersContainer.appendChild(customerCard);
             });
+        }
+        
+        /**
+         * Copy customer dashboard URL to clipboard
+         * @param {string} url - The URL to copy
+         * @param {string} customerName - The name of the customer
+         */
+        function copyCustomerUrl(url, customerName) {
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    showNotification(`Dashboard URL for ${customerName} copied to clipboard`);
+                })
+                .catch(err => {
+                    console.error('Error copying URL to clipboard:', err);
+                    showNotification('Error copying URL to clipboard', 'error');
+                });
+        }
+        
+        /**
+         * Show notification
+         * @param {string} message - The message to display
+         * @param {string} type - The type of notification (success or error)
+         */
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = 'notification show';
+            
+            if (type === 'error') {
+                notification.style.backgroundColor = '#f44336';
+            } else {
+                notification.style.backgroundColor = '#4caf50';
+            }
+            
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 3000);
         }
         
         /**
@@ -471,8 +616,10 @@
             };
             
             customers.push(newCustomer);
+            saveCustomers();
             renderCustomers();
             hideAddCustomerForm();
+            showNotification(`Customer "${name}" added successfully`);
         }
         
         /**
@@ -505,8 +652,10 @@
             const index = customers.findIndex(c => c.id === id);
             if (index !== -1) {
                 customers[index] = { id, name, contact, email };
+                saveCustomers();
                 renderCustomers();
                 closeAllModals();
+                showNotification(`Customer "${name}" updated successfully`);
             }
         }
         
@@ -524,9 +673,16 @@
          */
         function deleteCustomer() {
             const id = document.getElementById('delete-customer-id').value;
-            customers = customers.filter(c => c.id !== id);
-            renderCustomers();
-            closeAllModals();
+            const customerToDelete = customers.find(c => c.id === id);
+            
+            if (customerToDelete) {
+                const customerName = customerToDelete.name;
+                customers = customers.filter(c => c.id !== id);
+                saveCustomers();
+                renderCustomers();
+                closeAllModals();
+                showNotification(`Customer "${customerName}" deleted successfully`);
+            }
         }
         
         /**
@@ -581,9 +737,10 @@
                 confirmDeleteButton.addEventListener('click', deleteCustomer);
             }
             
-            // Make edit and delete functions available globally
+            // Make functions available globally
             window.editCustomer = editCustomer;
             window.showDeleteConfirmation = showDeleteConfirmation;
+            window.copyCustomerUrl = copyCustomerUrl;
         }
     </script>
 </body>
