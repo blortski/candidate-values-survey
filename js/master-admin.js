@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.5.9
+ * Version: v1.6.0
  */
 
 // Global variables
@@ -276,10 +276,17 @@ function showDashboard(username) {
     
     // Show customer management options
     addCustomerButton.style.display = 'block';
-    viewCustomerButtons.forEach(button => button.style.display = 'block');
-    editCustomerButtons.forEach(button => button.style.display = 'block');
-    deleteCustomerButtons.forEach(button => button.style.display = 'block');
-    accessDashboardButtons.forEach(button => button.style.display = 'block');
+    
+    // Show customer management buttons for all customers
+    const viewButtons = document.querySelectorAll('.view-customer-btn');
+    const editButtons = document.querySelectorAll('.edit-customer-btn');
+    const deleteButtons = document.querySelectorAll('.delete-customer-btn');
+    
+    viewButtons.forEach(button => button.style.display = 'inline-block');
+    editButtons.forEach(button => button.style.display = 'inline-block');
+    deleteButtons.forEach(button => button.style.display = 'inline-block');
+    
+    console.log('Showing customer management buttons for logged in user:', username);
 }
 
 /**
