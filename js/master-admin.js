@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.5.6
+ * Version: v1.5.8
  */
 
 // Global variables
