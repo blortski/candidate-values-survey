@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Login</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.6.3&t=20250316105119">
-    <link rel="stylesheet" href="css/admin.css?v=1.6.3&t=20250316105119">
+    <link rel="stylesheet" href="css/styles.css?v=1.6.5&t=20250316105119">
+    <link rel="stylesheet" href="css/admin.css?v=1.6.5&t=20250316105119">
     <style>
         body {
             background-color: #f5f8fa;
@@ -124,19 +124,20 @@
         </div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.6.4</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.6.5</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.6.3&t=20250316105119"></script>
+    <script src="js/lib/config.js?v=1.6.5&t=20250316105119"></script>
+    <script src="js/lib/github-api.js?v=1.6.5&t=20250316105119"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement && window.config) {
-                versionElement.textContent = window.config.version;
-                console.log('Set version to:', window.config.version);
+                versionElement.textContent = 'v1.6.5';
+                console.log('Set version to:', 'v1.6.5');
             }
             
             // Check if already logged in
@@ -170,19 +171,47 @@
                     return;
                 }
                 
-                // Check password against config
-                if (password !== config.admin.password) {
-                    errorMessage.textContent = 'Invalid password';
+                // Check username and password against config
+                if (username !== 'Admin' || password !== 'WildZora2025') {
+                    errorMessage.textContent = 'Invalid username or password';
                     errorMessage.style.display = 'block';
                     return;
                 }
                 
-                // Store credentials in localStorage
-                localStorage.setItem('github_token', token);
-                localStorage.setItem('username', username);
+                // Test GitHub token before redirecting
+                console.log('Testing GitHub token...');
                 
-                // Redirect to dashboard
-                window.location.href = 'master-admin-dashboard.html';
+                // Create a temporary GitHub API instance to test the token
+                const testApi = new GitHubAPI({
+                    owner: config.github.owner,
+                    repo: config.github.repo,
+                    branch: config.github.branch,
+                    resultsPath: config.github.resultsPath,
+                    token: token
+                });
+                
+                testApi.testAccess()
+                    .then(success => {
+                        if (success) {
+                            console.log('GitHub token is valid, proceeding to dashboard');
+                            
+                            // Store credentials in localStorage
+                            localStorage.setItem('github_token', token);
+                            localStorage.setItem('username', username);
+                            
+                            // Redirect to dashboard
+                            window.location.href = 'master-admin-dashboard.html';
+                        } else {
+                            console.error('GitHub token is invalid');
+                            errorMessage.textContent = 'Invalid GitHub token. Please check and try again.';
+                            errorMessage.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error testing GitHub token:', error);
+                        errorMessage.textContent = 'Error validating GitHub token. Please try again.';
+                        errorMessage.style.display = 'block';
+                    });
             });
         });
     </script>

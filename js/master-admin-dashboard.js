@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.4
+ * Version: v1.6.5
  */
 
 // Global variables
@@ -27,12 +27,13 @@ const addCustomerButton = document.getElementById('add-customer-btn');
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing master admin dashboard...');
+    console.log('Config loaded:', config);
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = config.version;
-        console.log('Set version to:', config.version);
+        versionElement.textContent = 'v1.6.5';
+        console.log('Set version to:', 'v1.6.5');
     }
     
     // Check if user is logged in
@@ -49,37 +50,58 @@ function checkLoginStatus() {
     const token = localStorage.getItem('github_token');
     const username = localStorage.getItem('username');
     
+    console.log('Checking login status...');
+    console.log('Token exists:', !!token);
+    console.log('Username exists:', !!username);
+    
     if (token && username) {
         console.log('User is logged in:', username);
         
-        // Initialize GitHub API with proper configuration
-        githubAPI = new GitHubAPI({
-            owner: config.github.owner,
-            repo: config.github.repo,
-            branch: config.github.branch,
-            resultsPath: config.github.resultsPath,
-            token: token
-        });
-        
-        // Test GitHub API access to ensure token is valid
-        githubAPI.testAccess()
-            .then(success => {
-                if (success) {
-                    // Show dashboard
-                    showDashboard(username);
-                    
-                    // Load customers
-                    loadCustomers();
-                } else {
-                    // Token is invalid, show login prompt
-                    console.error('GitHub token is invalid');
-                    showLoginPrompt();
-                }
-            })
-            .catch(error => {
-                console.error('Error testing GitHub access:', error);
-                showLoginPrompt();
+        try {
+            // Initialize GitHub API with proper configuration
+            console.log('Initializing GitHub API with config:', {
+                owner: config.github.owner,
+                repo: config.github.repo,
+                branch: config.github.branch,
+                resultsPath: config.github.resultsPath,
+                token: token ? token.substring(0, 4) + '...' : 'null'
             });
+            
+            githubAPI = new GitHubAPI({
+                owner: config.github.owner,
+                repo: config.github.repo,
+                branch: config.github.branch,
+                resultsPath: config.github.resultsPath,
+                token: token
+            });
+            
+            console.log('GitHub API initialized:', githubAPI);
+            
+            // Test GitHub API access to ensure token is valid
+            console.log('Testing GitHub API access...');
+            githubAPI.testAccess()
+                .then(success => {
+                    console.log('GitHub API access test result:', success);
+                    if (success) {
+                        // Show dashboard
+                        showDashboard(username);
+                        
+                        // Load customers
+                        loadCustomers();
+                    } else {
+                        // Token is invalid, show login prompt
+                        console.error('GitHub token is invalid');
+                        showLoginPrompt();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error testing GitHub access:', error);
+                    showLoginPrompt();
+                });
+        } catch (error) {
+            console.error('Error initializing GitHub API:', error);
+            showLoginPrompt();
+        }
     } else {
         console.log('User not logged in, showing login prompt');
         showLoginPrompt();
@@ -90,6 +112,8 @@ function checkLoginStatus() {
  * Show the login prompt
  */
 function showLoginPrompt() {
+    console.log('Showing login prompt...');
+    
     // Clear any stored credentials
     localStorage.removeItem('github_token');
     localStorage.removeItem('username');
@@ -99,6 +123,8 @@ function showLoginPrompt() {
     
     // Hide dashboard content
     dashboardContent.classList.add('hidden');
+    
+    console.log('Login prompt displayed, dashboard hidden');
 }
 
 /**
@@ -106,59 +132,18 @@ function showLoginPrompt() {
  * @param {string} username - The username to display
  */
 function showDashboard(username) {
+    console.log('Showing dashboard for user:', username);
+    
+    // Set user display
+    userDisplay.textContent = username;
+    
     // Hide login prompt
     loginPrompt.classList.add('hidden');
     
     // Show dashboard content
     dashboardContent.classList.remove('hidden');
     
-    // Update user display
-    userDisplay.textContent = username;
-}
-
-/**
- * Set up event listeners
- */
-function setupEventListeners() {
-    // Logout button
-    if (logoutButton) {
-        logoutButton.addEventListener('click', handleLogout);
-    }
-    
-    // Add customer button
-    if (addCustomerButton) {
-        addCustomerButton.addEventListener('click', showAddCustomerForm);
-    }
-    
-    // Cancel add customer button
-    const cancelAddCustomerBtn = document.getElementById('cancel-add-customer');
-    if (cancelAddCustomerBtn) {
-        cancelAddCustomerBtn.addEventListener('click', hideAddCustomerForm);
-    }
-    
-    // Customer form submission
-    const customerForm = document.getElementById('customer-form');
-    if (customerForm) {
-        customerForm.addEventListener('submit', saveNewCustomer);
-    }
-    
-    // Edit customer save button
-    const saveEditCustomerBtn = document.getElementById('save-edit-customer-btn');
-    if (saveEditCustomerBtn) {
-        saveEditCustomerBtn.addEventListener('click', saveEditedCustomer);
-    }
-    
-    // Delete customer confirm button
-    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', deleteCustomer);
-    }
-    
-    // Close modal buttons
-    const closeModalButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
-    closeModalButtons.forEach(button => {
-        button.addEventListener('click', closeAllModals);
-    });
+    console.log('Dashboard displayed, login prompt hidden');
 }
 
 /**
@@ -532,4 +517,49 @@ function closeAllModals() {
     
     // Clear current customer ID
     currentCustomerId = null;
+}
+
+/**
+ * Set up event listeners
+ */
+function setupEventListeners() {
+    // Logout button
+    if (logoutButton) {
+        logoutButton.addEventListener('click', handleLogout);
+    }
+    
+    // Add customer button
+    if (addCustomerButton) {
+        addCustomerButton.addEventListener('click', showAddCustomerForm);
+    }
+    
+    // Cancel add customer button
+    const cancelAddCustomerBtn = document.getElementById('cancel-add-customer');
+    if (cancelAddCustomerBtn) {
+        cancelAddCustomerBtn.addEventListener('click', hideAddCustomerForm);
+    }
+    
+    // Customer form submission
+    const customerForm = document.getElementById('customer-form');
+    if (customerForm) {
+        customerForm.addEventListener('submit', saveNewCustomer);
+    }
+    
+    // Edit customer save button
+    const saveEditCustomerBtn = document.getElementById('save-edit-customer-btn');
+    if (saveEditCustomerBtn) {
+        saveEditCustomerBtn.addEventListener('click', saveEditedCustomer);
+    }
+    
+    // Delete customer confirm button
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', deleteCustomer);
+    }
+    
+    // Close modal buttons
+    const closeModalButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
+    closeModalButtons.forEach(button => {
+        button.addEventListener('click', closeAllModals);
+    });
 }
