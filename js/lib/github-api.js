@@ -195,7 +195,7 @@ class GitHubAPI {
     }
     
     /**
-     * Get all in-progress surveys from GitHub
+     * Get in-progress surveys from GitHub
      * @returns {Promise<Array>} - Promise resolving to an array of in-progress surveys
      */
     async getInProgressSurveys() {
@@ -231,22 +231,17 @@ class GitHubAPI {
             
             const files = await response.json();
             
-            // Filter out non-JSON files
+            // Filter out non-JSON files and README
             const jsonFiles = files.filter(file => 
                 file.type === 'file' && 
-                file.name.endsWith('.json')
+                file.name.endsWith('.json') &&
+                file.name !== 'README.md'
             );
             
-            // Get content of each file
-            const surveysPromises = jsonFiles.map(async file => {
-                const fileResponse = await fetch(file.download_url);
-                if (!fileResponse.ok) {
-                    throw new Error(`Failed to download file: ${file.name}`);
-                }
-                return await fileResponse.json();
-            });
+            console.log('Found in-progress survey files:', jsonFiles);
             
-            return await Promise.all(surveysPromises);
+            // Return the file metadata directly
+            return jsonFiles;
         } catch (error) {
             console.error('Error getting in-progress surveys from GitHub:', error);
             // Return empty array in case of error
@@ -408,23 +403,39 @@ class GitHubAPI {
     }
 
     /**
-     * Get file content from GitHub
+     * Get file content by path
      * @param {string} path - Path to the file
      * @returns {Promise<Object>} - Promise resolving to the file content
      */
     async getFileContent(path) {
-        const response = await fetch(`${this.baseUrl}/${path}?ref=${this.branch}`, {
-            headers: {
-                'Authorization': `token ${this.token}`
-            }
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`GitHub API error: ${errorData.message}`);
+        if (!this.isConfigured()) {
+            throw new Error('GitHub API is not configured. Please set a token.');
         }
         
-        return await response.json();
+        try {
+            // Get file content
+            const response = await fetch(`${this.baseUrl}/${path}?ref=${this.branch}`, {
+                headers: {
+                    'Authorization': `token ${this.token}`
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`GitHub API error: ${errorData.message}`);
+            }
+            
+            const fileData = await response.json();
+            
+            // Decode content
+            const content = atob(fileData.content);
+            
+            // Parse JSON content
+            return JSON.parse(content);
+        } catch (error) {
+            console.error('Error getting file content from GitHub:', error);
+            throw error;
+        }
     }
 
     /**
