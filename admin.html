@@ -744,7 +744,6 @@
                 <div class="dashboard-header">
                     <h2>Admin Dashboard</h2>
                     <div class="dashboard-actions">
-                        <button id="refresh-btn" class="btn secondary-btn">Refresh Data</button>
                         <button id="github-token-btn" class="btn secondary-btn">Set GitHub Token</button>
                         <button id="logout-btn" class="btn secondary-btn">Logout</button>
                     </div>
@@ -770,7 +769,6 @@
                 <div id="in-progress-container" class="in-progress-container">
                     <div class="in-progress-header">
                         <h3 class="in-progress-title"><span class="pulse"></span>In-Progress Surveys</h3>
-                        <button id="refresh-in-progress-btn" class="btn secondary-btn">Refresh</button>
                     </div>
                     <div id="in-progress-content">
                         <!-- In-progress surveys will be loaded here -->
@@ -786,7 +784,6 @@
                 <div class="values-section">
                     <div class="values-header">
                         <h3>Company Values Management</h3>
-                        <button id="refresh-values-btn" class="btn secondary-btn">Refresh Values</button>
                     </div>
                     <p>Manage the company values that are being tested in the survey. You can enable or disable values, edit their descriptions, and manage the assessment questions.</p>
                     <div id="values-error" class="error-message"></div>
@@ -881,7 +878,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.3.0</span>
+                <span class="version" id="app-version">v1.3.1</span>
             </div>
         </footer>
     </div>
@@ -908,7 +905,6 @@
         const loginBtn = document.getElementById('login-btn');
         const loginError = document.getElementById('login-error');
         const logoutBtn = document.getElementById('logout-btn');
-        const refreshBtn = document.getElementById('refresh-btn');
         const resultsContainer = document.getElementById('results-container');
         const loadingIndicator = document.getElementById('loading-indicator');
         const detailsModal = document.getElementById('details-modal');
@@ -916,7 +912,6 @@
         const candidateDetailsContainer = document.getElementById('candidate-details-container');
         const inProgressContainer = document.getElementById('in-progress-container');
         const inProgressContent = document.getElementById('in-progress-content');
-        const refreshInProgressBtn = document.getElementById('refresh-in-progress-btn');
         
         // Token modal elements
         const tokenModal = document.getElementById('token-modal');
@@ -941,7 +936,6 @@
         const closeEditQuestionModal = document.querySelector('.close-edit-question-modal');
         const saveValueBtn = document.getElementById('save-value-btn');
         const saveQuestionBtn = document.getElementById('save-question-btn');
-        const refreshValuesBtn = document.getElementById('refresh-values-btn');
         
         // Check if admin is logged in
         function checkAuth() {
@@ -990,6 +984,9 @@
                         setTimeout(() => {
                             loadResults();
                             loadInProgressSurveys();
+                            
+                            // Set up auto-refresh every 60 seconds
+                            startAutoRefresh();
                         }, 100);
                     } else {
                         console.warn('GitHub API not properly configured in showDashboard');
@@ -1028,7 +1025,13 @@
         
         // Handle logout
         function handleLogout() {
+            // Stop auto-refresh when logging out
+            stopAutoRefresh();
+            
+            // Clear admin authentication
             sessionStorage.removeItem('adminAuthenticated');
+            
+            // Show login section
             showLogin();
         }
         
@@ -1489,15 +1492,6 @@
             // Logout button
             logoutBtn.addEventListener('click', handleLogout);
             
-            // Refresh button
-            refreshBtn.addEventListener('click', () => {
-                loadResults();
-                loadInProgressSurveys();
-            });
-            
-            // Refresh in-progress button
-            refreshInProgressBtn.addEventListener('click', loadInProgressSurveys);
-            
             // GitHub token button
             githubTokenBtn.addEventListener('click', showTokenModal);
             
@@ -1532,10 +1526,10 @@
             });
             
             // Values management event listeners
-            if (refreshValuesBtn) {
-                refreshValuesBtn.addEventListener('click', function() {
+            if (saveValueBtn) {
+                saveValueBtn.addEventListener('click', function() {
                     if (window.adminValues) {
-                        window.adminValues.initialize();
+                        window.adminValues.saveEditedValue();
                     }
                 });
             }
@@ -1555,14 +1549,6 @@
             if (closeEditQuestionModal) {
                 closeEditQuestionModal.addEventListener('click', function() {
                     editQuestionModal.style.display = 'none';
-                });
-            }
-            
-            if (saveValueBtn) {
-                saveValueBtn.addEventListener('click', function() {
-                    if (window.adminValues) {
-                        window.adminValues.saveEditedValue();
-                    }
                 });
             }
             
@@ -1685,6 +1671,20 @@
                 console.error('Error removing in-progress survey:', error);
                 alert(`Error removing survey: ${error.message}`);
             }
+        }
+        
+        // Auto-refresh functionality
+        let autoRefreshInterval;
+        
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                loadResults();
+                loadInProgressSurveys();
+            }, 60000); // 60 seconds
+        }
+        
+        function stopAutoRefresh() {
+            clearInterval(autoRefreshInterval);
         }
     </script>
 </body>
