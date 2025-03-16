@@ -958,17 +958,19 @@
         
         // Show dashboard section
         function showDashboard() {
-            console.log('Showing dashboard...');
+            console.log('Showing dashboard... START');
             loginSection.style.display = 'none';
             dashboardSection.style.display = 'block';
             
             // Check if GitHub token is set in localStorage
             const token = localStorage.getItem('github_token');
+            console.log('GitHub token found?', !!token);
             
             if (token) {
                 console.log('GitHub token found in showDashboard');
                 
                 try {
+                    console.log('Initializing GitHub API with token');
                     // Initialize GitHub API with token
                     githubAPI = new GitHubAPI({
                         token: token,
@@ -977,12 +979,14 @@
                         branch: config.github.branch,
                         resultsPath: config.github.resultsPath
                     });
+                    console.log('GitHubAPI instance created');
                     
                     if (githubAPI.isConfigured()) {
                         console.log('GitHub API initialized successfully in showDashboard');
                         defaultTokenMessage.style.display = 'none';
                         
                         // Only load data if GitHub API is properly configured
+                        console.log('Setting timeout to load results');
                         setTimeout(() => {
                             console.log('Loading data after short delay...');
                             loadResults();
@@ -1015,12 +1019,18 @@
         
         // Handle login
         function handleLogin() {
+            console.log('handleLogin called');
             const password = adminPasswordInput.value.trim();
+            console.log('Password entered, checking against:', ADMIN_PASSWORD);
             
             if (password === ADMIN_PASSWORD) {
+                console.log('Password correct, setting adminAuthenticated in sessionStorage');
                 sessionStorage.setItem('adminAuthenticated', 'true');
+                console.log('About to call showDashboard()');
                 showDashboard();
+                console.log('showDashboard() completed');
             } else {
+                console.log('Password incorrect');
                 loginError.textContent = 'Incorrect password. Please try again.';
             }
         }
@@ -1390,6 +1400,86 @@
         
         function stopAutoRefresh() {
             clearInterval(autoRefreshInterval);
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            console.log('Setting up event listeners...');
+            
+            // Login button
+            loginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Login button clicked');
+                handleLogin();
+            });
+            
+            // Admin password input - allow Enter key to submit
+            adminPasswordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    console.log('Enter key pressed in password field');
+                    handleLogin();
+                }
+            });
+            
+            // Logout button
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleLogout();
+            });
+            
+            // GitHub token button
+            githubTokenBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                showTokenModal();
+            });
+            
+            // Close token modal
+            closeTokenModal.addEventListener('click', () => {
+                tokenModal.style.display = 'none';
+            });
+            
+            // Save token button
+            saveTokenBtn.addEventListener('click', () => {
+                saveGitHubToken();
+            });
+            
+            // Clear token button
+            clearTokenBtn.addEventListener('click', () => {
+                clearGitHubToken();
+            });
+            
+            // Close details modal
+            closeModal.addEventListener('click', () => {
+                detailsModal.style.display = 'none';
+            });
+            
+            // Close value edit modal
+            closeEditValueModal.addEventListener('click', () => {
+                editValueModal.style.display = 'none';
+            });
+            
+            // Close questions edit modal
+            closeEditQuestionsModal.addEventListener('click', () => {
+                editQuestionsModal.style.display = 'none';
+            });
+            
+            // Close question edit modal
+            closeEditQuestionModal.addEventListener('click', () => {
+                editQuestionModal.style.display = 'none';
+            });
+            
+            // Copy survey link button
+            copyLinkBtn.addEventListener('click', () => {
+                surveyLinkInput.select();
+                document.execCommand('copy');
+                copyConfirmation.style.display = 'inline';
+                setTimeout(() => {
+                    copyConfirmation.style.display = 'none';
+                }, 2000);
+            });
+            
+            console.log('Event listeners setup complete');
         }
     </script>
 </body>
