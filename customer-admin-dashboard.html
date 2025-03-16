@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Customer Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.7&t=20250316132732">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.8&t=20250316133844">
     <style>
         body {
             background-color: #f5f8fa;
@@ -260,21 +260,7 @@
         }
         
         .back-link {
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 20px;
-            color: #2e7d32;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        
-        .back-link:hover {
-            text-decoration: underline;
-        }
-        
-        .back-link:before {
-            content: '←';
-            margin-right: 5px;
+            display: none;
         }
         
         .login-prompt {
@@ -307,9 +293,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Back link only visible to master admin -->
-        <a href="master-admin-dashboard.html" class="back-link" id="back-to-master">Back to Master Admin Dashboard</a>
-        
         <header>
             <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
             <div class="user-controls">
@@ -485,12 +468,12 @@
         </div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.7</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.8</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.7&t=20250316132732"></script>
+    <script src="js/lib/config.js?v=1.7.8&t=20250316133844"></script>
     <script>
         // Global variables
         let customerId = null;
@@ -516,13 +499,13 @@
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing customer admin dashboard v1.7.7...');
+            console.log('Initializing customer admin dashboard v1.7.8...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.7';
-                console.log('Set version to:', 'v1.7.7');
+                versionElement.textContent = 'v1.7.8';
+                console.log('Set version to:', 'v1.7.8');
             }
             
             // Get customer ID from URL
@@ -548,24 +531,8 @@
          * Check login status
          */
         function checkLoginStatus() {
-            const masterAdminToken = localStorage.getItem('github_token');
-            const masterAdminUsername = localStorage.getItem('username');
             const customerAdminUsername = sessionStorage.getItem('customer_admin_username');
             const customerAdminId = sessionStorage.getItem('customer_admin_id');
-            
-            // Check if user is a master admin
-            if (masterAdminToken && masterAdminUsername) {
-                console.log('Master admin logged in');
-                showDashboard();
-                
-                // Show the back link for master admin
-                const backLink = document.getElementById('back-to-master');
-                if (backLink) {
-                    backLink.style.display = 'block';
-                }
-                
-                return;
-            }
             
             // Check if user is a customer admin for this specific customer
             if (customerAdminUsername && customerAdminId) {
@@ -577,11 +544,8 @@
                     console.log('Customer admin logged in');
                     showDashboard();
                     
-                    // Hide the back link for customer admin
-                    const backLink = document.getElementById('back-to-master');
-                    if (backLink) {
-                        backLink.style.display = 'none';
-                    }
+                    // Load customer data
+                    loadCustomerData();
                     
                     return;
                 }
@@ -663,115 +627,8 @@
             // Show dashboard
             showDashboard();
             
-            // Hide the back link for customer admin
-            const backLink = document.getElementById('back-to-master');
-            if (backLink) {
-                backLink.style.display = 'none';
-            }
-        }
-        
-        /**
-         * Load customer admins from storage
-         */
-        function loadCustomerAdminsFromStorage() {
-            const storedAdmins = localStorage.getItem(`admins_${customerId}`);
-            
-            if (storedAdmins) {
-                try {
-                    return JSON.parse(storedAdmins);
-                } catch (error) {
-                    console.error('Error parsing admins from localStorage:', error);
-                    return [];
-                }
-            } else {
-                return [];
-            }
-        }
-        
-        /**
-         * Logout
-         */
-        function logout() {
-            // Check if user is a master admin
-            const masterAdminToken = localStorage.getItem('github_token');
-            const masterAdminUsername = localStorage.getItem('username');
-            
-            if (masterAdminToken && masterAdminUsername) {
-                // Redirect to master admin login
-                window.location.href = 'admin-login.html';
-                return;
-            }
-            
-            // Clear customer admin session storage
-            sessionStorage.removeItem('customer_admin_username');
-            sessionStorage.removeItem('customer_admin_id');
-            
-            // Show login form
-            showLoginForm();
-        }
-        
-        /**
-         * Add event listeners
-         */
-        function addEventListeners() {
-            // Tab navigation
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabId = this.getAttribute('data-tab');
-                    switchTab(tabId);
-                });
-            });
-            
-            // Logout button
-            if (logoutButton) {
-                logoutButton.addEventListener('click', logout);
-            }
-            
-            // Admin form submission
-            const addAdminForm = document.getElementById('add-admin-form');
-            if (addAdminForm) {
-                addAdminForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    addAdmin();
-                });
-            }
-            
-            // Logo upload form submission
-            if (logoUploadForm) {
-                logoUploadForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    uploadLogo();
-                });
-            }
-            
-            // Close modal buttons
-            const closeButtons = document.querySelectorAll('.close-btn');
-            closeButtons.forEach(button => {
-                button.addEventListener('click', closeAllModals);
-            });
-        }
-        
-        /**
-         * Set up tabs
-         */
-        function setupTabs() {
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    
-                    // Remove active class from all tabs and contents
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    
-                    // Add active class to clicked tab and corresponding content
-                    tab.classList.add('active');
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
-                });
-            });
+            // Load customer data
+            loadCustomerData();
         }
         
         /**
@@ -1146,6 +1003,62 @@
             };
             
             reader.readAsDataURL(file);
+        }
+        
+        /**
+         * Logout
+         */
+        function logout() {
+            // Clear customer admin session storage
+            sessionStorage.removeItem('customer_admin_username');
+            sessionStorage.removeItem('customer_admin_id');
+            
+            // Show login form
+            showLoginForm();
+        }
+        
+        // Add event listeners
+        function addEventListeners() {
+            // Logout button
+            logoutButton.addEventListener('click', logout);
+            
+            // Add admin form
+            const addAdminForm = document.getElementById('add-admin-form');
+            if (addAdminForm) {
+                addAdminForm.addEventListener('submit', addNewAdmin);
+            }
+            
+            // Reset password form
+            const resetPasswordForm = document.getElementById('reset-password-form');
+            if (resetPasswordForm) {
+                resetPasswordForm.addEventListener('submit', saveResetPassword);
+            }
+            
+            // Logo upload form
+            logoUploadForm.addEventListener('submit', uploadLogo);
+        }
+        
+        // Set up tabs
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    const tabContent = tabContents.find(content => content.id === `${tabId}-tab`);
+                    
+                    // Hide all tab contents
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Show selected tab content
+                    tabContent.classList.add('active');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
         }
     </script>
 </body>
