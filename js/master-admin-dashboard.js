@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.3
+ * Version: v1.6.4
  */
 
 // Global variables
@@ -52,8 +52,14 @@ function checkLoginStatus() {
     if (token && username) {
         console.log('User is logged in:', username);
         
-        // Initialize GitHub API
-        githubAPI = new GitHubAPI(token);
+        // Initialize GitHub API with proper configuration
+        githubAPI = new GitHubAPI({
+            owner: config.github.owner,
+            repo: config.github.repo,
+            branch: config.github.branch,
+            resultsPath: config.github.resultsPath,
+            token: token
+        });
         
         // Test GitHub API access to ensure token is valid
         githubAPI.testAccess()
@@ -66,7 +72,7 @@ function checkLoginStatus() {
                     loadCustomers();
                 } else {
                     // Token is invalid, show login prompt
-                    console.log('GitHub token is invalid');
+                    console.error('GitHub token is invalid');
                     showLoginPrompt();
                 }
             })
