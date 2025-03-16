@@ -348,7 +348,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.1.7</span>
+                <span class="version" id="app-version">v1.1.8</span>
             </div>
         </footer>
     </div>
@@ -364,18 +364,65 @@
         // Set version from config
         document.getElementById('app-version').textContent = config.version;
         
-        // Directly attach event listener to start button without waiting for DOMContentLoaded
+        // Define a direct startSurvey function that will call the one from survey.js
+        function directStartSurvey() {
+            console.log('Direct start survey function called');
+            
+            // Check if survey.js is loaded and has the startSurvey function
+            if (typeof window.startSurvey === 'function') {
+                console.log('Calling survey.js startSurvey function');
+                window.startSurvey();
+            } else {
+                console.log('Creating intro form directly');
+                
+                // Create the form directly if the survey.js function is not available
+                const introSection = document.getElementById('intro-section');
+                if (!introSection) {
+                    console.error('Intro section not found');
+                    return;
+                }
+                
+                // Create a form to collect candidate information
+                introSection.innerHTML = `
+                    <h2>Before we begin</h2>
+                    <p>Please provide your information:</p>
+                    <form id="candidate-info-form" class="candidate-form">
+                        <div class="form-group">
+                            <label for="candidate-name">Full Name:</label>
+                            <input type="text" id="candidate-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="candidate-email">Email:</label>
+                            <input type="email" id="candidate-email" required>
+                        </div>
+                        <button type="submit" class="btn primary-btn">Continue to Survey</button>
+                    </form>
+                `;
+                
+                // Add event listener to the form
+                const form = document.getElementById('candidate-info-form');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        // If survey.js is loaded, use its showQuestions function
+                        if (typeof window.showQuestions === 'function') {
+                            window.showQuestions();
+                        } else {
+                            alert('Survey questions could not be loaded. Please refresh the page and try again.');
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Directly attach event listener to start button
         console.log('Inline script: Adding direct event listener to start button');
         var startBtn = document.getElementById('start-survey');
         if (startBtn) {
             startBtn.onclick = function(e) {
                 console.log('Start button clicked from inline script');
-                if (typeof startSurvey === 'function') {
-                    startSurvey();
-                } else {
-                    console.error('startSurvey function not found');
-                    alert('Error: Survey functionality not loaded properly. Please refresh the page.');
-                }
+                directStartSurvey();
                 return false;
             };
             console.log('Inline script: Event listener attached successfully');

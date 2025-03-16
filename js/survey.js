@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.1.7
+ * Version: v1.1.8
  */
 
 // Global variables
@@ -675,3 +675,7 @@ function showError(message) {
         errorElement.style.display = 'none';
     }, 5000);
 }
+
+// Make functions globally accessible
+window.startSurvey = startSurvey;
+window.showQuestions = showQuestions;
