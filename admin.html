@@ -881,7 +881,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.8</span>
+                <span class="version" id="app-version">v1.2.9</span>
             </div>
         </footer>
     </div>
@@ -967,23 +967,46 @@
             dashboardSection.style.display = 'block';
             
             // Check if GitHub token is set in localStorage
-            const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+            const token = localStorage.getItem('github_token');
             
             if (token) {
-                // Set token from localStorage
-                config.github.token = token;
-                if (githubAPI) {
-                    githubAPI.setToken(token);
+                console.log('GitHub token found in showDashboard');
+                
+                try {
+                    // Initialize GitHub API with token
+                    const github = new GitHubAPI({
+                        token: token,
+                        owner: config.github.owner,
+                        repo: config.github.repo,
+                        branch: config.github.branch,
+                        resultsPath: config.github.resultsPath
+                    });
+                    
+                    if (github.isConfigured()) {
+                        console.log('GitHub API initialized successfully in showDashboard');
+                        defaultTokenMessage.style.display = 'none';
+                        
+                        // Only load data if GitHub API is properly configured
+                        setTimeout(() => {
+                            loadResults();
+                            loadInProgressSurveys();
+                        }, 100);
+                    } else {
+                        console.warn('GitHub API not properly configured in showDashboard');
+                        defaultTokenMessage.textContent = 'GitHub API not properly configured. Please check your token.';
+                        defaultTokenMessage.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error initializing GitHub API in showDashboard:', error);
+                    defaultTokenMessage.textContent = 'Error initializing GitHub API: ' + error.message;
+                    defaultTokenMessage.style.display = 'block';
                 }
-                defaultTokenMessage.style.display = 'none';
             } else {
                 // No token available
+                console.warn('No GitHub token found in showDashboard');
                 defaultTokenMessage.textContent = 'Please set a GitHub token to access survey results.';
                 defaultTokenMessage.style.display = 'block';
             }
-            
-            loadResults();
-            loadInProgressSurveys();
             
             // Initialize values management
             if (window.adminValues) {
@@ -1011,7 +1034,7 @@
         
         // Show GitHub token modal
         function showTokenModal() {
-            const currentToken = localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+            const currentToken = localStorage.getItem('github_token') || '';
             githubTokenInput.value = currentToken;
             tokenModal.style.display = 'block';
         }
@@ -1020,11 +1043,7 @@
         function saveGitHubToken() {
             const token = githubTokenInput.value.trim();
             if (token) {
-                localStorage.setItem(GITHUB_TOKEN_KEY, token);
-                config.github.token = token;
-                if (githubAPI) {
-                    githubAPI.setToken(token);
-                }
+                localStorage.setItem('github_token', token);
                 defaultTokenMessage.style.display = 'none';
                 tokenModal.style.display = 'none';
                 loadResults(); // Reload results with new token
@@ -1033,12 +1052,8 @@
         
         // Clear GitHub token
         function clearGitHubToken() {
-            localStorage.removeItem(GITHUB_TOKEN_KEY);
+            localStorage.removeItem('github_token');
             githubTokenInput.value = '';
-            config.github.token = '';
-            if (githubAPI) {
-                githubAPI.setToken('');
-            }
             defaultTokenMessage.textContent = 'Please set a GitHub token to access survey results.';
             defaultTokenMessage.style.display = 'block';
         }
@@ -1465,10 +1480,6 @@
             } else {
                 console.warn('No GitHub token found on page load');
             }
-            
-            // Load initial data
-            loadInProgressSurveys();
-            loadCompletedSurveys();
             
             // Check authentication on page load
             checkAuth();
