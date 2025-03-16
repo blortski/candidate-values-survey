@@ -348,7 +348,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.1.8</span>
+                <span class="version" id="app-version">v1.1.9</span>
             </div>
         </footer>
     </div>
@@ -364,6 +364,37 @@
         // Set version from config
         document.getElementById('app-version').textContent = config.version;
         
+        // Global variables for direct access
+        let directSurveyData = null;
+        let directValuesData = null;
+        
+        // Load data directly
+        function loadSurveyDataDirectly() {
+            console.log('Loading survey data directly');
+            
+            // Load survey data
+            fetch('data/survey.json')
+                .then(response => response.json())
+                .then(data => {
+                    directSurveyData = data;
+                    console.log('Survey data loaded directly:', directSurveyData);
+                    
+                    // Load values data
+                    return fetch('data/values.json');
+                })
+                .then(response => response.json())
+                .then(data => {
+                    directValuesData = data;
+                    console.log('Values data loaded directly:', directValuesData);
+                })
+                .catch(error => {
+                    console.error('Error loading data directly:', error);
+                });
+        }
+        
+        // Load data immediately
+        loadSurveyDataDirectly();
+        
         // Define a direct startSurvey function that will call the one from survey.js
         function directStartSurvey() {
             console.log('Direct start survey function called');
@@ -372,46 +403,124 @@
             if (typeof window.startSurvey === 'function') {
                 console.log('Calling survey.js startSurvey function');
                 window.startSurvey();
-            } else {
-                console.log('Creating intro form directly');
+                return;
+            }
+            
+            console.log('Creating intro form directly');
+            
+            // Create the form directly if the survey.js function is not available
+            const introSection = document.getElementById('intro-section');
+            if (!introSection) {
+                console.error('Intro section not found');
+                return;
+            }
+            
+            // Create a form to collect candidate information
+            introSection.innerHTML = `
+                <h2>Before we begin</h2>
+                <p>Please provide your information:</p>
+                <form id="candidate-info-form" class="candidate-form">
+                    <div class="form-group">
+                        <label for="candidate-name">Full Name:</label>
+                        <input type="text" id="candidate-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="candidate-email">Email:</label>
+                        <input type="email" id="candidate-email" required>
+                    </div>
+                    <button type="submit" class="btn primary-btn">Continue to Survey</button>
+                </form>
+            `;
+            
+            // Add event listener to the form
+            const form = document.getElementById('candidate-info-form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const candidateName = document.getElementById('candidate-name').value.trim();
+                    const candidateEmail = document.getElementById('candidate-email').value.trim();
+                    
+                    if (!candidateName || !candidateEmail) {
+                        alert('Please provide your name and email to continue.');
+                        return;
+                    }
+                    
+                    // Try to use the survey.js function first
+                    if (typeof window.showQuestions === 'function') {
+                        console.log('Using survey.js showQuestions function');
+                        window.showQuestions();
+                    } else {
+                        // Direct implementation of showing the first question
+                        console.log('Using direct implementation of showing questions');
+                        directShowQuestions();
+                    }
+                });
+            }
+        }
+        
+        // Direct implementation of showing questions
+        function directShowQuestions() {
+            console.log('Direct show questions function called');
+            
+            // Check if we have survey data
+            if (!directSurveyData || !directSurveyData.questions || directSurveyData.questions.length === 0) {
+                console.error('Survey data not loaded or no questions available');
+                alert('Survey questions could not be loaded. Please refresh the page and try again.');
+                return;
+            }
+            
+            // Hide intro section
+            const introSection = document.getElementById('intro-section');
+            if (introSection) {
+                introSection.style.display = 'none';
+            }
+            
+            // Show survey section
+            const surveySection = document.getElementById('questions-section');
+            if (surveySection) {
+                surveySection.style.display = 'block';
                 
-                // Create the form directly if the survey.js function is not available
-                const introSection = document.getElementById('intro-section');
-                if (!introSection) {
-                    console.error('Intro section not found');
-                    return;
-                }
-                
-                // Create a form to collect candidate information
-                introSection.innerHTML = `
-                    <h2>Before we begin</h2>
-                    <p>Please provide your information:</p>
-                    <form id="candidate-info-form" class="candidate-form">
-                        <div class="form-group">
-                            <label for="candidate-name">Full Name:</label>
-                            <input type="text" id="candidate-name" required>
+                // Show the first question
+                const questionContainer = document.getElementById('question-container');
+                if (questionContainer) {
+                    const firstQuestion = directSurveyData.questions[0];
+                    questionContainer.innerHTML = `
+                        <div class="question">
+                            <h3>${firstQuestion.text}</h3>
+                            <div class="rating-container">
+                                <div class="rating-scale">
+                                    <span class="rating-label">Strongly Disagree</span>
+                                    <div class="rating-options">
+                                        <label>
+                                            <input type="radio" name="rating" value="1">
+                                            <span>1</span>
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="rating" value="2">
+                                            <span>2</span>
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="rating" value="3">
+                                            <span>3</span>
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="rating" value="4">
+                                            <span>4</span>
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="rating" value="5">
+                                            <span>5</span>
+                                        </label>
+                                    </div>
+                                    <span class="rating-label">Strongly Agree</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="candidate-email">Email:</label>
-                            <input type="email" id="candidate-email" required>
+                        <div class="navigation-buttons">
+                            <button id="next-question" class="btn primary-btn">Next</button>
                         </div>
-                        <button type="submit" class="btn primary-btn">Continue to Survey</button>
-                    </form>
-                `;
-                
-                // Add event listener to the form
-                const form = document.getElementById('candidate-info-form');
-                if (form) {
-                    form.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        
-                        // If survey.js is loaded, use its showQuestions function
-                        if (typeof window.showQuestions === 'function') {
-                            window.showQuestions();
-                        } else {
-                            alert('Survey questions could not be loaded. Please refresh the page and try again.');
-                        }
-                    });
+                    `;
                 }
             }
         }
@@ -421,6 +530,7 @@
         var startBtn = document.getElementById('start-survey');
         if (startBtn) {
             startBtn.onclick = function(e) {
+                e.preventDefault();
                 console.log('Start button clicked from inline script');
                 directStartSurvey();
                 return false;
