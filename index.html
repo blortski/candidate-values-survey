@@ -356,7 +356,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.1</span>
+                <span class="version" id="app-version">v1.2.2</span>
             </div>
         </footer>
     </div>
@@ -447,6 +447,9 @@
                 if (valuesXhr.status === 200) {
                     directValuesData = JSON.parse(valuesXhr.responseText);
                     debugLog('Values data loaded directly: ' + directValuesData.values.length + ' values');
+                    
+                    // Filter questions based on enabled values
+                    filterQuestionsByEnabledValues();
                 } else {
                     debugLog('Failed to load values data: ' + valuesXhr.status, true);
                 }
@@ -455,8 +458,46 @@
             }
         }
         
-        // Load data immediately
-        loadSurveyDataDirectly();
+        // Filter questions to only include those associated with enabled values
+        function filterQuestionsByEnabledValues() {
+            if (!directSurveyData || !directValuesData) {
+                debugLog('Survey data or values data not loaded', true);
+                return;
+            }
+            
+            // Create a map of enabled values
+            const enabledValues = {};
+            directValuesData.values.forEach(value => {
+                enabledValues[value.id] = value.enabled;
+                debugLog('Value: ' + value.name + ' is ' + (value.enabled ? 'enabled' : 'disabled'));
+            });
+            
+            // Get list of questions associated with enabled values
+            const enabledQuestionIds = [];
+            directSurveyData.categories.forEach(category => {
+                if (enabledValues[category.id]) {
+                    // If this value is enabled, add all its questions to the enabled list
+                    enabledQuestionIds.push(...category.questions);
+                    debugLog('Adding questions for enabled category: ' + category.name);
+                }
+            });
+            
+            // Filter the questions array to only include enabled questions
+            const filteredQuestions = directSurveyData.questions.filter(question => 
+                enabledQuestionIds.includes(question.id)
+            );
+            
+            debugLog('Filtered questions: ' + filteredQuestions.length + ' out of ' + directSurveyData.questions.length);
+            
+            // If no questions are enabled, use all questions as a fallback
+            if (filteredQuestions.length === 0) {
+                debugLog('No enabled questions found, using all questions as fallback', true);
+            } else {
+                // Replace the original questions array with the filtered one
+                directSurveyData.questions = filteredQuestions;
+                debugLog('Questions filtered successfully');
+            }
+        }
         
         // Define a direct startSurvey function that will call the one from survey.js
         function directStartSurvey() {
@@ -734,6 +775,9 @@
         } else {
             debugLog('Start button not found', true);
         }
+        
+        // Load data immediately
+        loadSurveyDataDirectly();
     </script>
 </body>
 </html>
