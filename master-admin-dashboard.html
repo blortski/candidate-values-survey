@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.8&t=20250316133844">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.9&t=20250316135035">
     <style>
         body {
             background-color: #f5f8fa;
@@ -365,12 +365,12 @@
         <div id="notification" class="notification"></div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.8</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.9</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.8&t=20250316133844"></script>
+    <script src="js/lib/config.js?v=1.7.9&t=20250316135035"></script>
     <script>
         // Global variables
         let customers = [];
@@ -391,13 +391,13 @@
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing master admin dashboard v1.7.8...');
+            console.log('Initializing master admin dashboard v1.7.9...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.8';
-                console.log('Set version to:', 'v1.7.8');
+                versionElement.textContent = 'v1.7.9';
+                console.log('Set version to:', 'v1.7.9');
             }
             
             // Make sure all modals are hidden
@@ -560,7 +560,7 @@
                     <p><strong>Contact:</strong> ${customer.contact}</p>
                     <p><strong>Email:</strong> ${customer.email}</p>
                     <div class="customer-actions">
-                        <a href="${customerDashboardUrl}" class="btn btn-small">Manage Dashboard</a>
+                        <a href="${customerDashboardUrl}" class="btn btn-small">Manage Customer</a>
                         <button class="btn btn-copy btn-small" onclick="copyCustomerUrl('${customerDashboardUrl}', '${customer.name}')">Copy URL</button>
                         <button class="btn btn-small" onclick="editCustomer('${customer.id}')">Edit</button>
                         <button class="btn btn-secondary btn-small" onclick="showDeleteConfirmation('${customer.id}')">Delete</button>
