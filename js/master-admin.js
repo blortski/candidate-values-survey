@@ -27,16 +27,11 @@ const editCustomerButtons = document.querySelectorAll('.edit-customer-btn');
 const deleteCustomerButtons = document.querySelectorAll('.delete-customer-btn');
 const accessDashboardButtons = document.querySelectorAll('.access-dashboard-btn');
 
-// Set version in footer
-document.getElementById('app-version').textContent = config.version;
-
 // Initialize the dashboard
-document.addEventListener('DOMContentLoaded', initializeDashboard);
-
-/**
- * Initialize the dashboard
- */
-function initializeDashboard() {
+document.addEventListener('DOMContentLoaded', function() {
+    // Set version in footer
+    document.getElementById('app-version').textContent = config.version;
+    
     console.log('Initializing master admin dashboard...');
     
     // Hide logout button initially
@@ -54,7 +49,7 @@ function initializeDashboard() {
     
     // Set up event listeners
     setupEventListeners();
-}
+});
 
 /**
  * Check if the user is already logged in
@@ -340,6 +335,9 @@ function displayCustomers(customersData) {
     // Get customer template
     const template = document.getElementById('customer-template');
     
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('github_token') && localStorage.getItem('username');
+    
     // Create customer cards
     customersData.forEach(customer => {
         // Clone template
@@ -359,18 +357,22 @@ function displayCustomers(customersData) {
         const viewBtn = customerCard.querySelector('.view-customer-btn');
         const editBtn = customerCard.querySelector('.edit-customer-btn');
         const deleteBtn = customerCard.querySelector('.delete-customer-btn');
-        const accessDashboardBtn = customerCard.querySelector('.access-dashboard-btn');
+        
+        // Hide buttons if not logged in
+        if (!isLoggedIn) {
+            viewBtn.style.display = 'none';
+            editBtn.style.display = 'none';
+            deleteBtn.style.display = 'none';
+        }
         
         viewBtn.setAttribute('data-customer-id', customer.id);
         editBtn.setAttribute('data-customer-id', customer.id);
         deleteBtn.setAttribute('data-customer-id', customer.id);
-        accessDashboardBtn.setAttribute('data-customer-id', customer.id);
         
         // Add event listeners
         viewBtn.addEventListener('click', () => viewCustomerDashboard(customer.id));
         editBtn.addEventListener('click', () => showEditCustomerModal(customer.id));
         deleteBtn.addEventListener('click', () => showDeleteCustomerModal(customer.id));
-        accessDashboardBtn.addEventListener('click', () => accessCustomerDashboard(customer.id, customer.name));
         
         // Append to container
         customersContainer.appendChild(customerCard);
