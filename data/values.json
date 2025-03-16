@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-03-15T17:33:58-06:00",
+  "lastUpdated": "2025-03-15T23:50:24.975Z",
   "values": [
     {
       "id": "optimism",
@@ -15,7 +15,7 @@
       "id": "productivity",
       "name": "Productivity & Continuous Improvement",
       "description": "Your work habits and improvement approaches",
-      "enabled": true,
+      "enabled": false,
       "stats": {
         "candidatesTested": 0,
         "averageAlignment": 0
@@ -25,7 +25,7 @@
       "id": "valueOrientation",
       "name": "Value Orientation",
       "description": "Your focus on ROI and business value",
-      "enabled": true,
+      "enabled": false,
       "stats": {
         "candidatesTested": 0,
         "averageAlignment": 0
@@ -35,7 +35,7 @@
       "id": "collaboration",
       "name": "Collaboration",
       "description": "Your teamwork, communication, and interpersonal skills",
-      "enabled": true,
+      "enabled": false,
       "stats": {
         "candidatesTested": 0,
         "averageAlignment": 0

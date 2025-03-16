@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.1.4
+ * Version: v1.1.5
  */
 
 // Global variables
@@ -133,6 +133,12 @@ function filterQuestionsByEnabledValues() {
     );
     
     console.log('Filtered questions:', filteredQuestions.length);
+    
+    // If no questions are enabled, use all questions as a fallback
+    if (filteredQuestions.length === 0) {
+        console.warn('No enabled questions found, using all questions as fallback');
+        filteredQuestions = surveyData.questions;
+    }
 }
 
 /**
@@ -140,6 +146,19 @@ function filterQuestionsByEnabledValues() {
  */
 function startSurvey() {
     console.log('Start survey function called');
+    
+    // Make sure we have survey data and questions
+    if (!surveyData || !surveyData.questions || surveyData.questions.length === 0) {
+        console.error('Survey data not loaded or no questions available');
+        showError('Survey data is not available. Please refresh the page and try again.');
+        return;
+    }
+    
+    // Make sure we have filtered questions
+    if (!filteredQuestions || filteredQuestions.length === 0) {
+        console.warn('No filtered questions available, using all questions');
+        filteredQuestions = surveyData.questions;
+    }
     
     const introSection = document.getElementById('intro-section');
     if (!introSection) {
@@ -221,6 +240,13 @@ async function saveInProgressSurvey() {
  */
 function showQuestions() {
     console.log('Showing questions');
+    
+    // Make sure we have filtered questions
+    if (!filteredQuestions || filteredQuestions.length === 0) {
+        console.error('No questions available to display');
+        showError('No survey questions are available. Please contact the administrator.');
+        return;
+    }
     
     const introSection = document.getElementById('intro-section');
     const questionsSection = document.getElementById('questions-section');
