@@ -30,6 +30,39 @@ class GitHubAPI {
     }
     
     /**
+     * Test GitHub API access with the current token
+     * @returns {Promise<boolean>} - True if access is successful, false otherwise
+     */
+    async testAccess() {
+        console.log('GitHubAPI.testAccess: Testing GitHub API access...');
+        
+        if (!this.isConfigured()) {
+            console.error('GitHubAPI.testAccess: GitHub API is not configured. Please set a token.');
+            return false;
+        }
+        
+        try {
+            // Test access by trying to get the repository details
+            const response = await fetch(`https://api.github.com/repos/${this.owner}/${this.repo}`, {
+                headers: {
+                    'Authorization': `token ${this.token}`
+                }
+            });
+            
+            if (!response.ok) {
+                console.error(`GitHubAPI.testAccess: Failed to access GitHub API. Status: ${response.status}`);
+                return false;
+            }
+            
+            console.log('GitHubAPI.testAccess: GitHub API access successful');
+            return true;
+        } catch (error) {
+            console.error('GitHubAPI.testAccess: Error testing GitHub API access:', error);
+            return false;
+        }
+    }
+    
+    /**
      * Get all surveys from GitHub
      * @returns {Promise<Array>} Array of survey results
      */
@@ -244,8 +277,8 @@ class GitHubAPI {
      */
     async getSurveyData() {
         try {
-            const response = await this.getFileContent('data/survey.json');
-            return JSON.parse(atob(response.content));
+            const fileData = await this.getFileContent('data/survey.json');
+            return JSON.parse(atob(fileData.content));
         } catch (error) {
             console.error('Error getting survey data from GitHub:', error);
             throw error;
@@ -258,8 +291,8 @@ class GitHubAPI {
      */
     async getValuesData() {
         try {
-            const response = await this.getFileContent('data/values.json');
-            return JSON.parse(atob(response.content));
+            const fileData = await this.getFileContent('data/values.json');
+            return JSON.parse(atob(fileData.content));
         } catch (error) {
             console.error('Error getting values data from GitHub:', error);
             throw error;
@@ -276,8 +309,8 @@ class GitHubAPI {
             // Get current file to get the SHA
             let sha = null;
             try {
-                const currentFile = await this.getFileContent('data/values.json');
-                sha = currentFile.sha;
+                const fileData = await this.getFileContent('data/values.json');
+                sha = fileData.sha;
             } catch (error) {
                 // File might not exist yet, which is fine
                 console.warn('Could not get current values.json file:', error);
@@ -304,7 +337,7 @@ class GitHubAPI {
     /**
      * Get file content by path
      * @param {string} path - Path to the file
-     * @returns {Promise<Object>} - Promise resolving to the file content
+     * @returns {Promise<Object>} - Promise resolving to the file data
      */
     async getFileContent(path) {
         if (!this.isConfigured()) {
@@ -324,13 +357,7 @@ class GitHubAPI {
                 throw new Error(`GitHub API error: ${errorData.message}`);
             }
             
-            const fileData = await response.json();
-            
-            // Decode content
-            const content = atob(fileData.content);
-            
-            // Parse JSON content
-            return JSON.parse(content);
+            return await response.json();
         } catch (error) {
             console.error('Error getting file content from GitHub:', error);
             throw error;

@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Login</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.6.2&t=20250316104631">
-    <link rel="stylesheet" href="css/admin.css?v=1.6.2&t=20250316104631">
+    <link rel="stylesheet" href="css/styles.css?v=1.6.3&t=20250316105119">
+    <link rel="stylesheet" href="css/admin.css?v=1.6.3&t=20250316105119">
     <style>
         body {
             background-color: #f5f8fa;
@@ -101,7 +101,7 @@
             
             <h1>Master Admin Login</h1>
             
-            <div id="error-message" class="error-message"></div>
+            <div id="error-message" class="error-message" style="display: none;"></div>
             
             <form id="login-form">
                 <div class="form-group">
@@ -124,12 +124,12 @@
         </div>
         
         <footer>
-            <p>ValuesAlign &copy; 2025 | <span id="app-version">v1.6.2</span></p>
+            <p>ValuesAlign &copy; 2025 | <span id="app-version">v1.6.3</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.6.2&t=20250316104631"></script>
+    <script src="js/lib/config.js?v=1.6.3&t=20250316105119"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Set version in footer
@@ -166,12 +166,14 @@
                 // Validate inputs
                 if (!username || !password || !token) {
                     errorMessage.textContent = 'Please fill in all fields';
+                    errorMessage.style.display = 'block';
                     return;
                 }
                 
                 // Check password against config
                 if (password !== config.admin.password) {
                     errorMessage.textContent = 'Invalid password';
+                    errorMessage.style.display = 'block';
                     return;
                 }
                 
