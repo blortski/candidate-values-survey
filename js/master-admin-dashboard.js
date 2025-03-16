@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.6
+ * Version: v1.6.7
  */
 
 // Global variables
@@ -26,14 +26,14 @@ const addCustomerButton = document.getElementById('add-customer-btn');
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard v1.6.6...');
+    console.log('Initializing master admin dashboard v1.6.7...');
     console.log('Config loaded:', config);
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.6.6';
-        console.log('Set version to:', 'v1.6.6');
+        versionElement.textContent = 'v1.6.7';
+        console.log('Set version to:', 'v1.6.7');
     }
     
     // Check if user is logged in

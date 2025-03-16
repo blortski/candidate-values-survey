@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.6
+ * Version: v1.6.7
  */
 
 // Global variables
@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.6.6';
-        console.log('Set version to:', 'v1.6.6');
+        versionElement.textContent = 'v1.6.7';
+        console.log('Set version to:', 'v1.6.7');
     } else {
         console.error('Version element not found');
     }
