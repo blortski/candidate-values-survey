@@ -4,7 +4,7 @@
  * This script handles the functionality for viewing and editing company values
  * in the admin interface, including statistics and question management.
  * 
- * Version: v1.1.5
+ * Version: v1.1.6
  */
 
 // Global variables

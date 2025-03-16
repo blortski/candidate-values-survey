@@ -5,7 +5,7 @@
  * including loading questions, collecting responses, calculating scores,
  * and displaying results.
  * 
- * Version: v1.1.5
+ * Version: v1.1.6
  */
 
 // Global variables
@@ -43,10 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const startButton = document.getElementById('start-survey');
     if (startButton) {
         console.log('Start button found, adding event listener');
-        startButton.addEventListener('click', function() {
+        // Remove any existing event listeners
+        startButton.replaceWith(startButton.cloneNode(true));
+        
+        // Get the new button reference after replacing
+        const newStartButton = document.getElementById('start-survey');
+        newStartButton.addEventListener('click', function(e) {
             console.log('Start button clicked');
+            e.preventDefault();
             startSurvey();
         });
+        console.log('Event listener added to start button');
     } else {
         console.error('Start button not found');
     }
