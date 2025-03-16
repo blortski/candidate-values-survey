@@ -878,7 +878,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.3.2</span>
+                <span class="version" id="app-version">v1.3.3</span>
             </div>
         </footer>
     </div>
@@ -957,6 +957,7 @@
         
         // Show dashboard section
         function showDashboard() {
+            console.log('Showing dashboard...');
             loginSection.style.display = 'none';
             dashboardSection.style.display = 'block';
             
@@ -968,7 +969,7 @@
                 
                 try {
                     // Initialize GitHub API with token
-                    const github = new GitHubAPI({
+                    githubAPI = new GitHubAPI({
                         token: token,
                         owner: config.github.owner,
                         repo: config.github.repo,
@@ -976,12 +977,13 @@
                         resultsPath: config.github.resultsPath
                     });
                     
-                    if (github.isConfigured()) {
+                    if (githubAPI.isConfigured()) {
                         console.log('GitHub API initialized successfully in showDashboard');
                         defaultTokenMessage.style.display = 'none';
                         
                         // Only load data if GitHub API is properly configured
                         setTimeout(() => {
+                            console.log('Loading data after short delay...');
                             loadResults();
                             loadInProgressSurveys();
                             
@@ -1045,11 +1047,47 @@
         // Save GitHub token
         function saveGitHubToken() {
             const token = githubTokenInput.value.trim();
-            if (token) {
-                localStorage.setItem('github_token', token);
-                defaultTokenMessage.style.display = 'none';
-                tokenModal.style.display = 'none';
-                loadResults(); // Reload results with new token
+            
+            if (!token) {
+                tokenError.textContent = 'Please enter a valid GitHub token.';
+                tokenError.style.display = 'block';
+                return;
+            }
+            
+            console.log('Saving GitHub token...');
+            
+            // Save token to localStorage
+            localStorage.setItem('github_token', token);
+            
+            // Initialize GitHub API with token
+            try {
+                githubAPI = new GitHubAPI({
+                    token: token,
+                    owner: config.github.owner,
+                    repo: config.github.repo,
+                    branch: config.github.branch,
+                    resultsPath: config.github.resultsPath
+                });
+                
+                if (githubAPI.isConfigured()) {
+                    console.log('GitHub API initialized successfully with new token');
+                    defaultTokenMessage.style.display = 'none';
+                    
+                    // Close token modal
+                    tokenModal.style.display = 'none';
+                    
+                    // Load data with new token
+                    loadResults();
+                    loadInProgressSurveys();
+                } else {
+                    console.warn('GitHub API not properly configured with new token');
+                    tokenError.textContent = 'GitHub API not properly configured. Please check your token.';
+                    tokenError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error initializing GitHub API with new token:', error);
+                tokenError.textContent = 'Error initializing GitHub API: ' + error.message;
+                tokenError.style.display = 'block';
             }
         }
         
@@ -1063,6 +1101,7 @@
         
         // Load survey results
         async function loadResults() {
+            console.log('Loading survey results...');
             showLoading(true);
             
             try {
@@ -1070,6 +1109,7 @@
                 const token = localStorage.getItem('github_token');
                 
                 if (!token) {
+                    console.warn('No GitHub token found in loadResults');
                     resultsContainer.innerHTML = `
                         <div class="no-results">
                             <p>GitHub API is not configured. Please set a GitHub token to view survey results.</p>
@@ -1080,7 +1120,8 @@
                     return;
                 }
                 
-                // Initialize GitHub API with token
+                console.log('Creating new GitHub API instance for loading results');
+                // Always create a fresh instance to ensure we're using the latest token
                 const github = new GitHubAPI({
                     token: token,
                     owner: config.github.owner,
@@ -1091,6 +1132,7 @@
                 
                 // Check if GitHub API is configured
                 if (!github.isConfigured()) {
+                    console.warn('GitHub API not properly configured in loadResults');
                     resultsContainer.innerHTML = `
                         <div class="no-results">
                             <p>GitHub API is not properly configured. Please check your token.</p>
@@ -1101,9 +1143,21 @@
                     return;
                 }
                 
+                console.log('Fetching survey results from GitHub...');
                 // Load results from GitHub
                 const results = await github.getAllSurveyResults();
                 console.log('Loaded results from GitHub:', results.length);
+                
+                if (results.length === 0) {
+                    console.log('No survey results found');
+                    resultsContainer.innerHTML = `
+                        <div class="no-results">
+                            <p>No survey results found.</p>
+                        </div>
+                    `;
+                    showLoading(false);
+                    return;
+                }
                 
                 // Sort results by timestamp (newest first)
                 results.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
@@ -1124,11 +1178,14 @@
         
         // Load in-progress surveys
         async function loadInProgressSurveys() {
+            console.log('Loading in-progress surveys...');
+            
             try {
                 // Get token from localStorage
                 const token = localStorage.getItem('github_token');
                 
                 if (!token) {
+                    console.warn('No GitHub token found in loadInProgressSurveys');
                     inProgressContent.innerHTML = `
                         <div class="no-results">
                             <p>GitHub API is not configured. Please set a GitHub token to view in-progress surveys.</p>
@@ -1137,7 +1194,8 @@
                     return;
                 }
                 
-                // Initialize GitHub API with token
+                console.log('Creating new GitHub API instance for loading in-progress surveys');
+                // Always create a fresh instance to ensure we're using the latest token
                 const github = new GitHubAPI({
                     token: token,
                     owner: config.github.owner,
@@ -1148,6 +1206,7 @@
                 
                 // Check if GitHub API is configured
                 if (!github.isConfigured()) {
+                    console.warn('GitHub API not properly configured in loadInProgressSurveys');
                     inProgressContent.innerHTML = `
                         <div class="no-results">
                             <p>GitHub API is not properly configured. Please check your token.</p>
@@ -1156,40 +1215,10 @@
                     return;
                 }
                 
+                console.log('Fetching in-progress surveys from GitHub...');
                 // Get in-progress surveys
-                const inProgressFiles = await github.getInProgressSurveys();
-                console.log('In-progress survey files:', inProgressFiles);
-                
-                if (!inProgressFiles || inProgressFiles.length === 0) {
-                    inProgressContent.innerHTML = `
-                        <div class="no-results">
-                            <p>No in-progress surveys found.</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // Process each file to get its content
-                const inProgressSurveys = [];
-                for (const file of inProgressFiles) {
-                    try {
-                        // Extract survey ID from filename
-                        const surveyId = file.name.replace('.json', '');
-                        
-                        // Get survey content
-                        const survey = await github.getFileContent(`${config.github.resultsPath}/in-progress/${file.name}`);
-                        
-                        // Add survey ID to the survey object
-                        survey.id = surveyId;
-                        
-                        inProgressSurveys.push(survey);
-                    } catch (error) {
-                        console.error(`Error loading in-progress survey ${file.name}:`, error);
-                    }
-                }
-                
-                // Sort by timestamp (newest first)
-                inProgressSurveys.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                const inProgressSurveys = await github.getInProgressSurveys();
+                console.log('Loaded in-progress surveys from GitHub:', inProgressSurveys.length);
                 
                 // Display in-progress surveys
                 displayInProgressSurveys(inProgressSurveys);
@@ -1466,37 +1495,9 @@
             }
         });
         
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize GitHub API on page load
-            const token = localStorage.getItem('github_token');
-            if (token) {
-                console.log('GitHub token found on page load');
-                
-                // Initialize GitHub API
-                try {
-                    const github = new GitHubAPI({
-                        token: token,
-                        owner: config.github.owner,
-                        repo: config.github.repo,
-                        branch: config.github.branch,
-                        resultsPath: config.github.resultsPath
-                    });
-                    
-                    if (github.isConfigured()) {
-                        console.log('GitHub API initialized successfully');
-                    } else {
-                        console.warn('GitHub API not properly configured');
-                    }
-                } catch (error) {
-                    console.error('Error initializing GitHub API:', error);
-                }
-            } else {
-                console.warn('No GitHub token found on page load');
-            }
-            
-            // Check authentication on page load
-            checkAuth();
+        // Set up event listeners
+        function setupEventListeners() {
+            console.log('Setting up event listeners');
             
             // Login button
             loginBtn.addEventListener('click', handleLogin);
@@ -1578,6 +1579,51 @@
                     }
                 });
             }
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing admin dashboard...');
+            
+            // Set version in footer
+            document.getElementById('app-version').textContent = config.version;
+            
+            // Check if admin is logged in
+            if (sessionStorage.getItem('adminAuthenticated') === 'true') {
+                console.log('Admin is authenticated, showing dashboard');
+                
+                // Initialize GitHub API
+                const token = localStorage.getItem('github_token');
+                if (token) {
+                    console.log('GitHub token found, initializing API');
+                    let githubAPI = new GitHubAPI({
+                        token: token,
+                        owner: config.github.owner,
+                        repo: config.github.repo,
+                        branch: config.github.branch,
+                        resultsPath: config.github.resultsPath
+                    });
+                    
+                    // Log GitHub API configuration
+                    console.log('GitHub API initialized with config:', {
+                        owner: config.github.owner,
+                        repo: config.github.repo,
+                        branch: config.github.branch,
+                        resultsPath: config.github.resultsPath,
+                        tokenExists: !!token
+                    });
+                } else {
+                    console.warn('No GitHub token found');
+                }
+                
+                showDashboard();
+            } else {
+                console.log('Admin is not authenticated, showing login');
+                showLogin();
+            }
+            
+            // Set up event listeners
+            setupEventListeners();
         });
         
         // Helper functions for loading indicators

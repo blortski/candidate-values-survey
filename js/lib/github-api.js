@@ -91,6 +91,11 @@ class GitHubAPI {
         }
         
         try {
+            console.log('Getting all survey results from GitHub...');
+            console.log('Base URL:', this.baseUrl);
+            console.log('Results Path:', this.resultsPath);
+            console.log('Branch:', this.branch);
+            
             // Get directory contents
             const response = await fetch(`${this.baseUrl}/${this.resultsPath}?ref=${this.branch}`, {
                 headers: {
@@ -98,12 +103,22 @@ class GitHubAPI {
                 }
             });
             
+            console.log('Directory response status:', response.status);
+            
             if (!response.ok) {
+                // If directory doesn't exist, return empty array
+                if (response.status === 404) {
+                    console.warn('Results directory not found. Returning empty array.');
+                    return [];
+                }
+                
                 const errorData = await response.json();
+                console.error('GitHub API error:', errorData);
                 throw new Error(`GitHub API error: ${errorData.message}`);
             }
             
             const files = await response.json();
+            console.log('Files found in results directory:', files.length);
             
             // Filter out non-JSON files and README
             const jsonFiles = files.filter(file => 
@@ -112,19 +127,43 @@ class GitHubAPI {
                 file.name !== 'README.md'
             );
             
+            console.log('JSON files found:', jsonFiles.length);
+            
+            if (jsonFiles.length === 0) {
+                console.log('No JSON files found in results directory.');
+                return [];
+            }
+            
             // Get content of each file
             const resultsPromises = jsonFiles.map(async file => {
-                const fileResponse = await fetch(file.download_url);
-                if (!fileResponse.ok) {
-                    throw new Error(`Failed to download file: ${file.name}`);
+                console.log('Downloading file:', file.name, 'from URL:', file.download_url);
+                try {
+                    const fileResponse = await fetch(file.download_url);
+                    
+                    if (!fileResponse.ok) {
+                        console.error(`Failed to download file: ${file.name}, status: ${fileResponse.status}`);
+                        return null;
+                    }
+                    
+                    const surveyData = await fileResponse.json();
+                    // Add filename as id for reference
+                    surveyData.id = file.name.replace('.json', '');
+                    return surveyData;
+                } catch (error) {
+                    console.error(`Error processing file ${file.name}:`, error);
+                    return null;
                 }
-                return await fileResponse.json();
             });
             
-            return await Promise.all(resultsPromises);
+            const results = await Promise.all(resultsPromises);
+            // Filter out any null results from failed downloads
+            const validResults = results.filter(result => result !== null);
+            
+            console.log('Successfully loaded survey results:', validResults.length);
+            return validResults;
         } catch (error) {
             console.error('Error getting survey results from GitHub:', error);
-            throw error;
+            return []; // Return empty array instead of throwing
         }
     }
     
@@ -204,9 +243,14 @@ class GitHubAPI {
         }
         
         try {
+            console.log('Getting in-progress surveys from GitHub...');
+            console.log('Base URL:', this.baseUrl);
+            console.log('In-Progress Path:', `${this.resultsPath}/in-progress`);
+            
             // Create in-progress directory if it doesn't exist
             try {
                 await this.ensureInProgressDirectory();
+                console.log('In-progress directory ensured');
             } catch (error) {
                 console.warn('Error ensuring in-progress directory exists:', error);
                 // Continue anyway, as the directory might already exist
@@ -219,17 +263,22 @@ class GitHubAPI {
                 }
             });
             
+            console.log('In-progress directory response status:', response.status);
+            
             if (!response.ok) {
                 // If directory doesn't exist, return empty array
                 if (response.status === 404) {
+                    console.warn('In-progress directory not found. Returning empty array.');
                     return [];
                 }
                 
                 const errorData = await response.json();
+                console.error('GitHub API error:', errorData);
                 throw new Error(`GitHub API error: ${errorData.message}`);
             }
             
             const files = await response.json();
+            console.log('Files found in in-progress directory:', files.length);
             
             // Filter out non-JSON files and README
             const jsonFiles = files.filter(file => 
@@ -238,14 +287,43 @@ class GitHubAPI {
                 file.name !== 'README.md'
             );
             
-            console.log('Found in-progress survey files:', jsonFiles);
+            console.log('JSON files found in in-progress directory:', jsonFiles.length);
             
-            // Return the file metadata directly
-            return jsonFiles;
+            if (jsonFiles.length === 0) {
+                console.log('No in-progress surveys found.');
+                return [];
+            }
+            
+            // Get content of each file
+            const surveysPromises = jsonFiles.map(async file => {
+                console.log('Downloading in-progress file:', file.name, 'from URL:', file.download_url);
+                try {
+                    const fileResponse = await fetch(file.download_url);
+                    
+                    if (!fileResponse.ok) {
+                        console.error(`Failed to download in-progress file: ${file.name}, status: ${fileResponse.status}`);
+                        return null;
+                    }
+                    
+                    const surveyData = await fileResponse.json();
+                    // Add filename as id for reference
+                    surveyData.id = file.name.replace('.json', '');
+                    return surveyData;
+                } catch (error) {
+                    console.error(`Error processing in-progress file ${file.name}:`, error);
+                    return null;
+                }
+            });
+            
+            const surveys = await Promise.all(surveysPromises);
+            // Filter out any null results from failed downloads
+            const validSurveys = surveys.filter(survey => survey !== null);
+            
+            console.log('Successfully loaded in-progress surveys:', validSurveys.length);
+            return validSurveys;
         } catch (error) {
             console.error('Error getting in-progress surveys from GitHub:', error);
-            // Return empty array in case of error
-            return [];
+            return []; // Return empty array in case of error
         }
     }
     
