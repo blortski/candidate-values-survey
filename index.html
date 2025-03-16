@@ -356,7 +356,7 @@
         <footer>
             <div class="footer-content">
                 <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
-                <span class="version" id="app-version">v1.2.0</span>
+                <span class="version" id="app-version">v1.2.1</span>
             </div>
         </footer>
     </div>
@@ -375,29 +375,84 @@
         // Global variables for direct access
         let directSurveyData = null;
         let directValuesData = null;
+        let userResponses = {};
         
-        // Load data directly
-        function loadSurveyDataDirectly() {
-            console.log('Loading survey data directly');
+        // Debug function to log to console and add visible message to page
+        function debugLog(message, isError = false) {
+            if (isError) {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
             
-            // Load survey data
-            fetch('data/survey.json')
-                .then(response => response.json())
-                .then(data => {
-                    directSurveyData = data;
-                    console.log('Survey data loaded directly:', directSurveyData);
-                    
-                    // Load values data
-                    return fetch('data/values.json');
-                })
-                .then(response => response.json())
-                .then(data => {
-                    directValuesData = data;
-                    console.log('Values data loaded directly:', directValuesData);
-                })
-                .catch(error => {
-                    console.error('Error loading data directly:', error);
-                });
+            // Add visible debug message to page
+            const debugContainer = document.getElementById('debug-container');
+            if (debugContainer) {
+                const msgElement = document.createElement('div');
+                msgElement.textContent = message;
+                msgElement.style.color = isError ? 'red' : 'blue';
+                msgElement.style.margin = '5px 0';
+                debugContainer.appendChild(msgElement);
+            }
+        }
+        
+        // Add debug container to page
+        function addDebugContainer() {
+            const container = document.querySelector('.container');
+            if (container) {
+                const debugContainer = document.createElement('div');
+                debugContainer.id = 'debug-container';
+                debugContainer.style.position = 'fixed';
+                debugContainer.style.bottom = '10px';
+                debugContainer.style.right = '10px';
+                debugContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                debugContainer.style.padding = '10px';
+                debugContainer.style.border = '1px solid #ccc';
+                debugContainer.style.maxHeight = '200px';
+                debugContainer.style.overflow = 'auto';
+                debugContainer.style.zIndex = '1000';
+                debugContainer.style.fontSize = '12px';
+                debugContainer.style.fontFamily = 'monospace';
+                container.appendChild(debugContainer);
+                
+                debugLog('Debug container added');
+            }
+        }
+        
+        // Add debug container immediately
+        addDebugContainer();
+        
+        // Load data directly with synchronous XMLHttpRequest to ensure it's loaded
+        function loadSurveyDataDirectly() {
+            debugLog('Loading survey data directly');
+            
+            try {
+                // Load survey data synchronously
+                const surveyXhr = new XMLHttpRequest();
+                surveyXhr.open('GET', 'data/survey.json', false); // false makes it synchronous
+                surveyXhr.send(null);
+                
+                if (surveyXhr.status === 200) {
+                    directSurveyData = JSON.parse(surveyXhr.responseText);
+                    debugLog('Survey data loaded directly: ' + directSurveyData.questions.length + ' questions');
+                } else {
+                    debugLog('Failed to load survey data: ' + surveyXhr.status, true);
+                }
+                
+                // Load values data synchronously
+                const valuesXhr = new XMLHttpRequest();
+                valuesXhr.open('GET', 'data/values.json', false); // false makes it synchronous
+                valuesXhr.send(null);
+                
+                if (valuesXhr.status === 200) {
+                    directValuesData = JSON.parse(valuesXhr.responseText);
+                    debugLog('Values data loaded directly: ' + directValuesData.values.length + ' values');
+                } else {
+                    debugLog('Failed to load values data: ' + valuesXhr.status, true);
+                }
+            } catch (error) {
+                debugLog('Error loading data directly: ' + error.message, true);
+            }
         }
         
         // Load data immediately
@@ -405,21 +460,28 @@
         
         // Define a direct startSurvey function that will call the one from survey.js
         function directStartSurvey() {
-            console.log('Direct start survey function called');
+            debugLog('Direct start survey function called');
             
             // Check if survey.js is loaded and has the startSurvey function
             if (typeof window.startSurvey === 'function') {
-                console.log('Calling survey.js startSurvey function');
+                debugLog('Calling survey.js startSurvey function');
                 window.startSurvey();
                 return;
             }
             
-            console.log('Creating intro form directly');
+            debugLog('Creating intro form directly');
+            
+            // Check if we have survey data
+            if (!directSurveyData || !directSurveyData.questions || directSurveyData.questions.length === 0) {
+                debugLog('Survey data not loaded or no questions available', true);
+                alert('Survey data could not be loaded. Please refresh the page and try again.');
+                return;
+            }
             
             // Create the form directly if the survey.js function is not available
             const introSection = document.getElementById('intro-section');
             if (!introSection) {
-                console.error('Intro section not found');
+                debugLog('Intro section not found', true);
                 return;
             }
             
@@ -454,26 +516,27 @@
                         return;
                     }
                     
-                    // Try to use the survey.js function first
-                    if (typeof window.showQuestions === 'function') {
-                        console.log('Using survey.js showQuestions function');
-                        window.showQuestions();
-                    } else {
-                        // Direct implementation of showing the first question
-                        console.log('Using direct implementation of showing questions');
-                        directShowQuestions();
-                    }
+                    debugLog('Form submitted with name: ' + candidateName + ' and email: ' + candidateEmail);
+                    
+                    // Store candidate info
+                    userResponses.candidateName = candidateName;
+                    userResponses.candidateEmail = candidateEmail;
+                    
+                    // Show questions directly
+                    directShowQuestions();
                 });
+            } else {
+                debugLog('Candidate info form not found', true);
             }
         }
         
         // Direct implementation of showing questions
         function directShowQuestions() {
-            console.log('Direct show questions function called');
+            debugLog('Direct show questions function called');
             
             // Check if we have survey data
             if (!directSurveyData || !directSurveyData.questions || directSurveyData.questions.length === 0) {
-                console.error('Survey data not loaded or no questions available');
+                debugLog('Survey data not loaded or no questions available', true);
                 alert('Survey questions could not be loaded. Please refresh the page and try again.');
                 return;
             }
@@ -482,33 +545,44 @@
             const introSection = document.getElementById('intro-section');
             if (introSection) {
                 introSection.style.display = 'none';
+                debugLog('Intro section hidden');
+            } else {
+                debugLog('Intro section not found', true);
             }
             
             // Show survey section
             const questionsSection = document.getElementById('questions-section');
             if (questionsSection) {
                 questionsSection.style.display = 'block';
+                debugLog('Questions section displayed');
                 
-                // Update total questions count
-                const totalQuestionsElement = document.getElementById('total-questions');
-                if (totalQuestionsElement) {
-                    totalQuestionsElement.textContent = directSurveyData.questions.length;
-                }
+                // Create the questions section structure if it doesn't exist
+                questionsSection.innerHTML = `
+                    <div class="progress-container">
+                        <div class="progress-text">Question <span id="current-question-num">1</span> of <span id="total-questions">${directSurveyData.questions.length}</span></div>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div id="question-container">
+                        <!-- Questions will be loaded here -->
+                    </div>
+                `;
                 
                 // Show the first question
                 showDirectQuestion(0);
             } else {
-                console.error('Questions section not found');
+                debugLog('Questions section not found', true);
             }
         }
         
         // Function to show a specific question
         function showDirectQuestion(questionIndex) {
-            console.log('Showing question at index:', questionIndex);
+            debugLog('Showing question at index: ' + questionIndex);
             
             // Check if the question index is valid
             if (!directSurveyData || !directSurveyData.questions || questionIndex >= directSurveyData.questions.length) {
-                console.error('Invalid question index or survey data not loaded');
+                debugLog('Invalid question index or survey data not loaded', true);
                 return;
             }
             
@@ -527,11 +601,12 @@
             
             // Get the question
             const question = directSurveyData.questions[questionIndex];
+            debugLog('Question text: ' + question.text);
             
             // Get the question container
             const questionContainer = document.getElementById('question-container');
             if (!questionContainer) {
-                console.error('Question container not found');
+                debugLog('Question container not found', true);
                 return;
             }
             
@@ -544,23 +619,23 @@
                             <span class="rating-label">Strongly Disagree</span>
                             <div class="rating-options">
                                 <label>
-                                    <input type="radio" name="rating" value="1">
+                                    <input type="radio" name="rating" value="1" ${userResponses[questionIndex] === 1 ? 'checked' : ''}>
                                     <span>1</span>
                                 </label>
                                 <label>
-                                    <input type="radio" name="rating" value="2">
+                                    <input type="radio" name="rating" value="2" ${userResponses[questionIndex] === 2 ? 'checked' : ''}>
                                     <span>2</span>
                                 </label>
                                 <label>
-                                    <input type="radio" name="rating" value="3">
+                                    <input type="radio" name="rating" value="3" ${userResponses[questionIndex] === 3 ? 'checked' : ''}>
                                     <span>3</span>
                                 </label>
                                 <label>
-                                    <input type="radio" name="rating" value="4">
+                                    <input type="radio" name="rating" value="4" ${userResponses[questionIndex] === 4 ? 'checked' : ''}>
                                     <span>4</span>
                                 </label>
                                 <label>
-                                    <input type="radio" name="rating" value="5">
+                                    <input type="radio" name="rating" value="5" ${userResponses[questionIndex] === 5 ? 'checked' : ''}>
                                     <span>5</span>
                                 </label>
                             </div>
@@ -591,7 +666,8 @@
                     
                     // Store the response
                     const response = parseInt(selectedRating.value);
-                    console.log(`Question ${questionIndex + 1} response:`, response);
+                    userResponses[questionIndex] = response;
+                    debugLog(`Question ${questionIndex + 1} response: ${response}`);
                     
                     // Show the next question
                     showDirectQuestion(questionIndex + 1);
@@ -617,7 +693,8 @@
                     
                     // Store the response
                     const response = parseInt(selectedRating.value);
-                    console.log(`Question ${questionIndex + 1} response:`, response);
+                    userResponses[questionIndex] = response;
+                    debugLog(`Question ${questionIndex + 1} response: ${response}`);
                     
                     // Show completion message
                     const questionsSection = document.getElementById('questions-section');
@@ -644,18 +721,18 @@
         }
         
         // Directly attach event listener to start button
-        console.log('Inline script: Adding direct event listener to start button');
+        debugLog('Adding direct event listener to start button');
         var startBtn = document.getElementById('start-survey');
         if (startBtn) {
             startBtn.onclick = function(e) {
                 e.preventDefault();
-                console.log('Start button clicked from inline script');
+                debugLog('Start button clicked');
                 directStartSurvey();
                 return false;
             };
-            console.log('Inline script: Event listener attached successfully');
+            debugLog('Event listener attached successfully');
         } else {
-            console.error('Inline script: Start button not found');
+            debugLog('Start button not found', true);
         }
     </script>
 </body>
