@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Customer Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.5&t=20250316130703">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.6&t=20250316131944">
     <style>
         body {
             background-color: #f5f8fa;
@@ -43,8 +43,24 @@
         }
         
         .user-display {
+            display: flex;
+            align-items: center;
             margin-right: 20px;
             font-weight: bold;
+        }
+        
+        .customer-logo-container {
+            margin-right: 20px;
+        }
+        
+        .customer-logo {
+            max-width: 100px;
+            height: auto;
+            vertical-align: middle;
+        }
+        
+        .logo-preview {
+            margin-top: 20px;
         }
         
         .btn {
@@ -260,19 +276,6 @@
             content: '←';
             margin-right: 5px;
         }
-        
-        .customer-logo-container {
-            margin-right: 20px;
-        }
-        
-        .customer-logo {
-            max-width: 100px;
-            height: auto;
-        }
-        
-        .logo-preview {
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
@@ -280,11 +283,12 @@
         <a href="master-admin-dashboard.html" class="back-link">Back to Master Admin Dashboard</a>
         
         <header>
-            <div id="customer-logo-container" class="customer-logo-container"></div>
             <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
             <div class="user-controls">
-                <div class="user-display">Customer: <span id="customer-name">Loading...</span></div>
-                <a href="master-admin-dashboard.html" class="btn btn-secondary">Back to Master Admin</a>
+                <div class="user-display">
+                    Customer: <span id="customer-name">Loading...</span>
+                </div>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
             </div>
         </header>
         
@@ -430,12 +434,12 @@
         <div id="notification" class="notification"></div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.5</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.6</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.5&t=20250316130703"></script>
+    <script src="js/lib/config.js?v=1.7.6&t=20250316131944"></script>
     <script>
         // Global variables
         let customerId = null;
@@ -458,13 +462,13 @@
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing customer admin dashboard v1.7.5...');
+            console.log('Initializing customer admin dashboard v1.7.6...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.5';
-                console.log('Set version to:', 'v1.7.5');
+                versionElement.textContent = 'v1.7.6';
+                console.log('Set version to:', 'v1.7.6');
             }
             
             // Get customer ID from URL
@@ -546,10 +550,10 @@
                     logoContainer.id = 'customer-logo-container';
                     logoContainer.className = 'customer-logo-container';
                     
-                    // Insert before the customer header
-                    const headerContainer = document.querySelector('.dashboard-header');
-                    if (headerContainer) {
-                        headerContainer.insertBefore(logoContainer, customerNameElement);
+                    // Insert after the customer name
+                    const customerNameElement = document.getElementById('customer-name');
+                    if (customerNameElement && customerNameElement.parentNode) {
+                        customerNameElement.parentNode.appendChild(logoContainer);
                     }
                 }
                 
@@ -559,18 +563,6 @@
                 const settingsLogoPreview = document.getElementById('logo-preview');
                 if (settingsLogoPreview) {
                     settingsLogoPreview.innerHTML = `<img src="${customerData.logo}" alt="${customerData.name} Logo" class="customer-logo">`;
-                } else {
-                    // Create preview element if it doesn't exist
-                    const previewContainer = document.createElement('div');
-                    previewContainer.id = 'logo-preview';
-                    previewContainer.className = 'logo-preview';
-                    previewContainer.innerHTML = `<img src="${customerData.logo}" alt="${customerData.name} Logo" class="customer-logo">`;
-                    
-                    // Insert after the form
-                    const logoUploadContainer = document.getElementById('logo-upload-container');
-                    if (logoUploadContainer) {
-                        logoUploadContainer.appendChild(previewContainer);
-                    }
                 }
             }
         }
