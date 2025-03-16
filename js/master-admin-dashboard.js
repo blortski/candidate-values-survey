@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.5
+ * Version: v1.6.6
  */
 
 // Global variables
@@ -26,14 +26,14 @@ const addCustomerButton = document.getElementById('add-customer-btn');
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard...');
+    console.log('Initializing master admin dashboard v1.6.6...');
     console.log('Config loaded:', config);
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.6.5';
-        console.log('Set version to:', 'v1.6.5');
+        versionElement.textContent = 'v1.6.6';
+        console.log('Set version to:', 'v1.6.6');
     }
     
     // Check if user is logged in
@@ -54,56 +54,61 @@ function checkLoginStatus() {
     console.log('Token exists:', !!token);
     console.log('Username exists:', !!username);
     
-    if (token && username) {
-        console.log('User is logged in:', username);
-        
-        try {
-            // Initialize GitHub API with proper configuration
-            console.log('Initializing GitHub API with config:', {
-                owner: config.github.owner,
-                repo: config.github.repo,
-                branch: config.github.branch,
-                resultsPath: config.github.resultsPath,
-                token: token ? token.substring(0, 4) + '...' : 'null'
-            });
-            
-            githubAPI = new GitHubAPI({
-                owner: config.github.owner,
-                repo: config.github.repo,
-                branch: config.github.branch,
-                resultsPath: config.github.resultsPath,
-                token: token
-            });
-            
-            console.log('GitHub API initialized:', githubAPI);
-            
-            // Test GitHub API access to ensure token is valid
-            console.log('Testing GitHub API access...');
-            githubAPI.testAccess()
-                .then(success => {
-                    console.log('GitHub API access test result:', success);
-                    if (success) {
-                        // Show dashboard
-                        showDashboard(username);
-                        
-                        // Load customers
-                        loadCustomers();
-                    } else {
-                        // Token is invalid, show login prompt
-                        console.error('GitHub token is invalid');
-                        showLoginPrompt();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error testing GitHub access:', error);
-                    showLoginPrompt();
-                });
-        } catch (error) {
-            console.error('Error initializing GitHub API:', error);
-            showLoginPrompt();
-        }
-    } else {
+    if (!token || !username) {
         console.log('User not logged in, showing login prompt');
+        showLoginPrompt();
+        return;
+    }
+    
+    console.log('User is logged in:', username);
+    
+    try {
+        // Initialize GitHub API with proper configuration
+        console.log('Initializing GitHub API with config:', {
+            owner: config.github.owner,
+            repo: config.github.repo,
+            branch: config.github.branch,
+            resultsPath: config.github.resultsPath,
+            token: token ? token.substring(0, 4) + '...' : 'null'
+        });
+        
+        // Initialize GitHub API
+        window.githubAPI = new GitHubAPI({
+            owner: config.github.owner,
+            repo: config.github.repo,
+            branch: config.github.branch,
+            resultsPath: config.github.resultsPath,
+            token: token
+        });
+        
+        // Set global variable
+        githubAPI = window.githubAPI;
+        
+        console.log('GitHub API initialized successfully');
+        
+        // Test GitHub API access to ensure token is valid
+        console.log('Testing GitHub API access...');
+        githubAPI.testAccess()
+            .then(success => {
+                console.log('GitHub API access test result:', success);
+                if (success) {
+                    // Show dashboard
+                    showDashboard(username);
+                    
+                    // Load customers
+                    loadCustomers();
+                } else {
+                    // Token is invalid, show login prompt
+                    console.error('GitHub token is invalid');
+                    showLoginPrompt();
+                }
+            })
+            .catch(error => {
+                console.error('Error testing GitHub access:', error);
+                showLoginPrompt();
+            });
+    } catch (error) {
+        console.error('Error initializing GitHub API:', error);
         showLoginPrompt();
     }
 }
