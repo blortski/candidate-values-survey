@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.6.1
+ * Version: v1.6.2
  */
 
 // Global variables
@@ -13,6 +13,8 @@ let customers = [];
 let currentCustomerId = null;
 
 // DOM elements
+const loginPrompt = document.getElementById('login-prompt');
+const dashboardContent = document.getElementById('dashboard-content');
 const dashboardSection = document.getElementById('dashboard-section');
 const customersContainer = document.getElementById('customers-container');
 const addCustomerForm = document.getElementById('add-customer-form');
@@ -53,15 +55,59 @@ function checkLoginStatus() {
         // Initialize GitHub API
         githubAPI = new GitHubAPI(token);
         
-        // Update user display
-        userDisplay.textContent = username;
-        
-        // Load customers
-        loadCustomers();
+        // Test GitHub API access to ensure token is valid
+        githubAPI.testAccess()
+            .then(success => {
+                if (success) {
+                    // Show dashboard
+                    showDashboard(username);
+                    
+                    // Load customers
+                    loadCustomers();
+                } else {
+                    // Token is invalid, show login prompt
+                    console.log('GitHub token is invalid');
+                    showLoginPrompt();
+                }
+            })
+            .catch(error => {
+                console.error('Error testing GitHub access:', error);
+                showLoginPrompt();
+            });
     } else {
-        console.log('User not logged in, redirecting to login page');
-        window.location.href = 'admin-login.html';
+        console.log('User not logged in, showing login prompt');
+        showLoginPrompt();
     }
+}
+
+/**
+ * Show the login prompt
+ */
+function showLoginPrompt() {
+    // Clear any stored credentials
+    localStorage.removeItem('github_token');
+    localStorage.removeItem('username');
+    
+    // Show login prompt
+    loginPrompt.classList.remove('hidden');
+    
+    // Hide dashboard content
+    dashboardContent.classList.add('hidden');
+}
+
+/**
+ * Show the dashboard
+ * @param {string} username - The username to display
+ */
+function showDashboard(username) {
+    // Hide login prompt
+    loginPrompt.classList.add('hidden');
+    
+    // Show dashboard content
+    dashboardContent.classList.remove('hidden');
+    
+    // Update user display
+    userDisplay.textContent = username;
 }
 
 /**
@@ -117,8 +163,8 @@ function handleLogout() {
     localStorage.removeItem('github_token');
     localStorage.removeItem('username');
     
-    // Redirect to login page
-    window.location.href = 'admin-login.html';
+    // Show login prompt
+    showLoginPrompt();
 }
 
 /**

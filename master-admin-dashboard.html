@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.6.1&t=20250316103941">
-    <link rel="stylesheet" href="css/admin.css?v=1.6.1&t=20250316103941">
+    <link rel="stylesheet" href="css/styles.css?v=1.6.2&t=20250316104631">
+    <link rel="stylesheet" href="css/admin.css?v=1.6.2&t=20250316104631">
     <style>
         .customer-card {
             border: 1px solid #ddd;
@@ -105,63 +105,118 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Login prompt styles */
+        .login-prompt {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .login-prompt img {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .login-prompt h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .login-prompt p {
+            margin-bottom: 30px;
+            color: #555;
+            font-size: 16px;
+        }
+        
+        .login-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--primary-color-dark);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <div class="logo-container">
-                <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
-                <h1>Master Admin Dashboard</h1>
-            </div>
-            <div class="user-info">
-                <span>Welcome, <span id="user-display"></span></span>
-                <button id="logout-btn" class="btn small-btn">Logout</button>
-            </div>
-        </header>
+        <!-- Login prompt (shown when not logged in) -->
+        <div id="login-prompt" class="login-prompt">
+            <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo">
+            <h2>Master Admin Dashboard</h2>
+            <p>You must be logged in to access the Master Admin Dashboard.</p>
+            <a href="admin-login.html" class="login-btn">Go to Login</a>
+        </div>
         
-        <main id="dashboard-section">
-            <div class="section-header">
-                <h2>Customer Management</h2>
-                <button id="add-customer-btn" class="btn">Add New Customer</button>
-            </div>
-            
-            <div id="customers-container">
-                <!-- Customers will be loaded here -->
-                <div class="loading-indicator">
-                    <div class="spinner"></div>
-                    <p>Loading customers...</p>
+        <!-- Dashboard content (hidden until logged in) -->
+        <div id="dashboard-content" class="hidden">
+            <header>
+                <div class="logo-container">
+                    <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
+                    <h1>Master Admin Dashboard</h1>
                 </div>
-            </div>
+                <div class="user-info">
+                    <span>Welcome, <span id="user-display"></span></span>
+                    <button id="logout-btn" class="btn small-btn">Logout</button>
+                </div>
+            </header>
             
-            <div id="add-customer-form" class="form-section hidden">
-                <h3>Add New Customer</h3>
-                <form id="customer-form">
-                    <div class="form-group">
-                        <label for="customer-name">Company Name</label>
-                        <input type="text" id="customer-name" name="customer-name" required>
+            <main id="dashboard-section">
+                <div class="section-header">
+                    <h2>Customer Management</h2>
+                    <button id="add-customer-btn" class="btn">Add New Customer</button>
+                </div>
+                
+                <div id="customers-container">
+                    <!-- Customers will be loaded here -->
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading customers...</p>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="customer-email">Contact Email</label>
-                        <input type="email" id="customer-email" name="customer-email" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="customer-phone">Contact Phone</label>
-                        <input type="tel" id="customer-phone" name="customer-phone">
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn">Save Customer</button>
-                        <button type="button" id="cancel-add-customer" class="btn secondary-btn">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </main>
+                </div>
+                
+                <div id="add-customer-form" class="form-section hidden">
+                    <h3>Add New Customer</h3>
+                    <form id="customer-form">
+                        <div class="form-group">
+                            <label for="customer-name">Company Name</label>
+                            <input type="text" id="customer-name" name="customer-name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer-email">Contact Email</label>
+                            <input type="email" id="customer-email" name="customer-email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer-phone">Contact Phone</label>
+                            <input type="tel" id="customer-phone" name="customer-phone">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Save Customer</button>
+                            <button type="button" id="cancel-add-customer" class="btn secondary-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
         
         <footer>
-            <p>ValuesAlign &copy; 2025 | <span id="app-version">v1.6.1</span></p>
+            <p>ValuesAlign &copy; 2025 | <span id="app-version">v1.6.2</span></p>
         </footer>
     </div>
     
@@ -237,8 +292,8 @@
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.6.1&t=20250316103941"></script>
-    <script src="js/lib/github-api.js?v=1.6.1&t=20250316103941"></script>
-    <script src="js/master-admin-dashboard.js?v=1.6.1&t=20250316103941"></script>
+    <script src="js/lib/config.js?v=1.6.2&t=20250316104631"></script>
+    <script src="js/lib/github-api.js?v=1.6.2&t=20250316104631"></script>
+    <script src="js/master-admin-dashboard.js?v=1.6.2&t=20250316104631"></script>
 </body>
 </html>
