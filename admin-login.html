@@ -7,26 +7,34 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Login</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.6.9&t=20250316120525">
-    <link rel="stylesheet" href="css/admin.css?v=1.6.9&t=20250316120525">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.0&t=20250316121035">
     <style>
         body {
             background-color: #f5f8fa;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-height: 100vh;
         }
         
         .login-container {
             max-width: 400px;
-            margin: 100px auto;
+            margin: 50px auto;
             padding: 30px;
-            background-color: #fff;
+            background-color: #f5f8fa;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         
         .logo-container {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .logo {
@@ -36,23 +44,21 @@
         
         h1 {
             text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 30px;
+            color: #2e7d32;
+            margin-bottom: 20px;
         }
         
         .form-group {
             margin-bottom: 20px;
         }
         
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
-            color: #555;
         }
         
-        input[type="text"],
-        input[type="password"] {
+        .form-group input {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -64,7 +70,7 @@
             display: block;
             width: 100%;
             padding: 12px;
-            background-color: var(--primary-color);
+            background-color: #2e7d32;
             color: white;
             border: none;
             border-radius: 4px;
@@ -74,20 +80,24 @@
         }
         
         .btn:hover {
-            background-color: var(--primary-color-dark);
+            background-color: #1b5e20;
         }
         
         .error-message {
-            color: #e74c3c;
-            margin-top: 20px;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
             text-align: center;
-            font-weight: bold;
         }
         
         footer {
             text-align: center;
-            margin-top: 40px;
-            color: #777;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
             font-size: 14px;
         }
     </style>
@@ -124,13 +134,12 @@
         </div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.6.9</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.0</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.6.9&t=20250316120525"></script>
-    <script src="js/lib/github-api.js?v=1.6.9&t=20250316120525"></script>
+    <script src="js/lib/config.js?v=1.7.0&t=20250316121035"></script>
     <script>
         // Immediately clear any existing login data
         localStorage.removeItem('github_token');
@@ -140,9 +149,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Set version in footer
             const versionElement = document.getElementById('app-version');
-            if (versionElement && window.config) {
-                versionElement.textContent = 'v1.6.9';
-                console.log('Set version to:', 'v1.6.9');
+            if (versionElement) {
+                versionElement.textContent = 'v1.7.0';
+                console.log('Set version to:', 'v1.7.0');
             }
             
             // Handle login form submission
@@ -174,40 +183,13 @@
                     return;
                 }
                 
-                // Test GitHub token before redirecting
-                console.log('Testing GitHub token...');
+                // Store credentials in localStorage
+                localStorage.setItem('github_token', token);
+                localStorage.setItem('username', username);
+                console.log('Credentials stored in localStorage');
                 
-                // Create a temporary GitHub API instance to test the token
-                const testApi = new GitHubAPI({
-                    owner: config.github.owner,
-                    repo: config.github.repo,
-                    branch: config.github.branch,
-                    resultsPath: config.github.resultsPath,
-                    token: token
-                });
-                
-                testApi.testAccess()
-                    .then(success => {
-                        if (success) {
-                            console.log('GitHub token is valid, proceeding to dashboard');
-                            
-                            // Store credentials in localStorage
-                            localStorage.setItem('github_token', token);
-                            localStorage.setItem('username', username);
-                            
-                            // Redirect to dashboard
-                            window.location.href = 'master-admin-dashboard.html';
-                        } else {
-                            console.error('GitHub token is invalid');
-                            errorMessage.textContent = 'Invalid GitHub token. Please check and try again.';
-                            errorMessage.style.display = 'block';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error testing GitHub token:', error);
-                        errorMessage.textContent = 'Error validating GitHub token. Please try again.';
-                        errorMessage.style.display = 'block';
-                    });
+                // Redirect to dashboard
+                window.location.href = 'master-admin-dashboard.html';
             });
         });
     </script>
