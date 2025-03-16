@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/styles.css?v=1.5.8&t=20250316">
+    <link rel="stylesheet" href="css/admin.css?v=1.5.8&t=20250316">
     <style>
         .customer-card {
             border: 1px solid #ddd;
@@ -229,8 +232,33 @@
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.5.8&t=20250316"></script>
-    <script src="js/lib/github-api.js?v=1.5.8&t=20250316"></script>
-    <script src="js/master-admin.js?v=1.5.8&t=20250316"></script>
+    <script src="js/lib/config.js?v=1.5.9&t=20250316102334"></script>
+    <script src="js/lib/github-api.js?v=1.5.9&t=20250316102334"></script>
+    <script src="js/master-admin.js?v=1.5.9&t=20250316102334"></script>
+    <script>
+        // Ensure version is displayed
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded with version:', config.version);
+            const versionElement = document.getElementById('app-version');
+            if (versionElement) {
+                versionElement.textContent = config.version;
+                console.log('Set version to:', config.version);
+            } else {
+                console.error('Version element not found');
+            }
+            
+            // Hide customer management options if not logged in
+            const isLoggedIn = localStorage.getItem('github_token') && localStorage.getItem('username');
+            if (!isLoggedIn) {
+                const viewBtns = document.querySelectorAll('.view-customer-btn');
+                const editBtns = document.querySelectorAll('.edit-customer-btn');
+                const deleteBtns = document.querySelectorAll('.delete-customer-btn');
+                
+                viewBtns.forEach(btn => btn.style.display = 'none');
+                editBtns.forEach(btn => btn.style.display = 'none');
+                deleteBtns.forEach(btn => btn.style.display = 'none');
+            }
+        });
+    </script>
 </body>
 </html>
