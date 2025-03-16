@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ValuesAlign - Customer Admin Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css?v=1.7.4&t=20250316125420">
+    <style>
+        body {
+            background-color: #f5f8fa;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-height: 100vh;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+        
+        .user-controls {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-display {
+            margin-right: 20px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn:hover {
+            background-color: #1b5e20;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        .btn-secondary {
+            background-color: #607d8b;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #455a64;
+        }
+        
+        .dashboard-section {
+            margin-bottom: 40px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            color: #2e7d32;
+            margin: 0;
+        }
+        
+        .tab-container {
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            border-bottom: 2px solid #2e7d32;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: white;
+            margin-bottom: 20px;
+        }
+        
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #2e7d32;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #4caf50;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1100;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal:not(.hidden) {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #2e7d32;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .back-link:before {
+            content: '←';
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="master-admin-dashboard.html" class="back-link">Back to Master Admin Dashboard</a>
+        
+        <header>
+            <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
+            <div class="user-controls">
+                <div class="user-display">Customer: <span id="customer-name">Loading...</span></div>
+                <a href="master-admin-dashboard.html" class="btn btn-secondary">Back to Master Admin</a>
+            </div>
+        </header>
+        
+        <div id="dashboard-section" class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">Customer Dashboard</h2>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="values">Values</div>
+                    <div class="tab" data-tab="questions">Questions</div>
+                    <div class="tab" data-tab="surveys">Surveys</div>
+                    <div class="tab" data-tab="admins">Admins</div>
+                </div>
+                
+                <!-- Values Tab -->
+                <div id="values-tab" class="tab-content active">
+                    <div class="section-header">
+                        <h3>Company Values</h3>
+                        <button id="add-value-btn" class="btn">Add New Value</button>
+                    </div>
+                    
+                    <div id="values-container" class="grid-container">
+                        <!-- Values will be loaded here -->
+                        <div class="card">
+                            <h3>Loading values...</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Questions Tab -->
+                <div id="questions-tab" class="tab-content">
+                    <div class="section-header">
+                        <h3>Survey Questions</h3>
+                        <button id="add-question-btn" class="btn">Add New Question</button>
+                    </div>
+                    
+                    <div id="questions-container">
+                        <!-- Questions will be loaded here -->
+                        <div class="card">
+                            <h3>Loading questions...</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Surveys Tab -->
+                <div id="surveys-tab" class="tab-content">
+                    <div class="section-header">
+                        <h3>Completed Surveys</h3>
+                        <button id="create-survey-link-btn" class="btn">Create New Survey Link</button>
+                    </div>
+                    
+                    <div id="surveys-container">
+                        <!-- Surveys will be loaded here -->
+                        <div class="card">
+                            <h3>Loading surveys...</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Admins Tab -->
+                <div id="admins-tab" class="tab-content">
+                    <div class="section-header">
+                        <h3>Customer Admins</h3>
+                        <button id="add-admin-btn" class="btn">Add New Admin</button>
+                    </div>
+                    
+                    <div id="admins-container" class="grid-container">
+                        <!-- Admins will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Admin Modal -->
+        <div id="add-admin-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Add New Admin</h2>
+                <form id="add-admin-form">
+                    <div class="form-group">
+                        <label for="admin-name">Name</label>
+                        <input type="text" id="admin-name" name="admin-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-email">Email</label>
+                        <input type="email" id="admin-email" name="admin-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password">Password</label>
+                        <input type="password" id="admin-password" name="admin-password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Save</button>
+                        <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Reset Password Modal -->
+        <div id="reset-password-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Reset Admin Password</h2>
+                <form id="reset-password-form">
+                    <input type="hidden" id="reset-admin-id">
+                    <div class="form-group">
+                        <label for="new-password">New Password</label>
+                        <input type="password" id="new-password" name="new-password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Reset Password</button>
+                        <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Notification -->
+        <div id="notification" class="notification"></div>
+        
+        <footer>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.4</span></p>
+        </footer>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/lib/config.js?v=1.7.4&t=20250316125420"></script>
+    <script>
+        // Global variables
+        let customerId = null;
+        let customerData = null;
+        let admins = [];
+        let values = [];
+        let questions = [];
+        let surveys = [];
+        
+        // DOM elements
+        const customerNameElement = document.getElementById('customer-name');
+        const valuesContainer = document.getElementById('values-container');
+        const questionsContainer = document.getElementById('questions-container');
+        const surveysContainer = document.getElementById('surveys-container');
+        const adminsContainer = document.getElementById('admins-container');
+        const addAdminModal = document.getElementById('add-admin-modal');
+        const resetPasswordModal = document.getElementById('reset-password-modal');
+        const notification = document.getElementById('notification');
+        
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing customer admin dashboard v1.7.4...');
+            
+            // Set version in footer
+            const versionElement = document.getElementById('app-version');
+            if (versionElement) {
+                versionElement.textContent = 'v1.7.4';
+                console.log('Set version to:', 'v1.7.4');
+            }
+            
+            // Get customer ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            customerId = urlParams.get('id');
+            
+            if (!customerId) {
+                showNotification('No customer ID provided', 'error');
+                return;
+            }
+            
+            // Check if master admin is logged in
+            const token = localStorage.getItem('github_token');
+            const username = localStorage.getItem('username');
+            
+            if (!token || !username) {
+                // Redirect to master admin login
+                window.location.href = 'admin-login.html';
+                return;
+            }
+            
+            // Load customer data
+            loadCustomerData();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Set up tabs
+            setupTabs();
+        });
+        
+        /**
+         * Load customer data
+         */
+        function loadCustomerData() {
+            // Load customers from localStorage
+            const storedCustomers = localStorage.getItem('customers');
+            
+            if (storedCustomers) {
+                try {
+                    const customers = JSON.parse(storedCustomers);
+                    customerData = customers.find(c => c.id === customerId);
+                    
+                    if (customerData) {
+                        console.log('Loaded customer data:', customerData);
+                        customerNameElement.textContent = customerData.name;
+                        document.title = `ValuesAlign - ${customerData.name} Dashboard`;
+                        
+                        // Load customer-specific data
+                        loadCustomerAdmins();
+                        loadCustomerValues();
+                        loadCustomerQuestions();
+                        loadCustomerSurveys();
+                    } else {
+                        showNotification('Customer not found', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error parsing customers from localStorage:', error);
+                    showNotification('Error loading customer data', 'error');
+                }
+            } else {
+                showNotification('No customers found', 'error');
+            }
+        }
+        
+        /**
+         * Load customer admins
+         */
+        function loadCustomerAdmins() {
+            // Load admins from localStorage
+            const storedAdmins = localStorage.getItem(`admins_${customerId}`);
+            
+            if (storedAdmins) {
+                try {
+                    admins = JSON.parse(storedAdmins);
+                    console.log('Loaded admins:', admins.length);
+                } catch (error) {
+                    console.error('Error parsing admins from localStorage:', error);
+                    admins = getDefaultAdmins();
+                }
+            } else {
+                console.log('No admins found, loading defaults');
+                admins = getDefaultAdmins();
+                saveAdmins();
+            }
+            
+            renderAdmins();
+        }
+        
+        /**
+         * Get default admins
+         */
+        function getDefaultAdmins() {
+            return [
+                { id: '1', name: 'Admin User', email: 'admin@example.com', password: 'password123' }
+            ];
+        }
+        
+        /**
+         * Save admins to localStorage
+         */
+        function saveAdmins() {
+            try {
+                localStorage.setItem(`admins_${customerId}`, JSON.stringify(admins));
+                console.log('Saved admins to localStorage:', admins.length);
+            } catch (error) {
+                console.error('Error saving admins to localStorage:', error);
+                showNotification('Error saving admin data', 'error');
+            }
+        }
+        
+        /**
+         * Render admins
+         */
+        function renderAdmins() {
+            adminsContainer.innerHTML = '';
+            
+            if (admins.length === 0) {
+                adminsContainer.innerHTML = '<p>No admins found. Add a new admin to get started.</p>';
+                return;
+            }
+            
+            admins.forEach(admin => {
+                const adminCard = document.createElement('div');
+                adminCard.className = 'card';
+                adminCard.innerHTML = `
+                    <h3>${admin.name}</h3>
+                    <p><strong>Email:</strong> ${admin.email}</p>
+                    <div class="form-actions">
+                        <button class="btn btn-small" onclick="resetAdminPassword('${admin.id}')">Reset Password</button>
+                        <button class="btn btn-secondary btn-small" onclick="deleteAdmin('${admin.id}')">Delete</button>
+                    </div>
+                `;
+                adminsContainer.appendChild(adminCard);
+            });
+        }
+        
+        /**
+         * Reset admin password
+         * @param {string} id - Admin ID
+         */
+        function resetAdminPassword(id) {
+            const admin = admins.find(a => a.id === id);
+            if (!admin) return;
+            
+            document.getElementById('reset-admin-id').value = id;
+            resetPasswordModal.classList.remove('hidden');
+        }
+        
+        /**
+         * Save reset password
+         * @param {Event} e - Form submit event
+         */
+        function saveResetPassword(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('reset-admin-id').value;
+            const newPassword = document.getElementById('new-password').value;
+            
+            const admin = admins.find(a => a.id === id);
+            if (admin) {
+                admin.password = newPassword;
+                saveAdmins();
+                closeAllModals();
+                showNotification(`Password reset for ${admin.name}`);
+                
+                // In a real app, you would send an email here
+                console.log(`Password reset email would be sent to ${admin.email}`);
+            }
+        }
+        
+        /**
+         * Delete admin
+         * @param {string} id - Admin ID
+         */
+        function deleteAdmin(id) {
+            const admin = admins.find(a => a.id === id);
+            
+            if (confirm(`Are you sure you want to delete admin ${admin.name}?`)) {
+                admins = admins.filter(a => a.id !== id);
+                saveAdmins();
+                renderAdmins();
+                showNotification(`Admin ${admin.name} deleted`);
+            }
+        }
+        
+        /**
+         * Add new admin
+         * @param {Event} e - Form submit event
+         */
+        function addNewAdmin(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('admin-name').value;
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            
+            const newAdmin = {
+                id: Date.now().toString(),
+                name,
+                email,
+                password
+            };
+            
+            admins.push(newAdmin);
+            saveAdmins();
+            renderAdmins();
+            closeAllModals();
+            showNotification(`Admin ${name} added successfully`);
+            
+            // In a real app, you would send an email here
+            console.log(`Welcome email would be sent to ${email}`);
+        }
+        
+        /**
+         * Load customer values (placeholder)
+         */
+        function loadCustomerValues() {
+            // Placeholder for now
+            valuesContainer.innerHTML = `
+                <div class="card">
+                    <h3>Integrity</h3>
+                    <p>We are honest, transparent, and committed to doing what's right.</p>
+                </div>
+                <div class="card">
+                    <h3>Innovation</h3>
+                    <p>We embrace change and creativity to deliver solutions.</p>
+                </div>
+                <div class="card">
+                    <h3>Collaboration</h3>
+                    <p>We work together to achieve shared success.</p>
+                </div>
+            `;
+        }
+        
+        /**
+         * Load customer questions (placeholder)
+         */
+        function loadCustomerQuestions() {
+            // Placeholder for now
+            questionsContainer.innerHTML = `
+                <div class="card">
+                    <h3>Question 1</h3>
+                    <p>How important is integrity in your daily work?</p>
+                </div>
+                <div class="card">
+                    <h3>Question 2</h3>
+                    <p>Rate your team's collaborative spirit.</p>
+                </div>
+            `;
+        }
+        
+        /**
+         * Load customer surveys (placeholder)
+         */
+        function loadCustomerSurveys() {
+            // Placeholder for now
+            surveysContainer.innerHTML = `
+                <div class="card">
+                    <h3>Engineering Team Survey</h3>
+                    <p>Completed: 12/15</p>
+                    <p>Started: March 10, 2025</p>
+                </div>
+                <div class="card">
+                    <h3>Marketing Team Survey</h3>
+                    <p>Completed: 5/8</p>
+                    <p>Started: March 12, 2025</p>
+                </div>
+            `;
+        }
+        
+        /**
+         * Set up tabs
+         */
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+        }
+        
+        /**
+         * Show notification
+         * @param {string} message - The message to display
+         * @param {string} type - The type of notification (success or error)
+         */
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = 'notification show';
+            
+            if (type === 'error') {
+                notification.style.backgroundColor = '#f44336';
+            } else {
+                notification.style.backgroundColor = '#4caf50';
+            }
+            
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 3000);
+        }
+        
+        /**
+         * Close all modals
+         */
+        function closeAllModals() {
+            addAdminModal.classList.add('hidden');
+            resetPasswordModal.classList.add('hidden');
+            
+            // Reset forms
+            document.getElementById('add-admin-form').reset();
+            document.getElementById('reset-password-form').reset();
+        }
+        
+        /**
+         * Set up event listeners
+         */
+        function setupEventListeners() {
+            // Add admin button
+            const addAdminBtn = document.getElementById('add-admin-btn');
+            if (addAdminBtn) {
+                addAdminBtn.addEventListener('click', () => {
+                    addAdminModal.classList.remove('hidden');
+                });
+            }
+            
+            // Add admin form
+            const addAdminForm = document.getElementById('add-admin-form');
+            if (addAdminForm) {
+                addAdminForm.addEventListener('submit', addNewAdmin);
+            }
+            
+            // Reset password form
+            const resetPasswordForm = document.getElementById('reset-password-form');
+            if (resetPasswordForm) {
+                resetPasswordForm.addEventListener('submit', saveResetPassword);
+            }
+            
+            // Modal close buttons
+            const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', closeAllModals);
+            });
+            
+            // Make functions available globally
+            window.resetAdminPassword = resetAdminPassword;
+            window.deleteAdmin = deleteAdmin;
+        }
+    </script>
+</body>
+</html>

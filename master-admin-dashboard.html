@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.3&t=20250316123541">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.4&t=20250316125420">
     <style>
         body {
             background-color: #f5f8fa;
@@ -347,12 +347,12 @@
         <div id="notification" class="notification"></div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.3</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.4</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.3&t=20250316123541"></script>
+    <script src="js/lib/config.js?v=1.7.4&t=20250316125420"></script>
     <script>
         // Global variables
         let customers = [];
@@ -373,13 +373,13 @@
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing master admin dashboard v1.7.3...');
+            console.log('Initializing master admin dashboard v1.7.4...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.3';
-                console.log('Set version to:', 'v1.7.3');
+                versionElement.textContent = 'v1.7.4';
+                console.log('Set version to:', 'v1.7.4');
             }
             
             // Make sure all modals are hidden
@@ -530,14 +530,15 @@
                 customerCard.className = 'customer-card';
                 
                 // Generate customer dashboard URL
-                const customerDashboardUrl = `https://blortski.github.io/candidate-values-survey/customer-admin-dashboard.html?id=${customer.id}`;
+                const customerDashboardUrl = `customer-admin-dashboard.html?id=${customer.id}`;
                 
                 customerCard.innerHTML = `
                     <h3>${customer.name}</h3>
                     <p><strong>Contact:</strong> ${customer.contact}</p>
                     <p><strong>Email:</strong> ${customer.email}</p>
                     <div class="customer-actions">
-                        <button class="btn btn-copy btn-small" onclick="copyCustomerUrl('${customerDashboardUrl}', '${customer.name}')">Copy Dashboard URL</button>
+                        <a href="${customerDashboardUrl}" class="btn btn-small">Manage Dashboard</a>
+                        <button class="btn btn-copy btn-small" onclick="copyCustomerUrl('${customerDashboardUrl}', '${customer.name}')">Copy URL</button>
                         <button class="btn btn-small" onclick="editCustomer('${customer.id}')">Edit</button>
                         <button class="btn btn-secondary btn-small" onclick="showDeleteConfirmation('${customer.id}')">Delete</button>
                     </div>
