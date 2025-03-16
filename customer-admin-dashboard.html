@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Customer Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.6&t=20250316131944">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.7&t=20250316132732">
     <style>
         body {
             background-color: #f5f8fa;
@@ -276,11 +276,39 @@
             content: '←';
             margin-right: 5px;
         }
+        
+        .login-prompt {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="master-admin-dashboard.html" class="back-link">Back to Master Admin Dashboard</a>
+        <!-- Back link only visible to master admin -->
+        <a href="master-admin-dashboard.html" class="back-link" id="back-to-master">Back to Master Admin Dashboard</a>
         
         <header>
             <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
@@ -292,154 +320,177 @@
             </div>
         </header>
         
-        <div id="dashboard-section" class="dashboard-section">
-            <div class="section-header">
-                <h2 class="section-title">Customer Dashboard</h2>
+        <!-- Login Form (for customer admins) -->
+        <div id="login-prompt" class="login-prompt">
+            <div class="login-container">
+                <h2>Customer Admin Login</h2>
+                <form id="customer-login-form">
+                    <div class="form-group">
+                        <label for="customer-username">Username</label>
+                        <input type="text" id="customer-username" name="customer-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-password">Password</label>
+                        <input type="password" id="customer-password" name="customer-password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Login</button>
+                    </div>
+                </form>
+                <div id="login-error" class="error-message"></div>
+            </div>
+        </div>
+        
+        <div id="dashboard-content" class="dashboard-content">
+            <div id="dashboard-section" class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">Customer Dashboard</h2>
+                </div>
+                
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="values">Values</div>
+                        <div class="tab" data-tab="questions">Questions</div>
+                        <div class="tab" data-tab="surveys">Surveys</div>
+                        <div class="tab" data-tab="admins">Admins</div>
+                        <div class="tab" data-tab="settings">Settings</div>
+                    </div>
+                    
+                    <!-- Values Tab -->
+                    <div id="values-tab" class="tab-content active">
+                        <div class="section-header">
+                            <h3>Company Values</h3>
+                            <button id="add-value-btn" class="btn">Add New Value</button>
+                        </div>
+                        
+                        <div id="values-container" class="grid-container">
+                            <!-- Values will be loaded here -->
+                            <div class="card">
+                                <h3>Loading values...</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Questions Tab -->
+                    <div id="questions-tab" class="tab-content">
+                        <div class="section-header">
+                            <h3>Survey Questions</h3>
+                            <button id="add-question-btn" class="btn">Add New Question</button>
+                        </div>
+                        
+                        <div id="questions-container">
+                            <!-- Questions will be loaded here -->
+                            <div class="card">
+                                <h3>Loading questions...</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Surveys Tab -->
+                    <div id="surveys-tab" class="tab-content">
+                        <div class="section-header">
+                            <h3>Completed Surveys</h3>
+                            <button id="create-survey-link-btn" class="btn">Create New Survey Link</button>
+                        </div>
+                        
+                        <div id="surveys-container">
+                            <!-- Surveys will be loaded here -->
+                            <div class="card">
+                                <h3>Loading surveys...</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Admins Tab -->
+                    <div id="admins-tab" class="tab-content">
+                        <div class="section-header">
+                            <h3>Customer Admins</h3>
+                            <button id="add-admin-btn" class="btn">Add New Admin</button>
+                        </div>
+                        
+                        <div id="admins-container" class="grid-container">
+                            <!-- Admins will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Tab -->
+                    <div id="settings-tab" class="tab-content">
+                        <div class="section-header">
+                            <h3>Logo Upload</h3>
+                        </div>
+                        
+                        <div id="logo-upload-container">
+                            <form id="logo-upload-form">
+                                <div class="form-group">
+                                    <label for="logo-upload">Logo</label>
+                                    <input type="file" id="logo-upload" name="logo-upload" required>
+                                </div>
+                                <div id="logo-preview" class="logo-preview"></div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn">Upload Logo</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div class="tab-container">
-                <div class="tabs">
-                    <div class="tab active" data-tab="values">Values</div>
-                    <div class="tab" data-tab="questions">Questions</div>
-                    <div class="tab" data-tab="surveys">Surveys</div>
-                    <div class="tab" data-tab="admins">Admins</div>
-                    <div class="tab" data-tab="settings">Settings</div>
-                </div>
-                
-                <!-- Values Tab -->
-                <div id="values-tab" class="tab-content active">
-                    <div class="section-header">
-                        <h3>Company Values</h3>
-                        <button id="add-value-btn" class="btn">Add New Value</button>
-                    </div>
-                    
-                    <div id="values-container" class="grid-container">
-                        <!-- Values will be loaded here -->
-                        <div class="card">
-                            <h3>Loading values...</h3>
+            <!-- Add Admin Modal -->
+            <div id="add-admin-modal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <h2>Add New Admin</h2>
+                    <form id="add-admin-form">
+                        <div class="form-group">
+                            <label for="admin-name">Name</label>
+                            <input type="text" id="admin-name" name="admin-name" required>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Questions Tab -->
-                <div id="questions-tab" class="tab-content">
-                    <div class="section-header">
-                        <h3>Survey Questions</h3>
-                        <button id="add-question-btn" class="btn">Add New Question</button>
-                    </div>
-                    
-                    <div id="questions-container">
-                        <!-- Questions will be loaded here -->
-                        <div class="card">
-                            <h3>Loading questions...</h3>
+                        <div class="form-group">
+                            <label for="admin-email">Email</label>
+                            <input type="email" id="admin-email" name="admin-email" required>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Surveys Tab -->
-                <div id="surveys-tab" class="tab-content">
-                    <div class="section-header">
-                        <h3>Completed Surveys</h3>
-                        <button id="create-survey-link-btn" class="btn">Create New Survey Link</button>
-                    </div>
-                    
-                    <div id="surveys-container">
-                        <!-- Surveys will be loaded here -->
-                        <div class="card">
-                            <h3>Loading surveys...</h3>
+                        <div class="form-group">
+                            <label for="admin-password">Password</label>
+                            <input type="password" id="admin-password" name="admin-password" required>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Admins Tab -->
-                <div id="admins-tab" class="tab-content">
-                    <div class="section-header">
-                        <h3>Customer Admins</h3>
-                        <button id="add-admin-btn" class="btn">Add New Admin</button>
-                    </div>
-                    
-                    <div id="admins-container" class="grid-container">
-                        <!-- Admins will be loaded here -->
-                    </div>
-                </div>
-                
-                <!-- Settings Tab -->
-                <div id="settings-tab" class="tab-content">
-                    <div class="section-header">
-                        <h3>Logo Upload</h3>
-                    </div>
-                    
-                    <div id="logo-upload-container">
-                        <form id="logo-upload-form">
-                            <div class="form-group">
-                                <label for="logo-upload">Logo</label>
-                                <input type="file" id="logo-upload" name="logo-upload" required>
-                            </div>
-                            <div id="logo-preview" class="logo-preview"></div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn">Upload Logo</button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Save</button>
+                            <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>
-        
-        <!-- Add Admin Modal -->
-        <div id="add-admin-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h2>Add New Admin</h2>
-                <form id="add-admin-form">
-                    <div class="form-group">
-                        <label for="admin-name">Name</label>
-                        <input type="text" id="admin-name" name="admin-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="admin-email">Email</label>
-                        <input type="email" id="admin-email" name="admin-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="admin-password">Password</label>
-                        <input type="password" id="admin-password" name="admin-password" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn">Save</button>
-                        <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
-                    </div>
-                </form>
+            
+            <!-- Reset Password Modal -->
+            <div id="reset-password-modal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <h2>Reset Admin Password</h2>
+                    <form id="reset-password-form">
+                        <input type="hidden" id="reset-admin-id">
+                        <div class="form-group">
+                            <label for="new-password">New Password</label>
+                            <input type="password" id="new-password" name="new-password" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Reset Password</button>
+                            <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
             </div>
+            
+            <!-- Notification -->
+            <div id="notification" class="notification"></div>
         </div>
-        
-        <!-- Reset Password Modal -->
-        <div id="reset-password-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h2>Reset Admin Password</h2>
-                <form id="reset-password-form">
-                    <input type="hidden" id="reset-admin-id">
-                    <div class="form-group">
-                        <label for="new-password">New Password</label>
-                        <input type="password" id="new-password" name="new-password" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn">Reset Password</button>
-                        <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <!-- Notification -->
-        <div id="notification" class="notification"></div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.6</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.7</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.6&t=20250316131944"></script>
+    <script src="js/lib/config.js?v=1.7.7&t=20250316132732"></script>
     <script>
         // Global variables
         let customerId = null;
@@ -459,16 +510,19 @@
         const resetPasswordModal = document.getElementById('reset-password-modal');
         const notification = document.getElementById('notification');
         const logoUploadForm = document.getElementById('logo-upload-form');
+        const loginPrompt = document.getElementById('login-prompt');
+        const dashboardContent = document.getElementById('dashboard-content');
+        const logoutButton = document.getElementById('logout-btn');
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing customer admin dashboard v1.7.6...');
+            console.log('Initializing customer admin dashboard v1.7.7...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.6';
-                console.log('Set version to:', 'v1.7.6');
+                versionElement.textContent = 'v1.7.7';
+                console.log('Set version to:', 'v1.7.7');
             }
             
             // Get customer ID from URL
@@ -480,25 +534,245 @@
                 return;
             }
             
-            // Check if master admin is logged in
-            const token = localStorage.getItem('github_token');
-            const username = localStorage.getItem('username');
+            // Check login status
+            checkLoginStatus();
             
-            if (!token || !username) {
+            // Set up event listeners
+            addEventListeners();
+            
+            // Set up tabs
+            setupTabs();
+        });
+        
+        /**
+         * Check login status
+         */
+        function checkLoginStatus() {
+            const masterAdminToken = localStorage.getItem('github_token');
+            const masterAdminUsername = localStorage.getItem('username');
+            const customerAdminUsername = sessionStorage.getItem('customer_admin_username');
+            const customerAdminId = sessionStorage.getItem('customer_admin_id');
+            
+            // Check if user is a master admin
+            if (masterAdminToken && masterAdminUsername) {
+                console.log('Master admin logged in');
+                showDashboard();
+                
+                // Show the back link for master admin
+                const backLink = document.getElementById('back-to-master');
+                if (backLink) {
+                    backLink.style.display = 'block';
+                }
+                
+                return;
+            }
+            
+            // Check if user is a customer admin for this specific customer
+            if (customerAdminUsername && customerAdminId) {
+                // Verify this admin belongs to this customer
+                const customerAdmins = loadCustomerAdminsFromStorage();
+                const admin = customerAdmins.find(admin => admin.id === customerAdminId);
+                
+                if (admin && admin.username === customerAdminUsername) {
+                    console.log('Customer admin logged in');
+                    showDashboard();
+                    
+                    // Hide the back link for customer admin
+                    const backLink = document.getElementById('back-to-master');
+                    if (backLink) {
+                        backLink.style.display = 'none';
+                    }
+                    
+                    return;
+                }
+            }
+            
+            // Not logged in, show login form
+            showLoginForm();
+        }
+        
+        /**
+         * Show login form
+         */
+        function showLoginForm() {
+            if (loginPrompt) {
+                loginPrompt.style.display = 'flex';
+            }
+            
+            if (dashboardContent) {
+                dashboardContent.style.display = 'none';
+            }
+            
+            // Add event listener for login form
+            const loginForm = document.getElementById('customer-login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    handleCustomerLogin();
+                });
+            }
+        }
+        
+        /**
+         * Show dashboard
+         */
+        function showDashboard() {
+            if (loginPrompt) {
+                loginPrompt.style.display = 'none';
+            }
+            
+            if (dashboardContent) {
+                dashboardContent.style.display = 'block';
+            }
+        }
+        
+        /**
+         * Handle customer login
+         */
+        function handleCustomerLogin() {
+            const username = document.getElementById('customer-username').value;
+            const password = document.getElementById('customer-password').value;
+            const loginError = document.getElementById('login-error');
+            
+            if (!username || !password) {
+                loginError.textContent = 'Please enter username and password';
+                return;
+            }
+            
+            // Get customer admins
+            const customerAdmins = loadCustomerAdminsFromStorage();
+            
+            // Find admin by username
+            const admin = customerAdmins.find(admin => admin.username === username);
+            
+            if (!admin) {
+                loginError.textContent = 'Invalid username or password';
+                return;
+            }
+            
+            // Check password
+            if (admin.password !== password) {
+                loginError.textContent = 'Invalid username or password';
+                return;
+            }
+            
+            // Store in session storage
+            sessionStorage.setItem('customer_admin_username', admin.username);
+            sessionStorage.setItem('customer_admin_id', admin.id);
+            
+            // Show dashboard
+            showDashboard();
+            
+            // Hide the back link for customer admin
+            const backLink = document.getElementById('back-to-master');
+            if (backLink) {
+                backLink.style.display = 'none';
+            }
+        }
+        
+        /**
+         * Load customer admins from storage
+         */
+        function loadCustomerAdminsFromStorage() {
+            const storedAdmins = localStorage.getItem(`admins_${customerId}`);
+            
+            if (storedAdmins) {
+                try {
+                    return JSON.parse(storedAdmins);
+                } catch (error) {
+                    console.error('Error parsing admins from localStorage:', error);
+                    return [];
+                }
+            } else {
+                return [];
+            }
+        }
+        
+        /**
+         * Logout
+         */
+        function logout() {
+            // Check if user is a master admin
+            const masterAdminToken = localStorage.getItem('github_token');
+            const masterAdminUsername = localStorage.getItem('username');
+            
+            if (masterAdminToken && masterAdminUsername) {
                 // Redirect to master admin login
                 window.location.href = 'admin-login.html';
                 return;
             }
             
-            // Load customer data
-            loadCustomerData();
+            // Clear customer admin session storage
+            sessionStorage.removeItem('customer_admin_username');
+            sessionStorage.removeItem('customer_admin_id');
             
-            // Set up event listeners
-            setupEventListeners();
+            // Show login form
+            showLoginForm();
+        }
+        
+        /**
+         * Add event listeners
+         */
+        function addEventListeners() {
+            // Tab navigation
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
             
-            // Set up tabs
-            setupTabs();
-        });
+            // Logout button
+            if (logoutButton) {
+                logoutButton.addEventListener('click', logout);
+            }
+            
+            // Admin form submission
+            const addAdminForm = document.getElementById('add-admin-form');
+            if (addAdminForm) {
+                addAdminForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    addAdmin();
+                });
+            }
+            
+            // Logo upload form submission
+            if (logoUploadForm) {
+                logoUploadForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    uploadLogo();
+                });
+            }
+            
+            // Close modal buttons
+            const closeButtons = document.querySelectorAll('.close-btn');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', closeAllModals);
+            });
+        }
+        
+        /**
+         * Set up tabs
+         */
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+        }
         
         /**
          * Load customer data
@@ -774,28 +1048,6 @@
         }
         
         /**
-         * Set up tabs
-         */
-        function setupTabs() {
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    
-                    // Remove active class from all tabs and contents
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    
-                    // Add active class to clicked tab and corresponding content
-                    tab.classList.add('active');
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
-                });
-            });
-        }
-        
-        /**
          * Show notification
          * @param {string} message - The message to display
          * @param {string} type - The type of notification (success or error)
@@ -825,42 +1077,6 @@
             // Reset forms
             document.getElementById('add-admin-form').reset();
             document.getElementById('reset-password-form').reset();
-        }
-        
-        /**
-         * Set up event listeners
-         */
-        function setupEventListeners() {
-            // Add admin button
-            const addAdminBtn = document.getElementById('add-admin-btn');
-            if (addAdminBtn) {
-                addAdminBtn.addEventListener('click', () => {
-                    addAdminModal.classList.remove('hidden');
-                });
-            }
-            
-            // Add admin form
-            const addAdminForm = document.getElementById('add-admin-form');
-            if (addAdminForm) {
-                addAdminForm.addEventListener('submit', addNewAdmin);
-            }
-            
-            // Reset password form
-            const resetPasswordForm = document.getElementById('reset-password-form');
-            if (resetPasswordForm) {
-                resetPasswordForm.addEventListener('submit', saveResetPassword);
-            }
-            
-            // Modal close buttons
-            const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
-            closeButtons.forEach(button => {
-                button.addEventListener('click', closeAllModals);
-            });
-            
-            // Logo upload form
-            if (logoUploadForm) {
-                logoUploadForm.addEventListener('submit', uploadLogo);
-            }
         }
         
         /**

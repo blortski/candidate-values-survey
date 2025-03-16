@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ValuesAlign - Master Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css?v=1.7.6&t=20250316131944">
+    <link rel="stylesheet" href="css/styles.css?v=1.7.7&t=20250316132732">
     <style>
         body {
             background-color: #f5f8fa;
@@ -365,12 +365,12 @@
         <div id="notification" class="notification"></div>
         
         <footer>
-            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.6</span></p>
+            <p>&copy; 2025 ValuesAlign. All rights reserved. <span id="app-version">v1.7.7</span></p>
         </footer>
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.7.6&t=20250316131944"></script>
+    <script src="js/lib/config.js?v=1.7.7&t=20250316132732"></script>
     <script>
         // Global variables
         let customers = [];
@@ -391,13 +391,13 @@
         
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing master admin dashboard v1.7.6...');
+            console.log('Initializing master admin dashboard v1.7.7...');
             
             // Set version in footer
             const versionElement = document.getElementById('app-version');
             if (versionElement) {
-                versionElement.textContent = 'v1.7.6';
-                console.log('Set version to:', 'v1.7.6');
+                versionElement.textContent = 'v1.7.7';
+                console.log('Set version to:', 'v1.7.7');
             }
             
             // Make sure all modals are hidden
@@ -571,18 +571,22 @@
         }
         
         /**
-         * Copy customer dashboard URL to clipboard
-         * @param {string} url - The URL to copy
-         * @param {string} customerName - The name of the customer
+         * Copy customer URL to clipboard
+         * @param {string} url - Customer dashboard URL
+         * @param {string} customerName - Customer name
          */
         function copyCustomerUrl(url, customerName) {
-            navigator.clipboard.writeText(url)
+            // Get the full URL including base
+            const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+            const fullUrl = baseUrl + url;
+            
+            navigator.clipboard.writeText(fullUrl)
                 .then(() => {
-                    showNotification(`Dashboard URL for ${customerName} copied to clipboard`);
+                    showNotification(`URL for ${customerName} copied to clipboard`, 'success');
                 })
                 .catch(err => {
-                    console.error('Error copying URL to clipboard:', err);
-                    showNotification('Error copying URL to clipboard', 'error');
+                    console.error('Could not copy URL: ', err);
+                    showNotification('Failed to copy URL', 'error');
                 });
         }
         
