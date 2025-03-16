@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ValuesAlign - Master Admin Login</title>
+    <link rel="stylesheet" href="css/styles.css?v=1.6.1&t=20250316103941">
+    <link rel="stylesheet" href="css/admin.css?v=1.6.1&t=20250316103941">
+    <style>
+        body {
+            background-color: #f5f8fa;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            max-width: 200px;
+            height: auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-color-dark);
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #777;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="logo-container">
+                <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
+            </div>
+            
+            <h1>Master Admin Login</h1>
+            
+            <div id="error-message" class="error-message"></div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="github-token">GitHub Token</label>
+                    <input type="password" id="github-token" name="github-token" required>
+                </div>
+                
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+        
+        <footer>
+            <p>ValuesAlign &copy; 2025 | <span id="app-version">v1.6.1</span></p>
+        </footer>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/lib/config.js?v=1.6.1&t=20250316103941"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set version in footer
+            const versionElement = document.getElementById('app-version');
+            if (versionElement && window.config) {
+                versionElement.textContent = window.config.version;
+                console.log('Set version to:', window.config.version);
+            }
+            
+            // Check if already logged in
+            const token = localStorage.getItem('github_token');
+            const username = localStorage.getItem('username');
+            
+            if (token && username) {
+                // Redirect to dashboard
+                window.location.href = 'master-admin-dashboard.html';
+            }
+            
+            // Handle login form submission
+            const loginForm = document.getElementById('login-form');
+            const errorMessage = document.getElementById('error-message');
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const usernameInput = document.getElementById('username');
+                const passwordInput = document.getElementById('password');
+                const tokenInput = document.getElementById('github-token');
+                
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+                const token = tokenInput.value.trim();
+                
+                // Validate inputs
+                if (!username || !password || !token) {
+                    errorMessage.textContent = 'Please fill in all fields';
+                    return;
+                }
+                
+                // Check password against config
+                if (password !== config.admin.password) {
+                    errorMessage.textContent = 'Invalid password';
+                    return;
+                }
+                
+                // Store credentials in localStorage
+                localStorage.setItem('github_token', token);
+                localStorage.setItem('username', username);
+                
+                // Redirect to dashboard
+                window.location.href = 'master-admin-dashboard.html';
+            });
+        });
+    </script>
+</body>
+</html>

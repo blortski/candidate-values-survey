@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ValuesAlign - Master Admin Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css?v=1.6.1&t=20250316103941">
+    <link rel="stylesheet" href="css/admin.css?v=1.6.1&t=20250316103941">
+    <style>
+        .customer-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .customer-card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .customer-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .customer-stats {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+        
+        .stat-item {
+            background-color: #fff;
+            border-radius: 4px;
+            padding: 10px;
+            flex: 1;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 60%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover {
+            color: #555;
+        }
+        
+        .loading-indicator {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="img/values-align-logo.jpg" alt="ValuesAlign Logo" class="logo">
+                <h1>Master Admin Dashboard</h1>
+            </div>
+            <div class="user-info">
+                <span>Welcome, <span id="user-display"></span></span>
+                <button id="logout-btn" class="btn small-btn">Logout</button>
+            </div>
+        </header>
+        
+        <main id="dashboard-section">
+            <div class="section-header">
+                <h2>Customer Management</h2>
+                <button id="add-customer-btn" class="btn">Add New Customer</button>
+            </div>
+            
+            <div id="customers-container">
+                <!-- Customers will be loaded here -->
+                <div class="loading-indicator">
+                    <div class="spinner"></div>
+                    <p>Loading customers...</p>
+                </div>
+            </div>
+            
+            <div id="add-customer-form" class="form-section hidden">
+                <h3>Add New Customer</h3>
+                <form id="customer-form">
+                    <div class="form-group">
+                        <label for="customer-name">Company Name</label>
+                        <input type="text" id="customer-name" name="customer-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customer-email">Contact Email</label>
+                        <input type="email" id="customer-email" name="customer-email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customer-phone">Contact Phone</label>
+                        <input type="tel" id="customer-phone" name="customer-phone">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Save Customer</button>
+                        <button type="button" id="cancel-add-customer" class="btn secondary-btn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+        
+        <footer>
+            <p>ValuesAlign &copy; 2025 | <span id="app-version">v1.6.1</span></p>
+        </footer>
+    </div>
+    
+    <!-- Customer Template (for JavaScript use) -->
+    <template id="customer-template">
+        <div class="customer-card">
+            <h3 class="customer-name">Company Name</h3>
+            <div class="customer-stats">
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Values</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Questions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Surveys</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Employees</div>
+                </div>
+            </div>
+            <div class="customer-actions">
+                <button class="btn small-btn view-customer-btn">View Dashboard</button>
+                <button class="btn small-btn edit-customer-btn">Edit</button>
+                <button class="btn small-btn delete-customer-btn">Delete</button>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Modal Templates -->
+    <div id="edit-customer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Edit Customer</h3>
+            <form id="edit-customer-form">
+                <div class="form-group">
+                    <label for="edit-customer-name">Company Name</label>
+                    <input type="text" id="edit-customer-name" name="edit-customer-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-customer-email">Contact Email</label>
+                    <input type="email" id="edit-customer-email" name="edit-customer-email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-customer-phone">Contact Phone</label>
+                    <input type="tel" id="edit-customer-phone" name="edit-customer-phone">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="save-edit-customer-btn" class="btn">Save Changes</button>
+                    <button type="button" class="btn secondary-btn close-modal-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="confirm-delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete this customer? This action cannot be undone.</p>
+            <div class="form-actions">
+                <button id="confirm-delete-btn" class="btn danger-btn">Delete</button>
+                <button class="btn secondary-btn close-modal-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/lib/config.js?v=1.6.1&t=20250316103941"></script>
+    <script src="js/lib/github-api.js?v=1.6.1&t=20250316103941"></script>
+    <script src="js/master-admin-dashboard.js?v=1.6.1&t=20250316103941"></script>
+</body>
+</html>
