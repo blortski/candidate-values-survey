@@ -4,25 +4,25 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.8.9
+ * Version: v1.9.0
  */
 
 // Global variables
-let githubAPI = null;
+let dashboardAPI = null;
 let customers = [];
 let currentCustomerId = null;
 
 // Wait for the DOM to be fully loaded before executing any code
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== MASTER ADMIN DASHBOARD INITIALIZATION ===');
-    console.log('Master Admin Dashboard v1.8.9 initializing...');
+    console.log('Master Admin Dashboard v1.9.0 initializing...');
     console.log('Time:', new Date().toISOString());
     
     // Update version in the footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.8.9';
-        console.log('Version set to v1.8.9');
+        versionElement.textContent = 'v1.9.0';
+        console.log('Version set to v1.9.0');
     } else {
         console.error('Version element not found in the DOM');
     }
@@ -106,8 +106,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('User display updated with username');
         }
         
-        // Initialize GitHub API
-        console.log('Initializing GitHub API...');
+        // Initialize GitHub API - Use the existing githubAPI instance from github-api.js
+        console.log('Setting up GitHub API...');
         try {
             console.log('GitHub API config:', {
                 owner: config.github.owner,
@@ -117,13 +117,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 token: token ? token.substring(0, 4) + '...' : 'not available'
             });
             
-            githubAPI = new GitHubAPI({
-                owner: config.github.owner,
-                repo: config.github.repo,
-                branch: config.github.branch,
-                resultsPath: config.github.resultsPath,
-                token: token
-            });
+            // Check if githubAPI already exists (from github-api.js)
+            if (window.githubAPI) {
+                console.log('Using existing githubAPI instance');
+                // Update the token in the existing instance
+                window.githubAPI.setToken(token);
+                dashboardAPI = window.githubAPI;
+            } else {
+                console.log('Creating new GitHubAPI instance');
+                // Create a new instance if not already created
+                dashboardAPI = new GitHubAPI({
+                    owner: config.github.owner,
+                    repo: config.github.repo,
+                    branch: config.github.branch,
+                    resultsPath: config.github.resultsPath,
+                    token: token
+                });
+            }
+            
             console.log('GitHub API initialized successfully');
             
             // Load customers
@@ -274,7 +285,7 @@ function closeAllModals() {
 function loadCustomers() {
     console.log('Loading customers...');
     
-    if (!githubAPI) {
+    if (!dashboardAPI) {
         console.error('GitHub API not initialized');
         return;
     }
