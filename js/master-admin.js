@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.5.4
+ * Version: v1.5.6
  */
 
 // Global variables
@@ -19,6 +19,13 @@ const customersContainer = document.getElementById('customers-container');
 const addCustomerForm = document.getElementById('add-customer-form');
 const editCustomerModal = document.getElementById('edit-customer-modal');
 const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+const logoutButton = document.getElementById('logout-btn');
+const userDisplay = document.getElementById('user-display');
+const addCustomerButton = document.getElementById('add-customer-btn');
+const viewCustomerButtons = document.querySelectorAll('.view-customer-btn');
+const editCustomerButtons = document.querySelectorAll('.edit-customer-btn');
+const deleteCustomerButtons = document.querySelectorAll('.delete-customer-btn');
+const accessDashboardButtons = document.querySelectorAll('.access-dashboard-btn');
 
 // Set version in footer
 document.getElementById('app-version').textContent = config.version;
@@ -31,6 +38,16 @@ document.addEventListener('DOMContentLoaded', initializeDashboard);
  */
 function initializeDashboard() {
     console.log('Initializing master admin dashboard...');
+    
+    // Hide logout button initially
+    logoutButton.style.display = 'none';
+    
+    // Hide customer management options initially
+    addCustomerButton.style.display = 'none';
+    viewCustomerButtons.forEach(button => button.style.display = 'none');
+    editCustomerButtons.forEach(button => button.style.display = 'none');
+    deleteCustomerButtons.forEach(button => button.style.display = 'none');
+    accessDashboardButtons.forEach(button => button.style.display = 'none');
     
     // Check if user is already logged in
     checkLoginStatus();
@@ -63,16 +80,10 @@ function setupEventListeners() {
     }
     
     // Logout button
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
+    logoutButton.addEventListener('click', handleLogout);
     
     // Add customer button
-    const addCustomerBtn = document.getElementById('add-customer-btn');
-    if (addCustomerBtn) {
-        addCustomerBtn.addEventListener('click', showAddCustomerForm);
-    }
+    addCustomerButton.addEventListener('click', showAddCustomerForm);
     
     // Save customer button
     const saveCustomerBtn = document.getElementById('save-customer-btn');
@@ -219,7 +230,17 @@ function handleLogout() {
     document.getElementById('github-token').value = '';
     
     // Update user display
-    document.getElementById('user-display').textContent = 'Not logged in';
+    userDisplay.textContent = 'Not logged in';
+    
+    // Hide logout button
+    logoutButton.style.display = 'none';
+    
+    // Hide customer management options
+    addCustomerButton.style.display = 'none';
+    viewCustomerButtons.forEach(button => button.style.display = 'none');
+    editCustomerButtons.forEach(button => button.style.display = 'none');
+    deleteCustomerButtons.forEach(button => button.style.display = 'none');
+    accessDashboardButtons.forEach(button => button.style.display = 'none');
 }
 
 /**
@@ -234,7 +255,17 @@ function showDashboard(username) {
     dashboardSection.classList.remove('hidden');
     
     // Update user display
-    document.getElementById('user-display').textContent = username;
+    userDisplay.textContent = username;
+    
+    // Show logout button
+    logoutButton.style.display = 'block';
+    
+    // Show customer management options
+    addCustomerButton.style.display = 'block';
+    viewCustomerButtons.forEach(button => button.style.display = 'block');
+    editCustomerButtons.forEach(button => button.style.display = 'block');
+    deleteCustomerButtons.forEach(button => button.style.display = 'block');
+    accessDashboardButtons.forEach(button => button.style.display = 'block');
 }
 
 /**
