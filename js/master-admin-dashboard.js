@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.8.2
+ * Version: v1.8.3
  */
 
 // Global variables
@@ -27,14 +27,14 @@ const goToLoginButton = document.getElementById('go-to-login-btn');
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing master admin dashboard v1.8.2...');
+    console.log('Initializing master admin dashboard v1.8.3...');
     console.log('Config loaded:', config);
     
     // Set version in footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.8.2';
-        console.log('Set version to:', 'v1.8.2');
+        versionElement.textContent = 'v1.8.3';
+        console.log('Set version to:', 'v1.8.3');
     }
     
     // Set up event listeners
@@ -119,10 +119,6 @@ function checkLoginStatus() {
  */
 function showLoginPrompt() {
     console.log('Showing login prompt...');
-    
-    // Clear any stored credentials
-    localStorage.removeItem('github_token');
-    localStorage.removeItem('username');
     
     // Show login prompt
     loginPrompt.classList.remove('hidden');
