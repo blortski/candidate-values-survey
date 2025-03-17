@@ -365,6 +365,57 @@ class GitHubAPI {
     }
 
     /**
+     * Get file - alias for getFileContent for backward compatibility
+     * @param {string} path - Path to the file
+     * @returns {Promise<Object>} - Promise resolving to the file data
+     */
+    async getFile(path) {
+        console.log('GitHubAPI.getFile: Getting file from path:', path);
+        return this.getFileContent(path);
+    }
+
+    /**
+     * Save file to GitHub
+     * @param {string} path - Path to the file
+     * @param {string} content - File content
+     * @param {string} message - Commit message
+     * @returns {Promise<Object>} - Promise resolving to the API response
+     */
+    async saveFile(path, content, message = 'Update file') {
+        console.log('GitHubAPI.saveFile: Saving file to path:', path);
+        
+        try {
+            // Get current file to get the SHA
+            let sha = null;
+            try {
+                const fileData = await this.getFileContent(path);
+                sha = fileData.sha;
+                console.log('GitHubAPI.saveFile: Existing file found with SHA:', sha);
+            } catch (error) {
+                // File might not exist yet, which is fine
+                console.log('GitHubAPI.saveFile: File does not exist yet, will create new file');
+            }
+
+            // Prepare the file content
+            const encodedContent = btoa(unescape(encodeURIComponent(content)));
+            
+            // Create or update the file
+            const response = await this.createOrUpdateFile(
+                path,
+                message,
+                encodedContent,
+                sha
+            );
+            
+            console.log('GitHubAPI.saveFile: File saved successfully');
+            return response;
+        } catch (error) {
+            console.error('GitHubAPI.saveFile: Error saving file to GitHub:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Create or update a file on GitHub
      * @param {string} path - Path to the file
      * @param {string} message - Commit message

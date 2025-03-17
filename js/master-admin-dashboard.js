@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.9.1
+ * Version: v1.9.3
  */
 
 // Global variables
@@ -19,14 +19,14 @@ let currentTab = 'values-tab';
 // Wait for the DOM to be fully loaded before executing any code
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== MASTER ADMIN DASHBOARD INITIALIZATION ===');
-    console.log('Master Admin Dashboard v1.9.2 initializing...');
+    console.log('Master Admin Dashboard v1.9.3 initializing...');
     console.log('Time:', new Date().toISOString());
     
     // Update version in the footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.9.1';
-        console.log('Version set to v1.9.1');
+        versionElement.textContent = 'v1.9.3';
+        console.log('Version set to v1.9.3');
     } else {
         console.error('Version element not found in the DOM');
     }
@@ -428,6 +428,10 @@ function loadCustomers() {
     
     if (!dashboardAPI) {
         console.error('GitHub API not initialized');
+        const customersContainer = document.getElementById('customers-container');
+        if (customersContainer) {
+            customersContainer.innerHTML = '<div class="error">Error: GitHub API not initialized. Please try logging in again.</div>';
+        }
         return;
     }
     
@@ -437,17 +441,15 @@ function loadCustomers() {
         return;
     }
     
-    // Clear customers container
+    // Show loading indicator
     customersContainer.innerHTML = '<div class="loading">Loading customers...</div>';
-    console.log('Customers container cleared and loading message displayed');
-    
-    // Get customers from GitHub
-    console.log('Fetching customers from GitHub...');
+    console.log('Loading indicator shown');
     
     // Path to the customers.json file in the repo
     const customersFilePath = 'data/customers.json';
+    console.log('Loading customers from path:', customersFilePath);
     
-    // Check if the file exists, if not create it
+    // Get the file from GitHub
     dashboardAPI.getFile(customersFilePath)
         .then(response => {
             console.log('Customers file found:', response);
