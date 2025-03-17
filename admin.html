@@ -3,1483 +3,483 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ValuesAlign for Wild Zora Foods</title>
+    <title>Wild Zora Survey Admin Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
     <style>
-        :root {
-            --primary-color: #0d5e2f;
-            --secondary-color: #c4161c;
-            --accent-color: #b1c800;
-            --light-bg: #f5f5f5;
-            --dark-text: #333;
-            --light-text: #fff;
-        }
-        
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: var(--dark-text);
-            background-color: var(--light-bg);
-            margin: 0;
-            padding: 0;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .admin-container {
             padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
         
-        header {
+        .admin-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--accent-color);
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .candidate-list {
             margin-bottom: 30px;
         }
         
-        .logo-container {
-            display: flex;
-            align-items: center;
-        }
-        
-        .logo {
-            height: 60px;
-            margin-right: 15px;
-        }
-        
-        .header-text {
-            flex: 1;
-        }
-        
-        h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 2rem;
-        }
-        
-        .subtitle {
-            color: var(--secondary-color);
-            margin-top: 5px;
-            font-size: 1.1rem;
-        }
-        
-        main {
-            flex: 1;
-        }
-        
-        footer {
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            margin-top: 30px;
-            position: relative;
-        }
-        
-        .version {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            font-size: 0.8rem;
-            color: #999;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
+        .candidate-card {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s;
+            transition: transform 0.2s;
         }
         
-        .btn:hover {
-            background-color: #094023;
+        .candidate-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .candidate-name {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .candidate-email {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .candidate-date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .overall-score {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .high {
+            color: #2e7d32;
+        }
+        
+        .medium {
+            color: #ff8f00;
+        }
+        
+        .low {
+            color: #c62828;
+        }
+        
+        .category-scores {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .category-score {
+            background-color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .category-score.high {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .category-score.medium {
+            background-color: #fff8e1;
+            color: #ff8f00;
+        }
+        
+        .category-score.low {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .detail-view {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .back-btn {
+            margin-bottom: 15px;
+        }
+        
+        .detail-header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .detail-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .detail-categories {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-btn {
+            margin-left: 10px;
         }
         
         .login-container {
             max-width: 400px;
-            margin: 50px auto;
-            padding: 30px;
+            margin: 0 auto;
+            padding: 20px;
             background-color: var(--light-bg);
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        
-        .error-message {
-            color: var(--secondary-color);
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
-        
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .dashboard-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .results-container {
-            margin-top: 20px;
-        }
-        
-        .in-progress-container {
-            margin-bottom: 30px;
-            border: 1px solid var(--accent-color);
-            border-radius: 5px;
-            padding: 15px;
-            background-color: #f9f9f9;
-        }
-        
-        .in-progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .in-progress-title {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-        }
-        
-        .in-progress-title .pulse {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: var(--secondary-color);
-            border-radius: 50%;
-            margin-right: 10px;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(196, 22, 28, 0.7);
-            }
-            
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 10px rgba(196, 22, 28, 0);
-            }
-            
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(196, 22, 28, 0);
-            }
-        }
-        
-        .in-progress-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .in-progress-table th,
-        .in-progress-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .in-progress-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        
-        .in-progress-table tr:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .in-progress-table .time-elapsed {
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        .in-progress-table .progress-indicator {
-            display: flex;
-            align-items: center;
-        }
-        
-        .in-progress-table .progress-bar {
-            flex: 1;
-            height: 10px;
-            background-color: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-right: 10px;
-        }
-        
-        .in-progress-table .progress-fill {
-            height: 100%;
-            background-color: var(--accent-color);
-            border-radius: 5px;
-        }
-        
-        .in-progress-table .progress-text {
-            white-space: nowrap;
-            font-size: 0.9rem;
-        }
-        
-        .no-in-progress {
-            font-style: italic;
-            color: #666;
-            text-align: center;
-            padding: 15px;
-        }
-        
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-        
-        .results-table th, .results-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .results-table th {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .results-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        
-        .results-table tr:hover {
-            background-color: #f1f1f1;
-        }
-        
-        .score-cell {
-            text-align: center;
-        }
-        
-        .high-score {
-            color: #2e7d32;
-            font-weight: bold;
-        }
-        
-        .medium-score {
-            color: #ff8f00;
-        }
-        
-        .low-score {
-            color: #c62828;
-        }
-        
-        .view-details-btn {
-            padding: 6px 12px;
-            font-size: 0.9rem;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            overflow: auto;
-        }
-        
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 5px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .close-modal, .close-token-modal {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .close-modal:hover, .close-token-modal:hover {
-            color: #000;
-        }
-        
-        .loading-indicator {
+        .login-form {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            display: none;
         }
         
-        .token-info {
-            margin: 15px 0;
-            font-style: italic;
-            color: #666;
-        }
-        
-        .token-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        #github-token {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        
-        .candidate-details {
-            margin-bottom: 20px;
-        }
-        
-        .candidate-name {
-            color: var(--primary-color);
-            margin: 0 0 10px 0;
-        }
-        
-        .candidate-email {
-            color: #666;
-            margin: 0 0 20px 0;
-        }
-        
-        .category-scores {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .category-score {
-            background-color: var(--light-bg);
-            padding: 15px;
-            border-radius: 6px;
-        }
-        
-        .category-name {
-            margin: 0 0 10px 0;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-        }
-        
-        .score-display {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: 50px 0;
-            color: #666;
-        }
-        
-        .logout-btn {
-            background-color: var(--secondary-color);
-        }
-        
-        .logout-btn:hover {
-            background-color: #a31216;
-        }
-        
-        .refresh-btn {
-            margin-right: 10px;
-        }
-        
-        .spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid var(--primary-color);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 2s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-        
-        .client-link-container {
-            margin-bottom: 20px;
-        }
-        
-        .link-box {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-        }
-        
-        #survey-link {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            background-color: #f9f9f9;
-        }
-        
-        #copy-link-btn {
-            margin-left: 10px;
-        }
-        
-        .copy-confirmation {
-            font-size: 0.9rem;
-            color: var(--primary-color);
-            display: none;
-        }
-        
-        /* Values Management Styles */
-        .values-section {
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        
-        .values-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .values-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        
-        .values-table th,
-        .values-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .values-table th {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .values-table tr:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .alignment-bar {
-            width: 100%;
-            height: 20px;
-            background-color: #eee;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .alignment-fill {
-            height: 100%;
-            border-radius: 10px;
-            position: absolute;
-            left: 0;
-            top: 0;
-        }
-        
-        .alignment-bar span {
-            position: relative;
-            z-index: 1;
-            padding-left: 5px;
-            font-weight: bold;
-            color: var(--dark-text);
-        }
-        
-        /* Toggle Switch */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
-        
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-        }
-        
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-        }
-        
-        input:checked + .slider {
-            background-color: var(--primary-color);
-        }
-        
-        input:focus + .slider {
-            box-shadow: 0 0 1px var(--primary-color);
-        }
-        
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-        
-        .slider.round {
-            border-radius: 24px;
-        }
-        
-        .slider.round:before {
-            border-radius: 50%;
-        }
-        
-        .status-text {
-            vertical-align: middle;
-        }
-        
-        /* Question Accordion */
-        .question-accordion {
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .question-header {
-            padding: 12px 15px;
-            background-color: #f5f5f5;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .question-content {
-            padding: 15px;
-            display: none;
-            border-top: 1px solid #ddd;
-        }
-        
-        .options-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .option-item {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            background-color: #f9f9f9;
-            border-radius: 4px;
-        }
-        
-        .option-id {
-            font-weight: bold;
-            margin-right: 10px;
-            padding: 2px 8px;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-        }
-        
-        .option-text {
-            flex: 1;
-        }
-        
-        .option-score {
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        /* Option Edit */
-        .option-edit {
+        .login-form input {
             margin-bottom: 15px;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            background-color: #f9f9f9;
         }
         
-        .option-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .option-row label {
-            width: 100px;
-            font-weight: bold;
-        }
-        
-        .option-row input,
-        .option-row select {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        /* Error Message */
-        #values-error {
-            background-color: #ffebee;
+        .login-error {
             color: #c62828;
-            padding: 10px;
-            border-radius: 4px;
             margin-bottom: 15px;
-            display: none;
+            font-size: 0.9rem;
         }
         
-        /* Status badge styles */
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .status-badge.in-progress {
-            background-color: #3498db;
-            color: white;
-        }
-        
-        .status-badge.completed {
-            background-color: #2ecc71;
-            color: white;
+        @media (min-width: 768px) {
+            .detail-categories {
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo-container">
-                <img src="./images/Wild Zora Logo.png" alt="ValuesAlign Logo" class="logo">
-                <div class="header-text">
-                    <h1>ValuesAlign</h1>
-                    <h2>Candidate Values Survey - Admin Dashboard</h2>
-                </div>
-            </div>
-            <div class="auth-container" id="auth-container">
-                <!-- Auth content will be loaded here -->
-            </div>
+            <h1>Wild Zora Survey Admin Dashboard</h1>
+            <p class="subtitle">View and analyze candidate survey results</p>
         </header>
         
-        <main>
-            <section id="login-section">
+        <main id="main-content" class="admin-container">
+            <!-- Login form will be displayed here initially -->
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 Wild Zora Foods. All rights reserved.</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Admin password - in a real application, this would be handled securely on the server
+        const ADMIN_PASSWORD = "WildZora2025";
+        
+        document.addEventListener('DOMContentLoaded', checkAuthentication);
+        
+        function checkAuthentication() {
+            const isAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
+            
+            if (isAuthenticated) {
+                showAdminDashboard();
+            } else {
+                showLoginForm();
+            }
+        }
+        
+        function showLoginForm(error = null) {
+            const mainContent = document.getElementById('main-content');
+            
+            let loginHTML = `
                 <div class="login-container">
                     <h2>Admin Login</h2>
-                    <p>Enter the admin password to access the dashboard.</p>
-                    <div class="form-group">
-                        <label for="admin-password">Password:</label>
-                        <input type="password" id="admin-password" required>
-                    </div>
-                    <p id="login-error" class="error-message"></p>
-                    <button id="login-btn" class="btn primary-btn">Login</button>
+                    <p>Please enter the admin password to access the dashboard.</p>
+                    
+                    ${error ? `<div class="login-error">${error}</div>` : ''}
+                    
+                    <form id="login-form" class="login-form">
+                        <input type="password" id="admin-password" placeholder="Enter password" required>
+                        <button type="submit" class="btn primary-btn">Login</button>
+                    </form>
+                    
+                    <p style="margin-top: 20px; text-align: center;">
+                        <a href="index.html">Return to Survey</a>
+                    </p>
                 </div>
-            </section>
+            `;
             
-            <section id="dashboard-section" style="display: none;">
-                <div class="dashboard-header">
-                    <h2>Admin Dashboard</h2>
-                    <div class="dashboard-actions">
-                        <button id="github-token-btn" class="btn secondary-btn">Set GitHub Token</button>
+            mainContent.innerHTML = loginHTML;
+            
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const password = document.getElementById('admin-password').value;
+                
+                if (password === ADMIN_PASSWORD) {
+                    sessionStorage.setItem('adminAuthenticated', 'true');
+                    showAdminDashboard();
+                } else {
+                    showLoginForm('Incorrect password. Please try again.');
+                }
+            });
+        }
+        
+        function showAdminDashboard() {
+            const mainContent = document.getElementById('main-content');
+            
+            mainContent.innerHTML = `
+                <div class="admin-header">
+                    <h2>Candidate Results</h2>
+                    <div>
+                        <button id="refresh-btn" class="btn secondary-btn refresh-btn">Refresh Data</button>
                         <button id="logout-btn" class="btn secondary-btn">Logout</button>
                     </div>
                 </div>
                 
-                <!-- Client Survey Link Section -->
-                <div class="client-link-container">
-                    <h3>Share Survey Link</h3>
-                    <p>Share this link with candidates to take the ValuesAlign Values Survey:</p>
-                    <div class="link-box">
-                        <input type="text" id="survey-link" value="https://blortski.github.io/candidate-values-survey/" readonly>
-                        <button id="copy-link-btn" class="btn primary-btn">Copy Link</button>
-                    </div>
-                    <div id="copy-confirmation" class="copy-confirmation">Link copied to clipboard!</div>
-                </div>
-                
-                <div id="loading-indicator" class="loading-indicator">
-                    <div class="spinner"></div>
-                    <p>Loading data...</p>
-                </div>
-                
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <h2>Surveys</h2>
-                        <div class="refresh-container">
-                            <button id="refresh-btn" class="btn secondary-btn">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
-                            <span id="last-refreshed">Last refreshed: Never</span>
-                        </div>
-                    </div>
-                    <div id="results-container" class="results-container">
-                        <!-- Survey results will be displayed here -->
+                <div id="results-container">
+                    <!-- Results will be loaded here -->
+                    <div class="no-results">
+                        <p>No survey results found. Candidates need to complete the survey first.</p>
                     </div>
                 </div>
-                
-                <!-- Values Management Section -->
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <h2>Company Values Management</h2>
-                    </div>
-                    <p>Manage the company values that are being tested in the survey. You can enable or disable values, edit their descriptions, and manage the assessment questions.</p>
-                    <div id="values-error" class="error-message"></div>
-                    <div id="values-container">
-                        <!-- Values will be loaded here -->
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-        <div id="details-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <div id="candidate-details-container">
-                    <!-- Candidate details will be loaded here -->
-                </div>
-            </div>
-        </div>
-        
-        <div id="token-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-token-modal">&times;</span>
-                <div id="token-container">
-                    <h2>Set GitHub Token</h2>
-                    <p>Enter your GitHub Personal Access Token to enable permanent storage of survey results.</p>
-                    <div class="form-group">
-                        <label for="github-token">GitHub Token:</label>
-                        <input type="password" id="github-token" placeholder="Enter your GitHub token">
-                    </div>
-                    <p class="token-info">This token will be stored securely in your browser and used to save survey results to GitHub.</p>
-                    <p id="default-token-message" class="token-info" style="color: var(--primary-color); font-weight: bold;"></p>
-                    <div class="token-actions">
-                        <button id="save-token-btn" class="btn primary-btn">Save Token</button>
-                        <button id="clear-token-btn" class="btn secondary-btn">Clear Token</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Edit Value Modal -->
-        <div id="edit-value-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-edit-value-modal">&times;</span>
-                <div id="edit-value-container">
-                    <h2>Edit Company Value</h2>
-                    <div class="form-group">
-                        <label for="value-name">Value Name:</label>
-                        <input type="text" id="value-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="value-description">Description:</label>
-                        <textarea id="value-description" rows="3" required></textarea>
-                    </div>
-                    <button id="save-value-btn" class="btn primary-btn">Save Changes</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Edit Questions Modal -->
-        <div id="edit-questions-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-edit-questions-modal">&times;</span>
-                <div id="edit-questions-container">
-                    <h2>Edit Questions for <span id="value-name-display"></span></h2>
-                    <p>Click on a question to expand it and see the options. Click the Edit button to modify a question.</p>
-                    <div id="questions-container">
-                        <!-- Questions will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Edit Question Modal -->
-        <div id="edit-question-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-edit-question-modal">&times;</span>
-                <div id="edit-question-container">
-                    <h2>Edit Question</h2>
-                    <div class="form-group">
-                        <label for="question-text">Question:</label>
-                        <textarea id="question-text" rows="3" required></textarea>
-                    </div>
-                    <h3>Options</h3>
-                    <div id="options-container">
-                        <!-- Options will be loaded here -->
-                    </div>
-                    <button id="save-question-btn" class="btn primary-btn">Save Changes</button>
-                </div>
-            </div>
-        </div>
-        
-        <footer>
-            <div class="footer-content">
-                <p>&copy; 2025 ValuesAlign LLC. All rights reserved.</p>
-                <span class="version" id="app-version">v1.4.0</span>
-            </div>
-        </footer>
-    </div>
-    
-    <!-- Load configuration and GitHub API -->
-    <script src="js/lib/config.js"></script>
-    <script src="js/lib/github-api.js"></script>
-    <script src="js/admin-values.js"></script>
-    
-    <script>
-        // Set version from config
-        document.getElementById('app-version').textContent = config.version;
-        
-        // Admin password from configuration
-        const ADMIN_PASSWORD = config.admin.password;
-        
-        // GitHub token storage key
-        const GITHUB_TOKEN_KEY = 'github_token';
-        
-        // DOM Elements
-        const loginSection = document.getElementById('login-section');
-        const dashboardSection = document.getElementById('dashboard-section');
-        const adminPasswordInput = document.getElementById('admin-password');
-        const loginBtn = document.getElementById('login-btn');
-        const loginError = document.getElementById('login-error');
-        const logoutBtn = document.getElementById('logout-btn');
-        const resultsContainer = document.getElementById('results-container');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const detailsModal = document.getElementById('details-modal');
-        const closeModal = document.querySelector('.close-modal');
-        const candidateDetailsContainer = document.getElementById('candidate-details-container');
-        
-        // Token modal elements
-        const tokenModal = document.getElementById('token-modal');
-        const closeTokenModal = document.querySelector('.close-token-modal');
-        const githubTokenInput = document.getElementById('github-token');
-        const saveTokenBtn = document.getElementById('save-token-btn');
-        const clearTokenBtn = document.getElementById('clear-token-btn');
-        const githubTokenBtn = document.getElementById('github-token-btn');
-        const defaultTokenMessage = document.getElementById('default-token-message');
-        
-        // Client survey link elements
-        const surveyLinkInput = document.getElementById('survey-link');
-        const copyLinkBtn = document.getElementById('copy-link-btn');
-        const copyConfirmation = document.getElementById('copy-confirmation');
-        
-        // Modal elements for values management
-        const editValueModal = document.getElementById('edit-value-modal');
-        const closeEditValueModal = document.querySelector('.close-edit-value-modal');
-        const editQuestionsModal = document.getElementById('edit-questions-modal');
-        const closeEditQuestionsModal = document.querySelector('.close-edit-questions-modal');
-        const editQuestionModal = document.getElementById('edit-question-modal');
-        const closeEditQuestionModal = document.querySelector('.close-edit-question-modal');
-        const saveValueBtn = document.getElementById('save-value-btn');
-        const saveQuestionBtn = document.getElementById('save-question-btn');
-        
-        // Check if admin is logged in
-        function checkAuth() {
-            const isAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
-            if (isAuthenticated) {
-                showDashboard();
-            } else {
-                showLogin();
-            }
-        }
-        
-        // Show login section
-        function showLogin() {
-            loginSection.style.display = 'block';
-            dashboardSection.style.display = 'none';
-            adminPasswordInput.value = '';
-            loginError.textContent = '';
-        }
-        
-        // Show dashboard section
-        function showDashboard() {
-            console.log('Showing dashboard... START');
-            loginSection.style.display = 'none';
-            dashboardSection.style.display = 'block';
-            
-            // Check if GitHub token is set in localStorage
-            const token = localStorage.getItem('github_token');
-            console.log('GitHub token found?', !!token);
-            
-            if (token) {
-                console.log('GitHub token found in showDashboard');
-                
-                try {
-                    console.log('Initializing GitHub API with token');
-                    // Initialize GitHub API with token
-                    githubAPI = new GitHubAPI({
-                        token: token,
-                        owner: config.github.owner,
-                        repo: config.github.repo,
-                        branch: config.github.branch,
-                        resultsPath: config.github.resultsPath
-                    });
-                    console.log('GitHubAPI instance created');
-                    
-                    if (githubAPI.isConfigured()) {
-                        console.log('GitHub API initialized successfully in showDashboard');
-                        defaultTokenMessage.style.display = 'none';
-                        
-                        // Only load data if GitHub API is properly configured
-                        console.log('Setting timeout to load results');
-                        setTimeout(() => {
-                            console.log('Loading data after short delay...');
-                            loadResults();
-                            
-                            // Set up auto-refresh every 60 seconds
-                            startAutoRefresh();
-                        }, 100);
-                    } else {
-                        console.warn('GitHub API not properly configured in showDashboard');
-                        defaultTokenMessage.textContent = 'GitHub API not properly configured. Please check your token.';
-                        defaultTokenMessage.style.display = 'block';
-                    }
-                } catch (error) {
-                    console.error('Error initializing GitHub API in showDashboard:', error);
-                    defaultTokenMessage.textContent = 'Error initializing GitHub API: ' + error.message;
-                    defaultTokenMessage.style.display = 'block';
-                }
-            } else {
-                // No token available
-                console.warn('No GitHub token found in showDashboard');
-                defaultTokenMessage.textContent = 'Please set a GitHub token to access survey results.';
-                defaultTokenMessage.style.display = 'block';
-            }
-            
-            // Initialize values management
-            if (window.adminValues) {
-                window.adminValues.initialize();
-            }
-        }
-        
-        // Handle login
-        function handleLogin() {
-            console.log('handleLogin called');
-            const password = adminPasswordInput.value.trim();
-            console.log('Password entered, checking against:', ADMIN_PASSWORD);
-            
-            if (password === ADMIN_PASSWORD) {
-                console.log('Password correct, setting adminAuthenticated in sessionStorage');
-                sessionStorage.setItem('adminAuthenticated', 'true');
-                console.log('About to call showDashboard()');
-                showDashboard();
-                console.log('showDashboard() completed');
-            } else {
-                console.log('Password incorrect');
-                loginError.textContent = 'Incorrect password. Please try again.';
-            }
-        }
-        
-        // Handle logout
-        function handleLogout() {
-            // Stop auto-refresh when logging out
-            stopAutoRefresh();
-            
-            // Clear admin authentication
-            sessionStorage.removeItem('adminAuthenticated');
-            
-            // Show login section
-            showLogin();
-        }
-        
-        // Show GitHub token modal
-        function showTokenModal() {
-            const currentToken = localStorage.getItem('github_token') || '';
-            githubTokenInput.value = currentToken;
-            tokenModal.style.display = 'block';
-        }
-        
-        // Save GitHub token
-        function saveGitHubToken() {
-            const token = githubTokenInput.value.trim();
-            
-            if (!token) {
-                tokenError.textContent = 'Please enter a valid GitHub token.';
-                tokenError.style.display = 'block';
-                return;
-            }
-            
-            console.log('Saving GitHub token...');
-            
-            // Save token to localStorage
-            localStorage.setItem('github_token', token);
-            
-            // Initialize GitHub API with token
-            try {
-                githubAPI = new GitHubAPI({
-                    token: token,
-                    owner: config.github.owner,
-                    repo: config.github.repo,
-                    branch: config.github.branch,
-                    resultsPath: config.github.resultsPath
-                });
-                
-                if (githubAPI.isConfigured()) {
-                    console.log('GitHub API initialized successfully with new token');
-                    defaultTokenMessage.style.display = 'none';
-                    
-                    // Close token modal
-                    tokenModal.style.display = 'none';
-                    
-                    // Load data with new token
-                    loadResults();
-                } else {
-                    console.warn('GitHub API not properly configured with new token');
-                    tokenError.textContent = 'GitHub API not properly configured. Please check your token.';
-                    tokenError.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Error initializing GitHub API with new token:', error);
-                tokenError.textContent = 'Error initializing GitHub API: ' + error.message;
-                tokenError.style.display = 'block';
-            }
-        }
-        
-        // Clear GitHub token
-        function clearGitHubToken() {
-            localStorage.removeItem('github_token');
-            githubTokenInput.value = '';
-            defaultTokenMessage.textContent = 'Please set a GitHub token to access survey results.';
-            defaultTokenMessage.style.display = 'block';
-        }
-        
-        // Load survey results
-        async function loadResults() {
-            console.log('Loading survey results...');
-            
-            // Show loading indicator
-            const resultsContainer = document.getElementById('results-container');
-            showLoadingIndicator(resultsContainer);
-            
-            try {
-                // Get token from localStorage
-                const token = localStorage.getItem('github_token');
-                
-                if (!token) {
-                    resultsContainer.innerHTML = '<div class="default-message">Please set a GitHub token to access survey results.</div>';
-                    return;
-                }
-                
-                // Initialize GitHub API with token
-                const github = new GitHubAPI({
-                    token: token,
-                    owner: config.github.owner,
-                    repo: config.github.repo,
-                    branch: config.github.branch,
-                    resultsPath: config.github.resultsPath
-                });
-                
-                // Get all surveys
-                const surveys = await github.getAllSurveys();
-                
-                // Update last refreshed timestamp
-                const lastRefreshedElement = document.getElementById('last-refreshed');
-                if (lastRefreshedElement) {
-                    const now = new Date();
-                    lastRefreshedElement.textContent = `Last refreshed: ${now.toLocaleTimeString()}`;
-                }
-                
-                // Display surveys
-                displaySurveys(surveys);
-                
-            } catch (error) {
-                console.error('Error loading results:', error);
-                resultsContainer.innerHTML = `<div class="error-message">Error loading results: ${error.message}</div>`;
-            }
-        }
-        
-        // Display surveys in the results container
-        function displaySurveys(surveys) {
-            console.log('Displaying surveys:', surveys);
-            
-            const resultsContainer = document.getElementById('results-container');
-            
-            if (!surveys || surveys.length === 0) {
-                resultsContainer.innerHTML = '<div class="default-message">No surveys found.</div>';
-                return;
-            }
-            
-            // Sort surveys by timestamp (newest first)
-            surveys.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            // Create table for surveys
-            let html = `
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
             `;
             
-            // Add rows for each survey
-            surveys.forEach(survey => {
-                const timestamp = new Date(survey.timestamp).toLocaleDateString();
-                const statusClass = survey.status === 'completed' ? 'status-completed' : 'status-in-progress';
-                const statusText = survey.status === 'completed' ? 'Completed' : 'In Progress';
+            document.getElementById('refresh-btn').addEventListener('click', loadResults);
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                sessionStorage.removeItem('adminAuthenticated');
+                showLoginForm();
+            });
+            
+            loadResults();
+        }
+        
+        function loadResults() {
+            const resultsContainer = document.getElementById('results-container');
+            const results = getAllSurveyResults();
+            
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <p>No survey results found. Candidates need to complete the survey first.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort results by timestamp (newest first)
+            results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            let html = `<div class="candidate-list">`;
+            
+            results.forEach(result => {
+                const date = new Date(result.timestamp).toLocaleDateString();
+                const overallAlignment = result.overallScore ? result.overallScore.alignment : 'unknown';
+                const overallPercentage = result.overallScore ? result.overallScore.percentage : 'N/A';
                 
                 html += `
-                    <tr>
-                        <td>${survey.name || 'Unknown'}</td>
-                        <td>${survey.email || 'Unknown'}</td>
-                        <td>${timestamp}</td>
-                        <td><span class="${statusClass}">${statusText}</span></td>
-                        <td>
-                            <button class="btn small-btn view-btn" data-id="${survey.id}">View</button>
-                            <button class="btn small-btn remove-btn" data-id="${survey.id}">Remove</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            html += `
-                    </tbody>
-                </table>
-            `;
-            
-            resultsContainer.innerHTML = html;
-            
-            // Add event listeners to view buttons
-            document.querySelectorAll('.view-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    viewSurveyDetails(id);
-                });
-            });
-            
-            // Add event listeners to remove buttons
-            document.querySelectorAll('.remove-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    removeSurvey(id);
-                });
-            });
-        }
-        
-        // Remove survey
-        async function removeSurvey(surveyId) {
-            if (!confirm(`Are you sure you want to remove this survey?`)) {
-                return;
-            }
-            
-            try {
-                // Get token from localStorage
-                const token = localStorage.getItem('github_token');
-                
-                if (!token) {
-                    alert('GitHub token not found. Please set your GitHub token first.');
-                    return;
-                }
-                
-                // Initialize GitHub API with token
-                const github = new GitHubAPI({
-                    token: token,
-                    owner: config.github.owner,
-                    repo: config.github.repo,
-                    branch: config.github.branch,
-                    resultsPath: config.github.resultsPath
-                });
-                
-                // Delete the survey
-                await github.deleteSurvey(surveyId);
-                
-                // Reload surveys
-                loadResults();
-                
-                // Show success message
-                alert('Survey removed successfully!');
-            } catch (error) {
-                console.error('Error removing survey:', error);
-                alert(`Error removing survey: ${error.message}`);
-            }
-        }
-        
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, initializing admin dashboard...');
-            
-            // Set version in footer
-            document.getElementById('app-version').textContent = config.version;
-            
-            // Check if admin is logged in
-            if (sessionStorage.getItem('adminAuthenticated') === 'true') {
-                console.log('Admin is authenticated, showing dashboard');
-                
-                // Initialize GitHub API
-                const token = localStorage.getItem('github_token');
-                if (token) {
-                    console.log('GitHub token found, initializing API');
-                    let githubAPI = new GitHubAPI({
-                        token: token,
-                        owner: config.github.owner,
-                        repo: config.github.repo,
-                        branch: config.github.branch,
-                        resultsPath: config.github.resultsPath
-                    });
-                    
-                    // Log GitHub API configuration
-                    console.log('GitHub API initialized with config:', {
-                        owner: config.github.owner,
-                        repo: config.github.repo,
-                        branch: config.github.branch,
-                        resultsPath: config.github.resultsPath,
-                        tokenExists: !!token
-                    });
-                } else {
-                    console.warn('No GitHub token found');
-                }
-                
-                showDashboard();
-            } else {
-                console.log('Admin is not authenticated, showing login');
-                showLogin();
-            }
-            
-            // Set up event listeners
-            setupEventListeners();
-        });
-        
-        // Helper functions for loading indicators
-        function showLoadingIndicator(container) {
-            container.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>Loading data...</p></div>';
-        }
-        
-        function hideLoadingIndicator(container) {
-            // This doesn't actually do anything as the container will be replaced with content
-            // But it's here for completeness
-        }
-        
-        // View survey details
-        async function viewSurveyDetails(id) {
-            try {
-                // Get token from localStorage
-                const token = localStorage.getItem('github_token');
-                
-                if (!token) {
-                    throw new Error('GitHub token not found. Please configure your GitHub token in the settings.');
-                }
-                
-                // Get GitHub API instance
-                const github = new GitHubAPI({
-                    token: token,
-                    owner: config.github.owner,
-                    repo: config.github.repo,
-                    branch: config.github.branch,
-                    resultsPath: config.github.resultsPath
-                });
-                
-                // Get survey data
-                const surveyData = await github.getFileContent(id);
-                
-                // Create modal for displaying survey details
-                const modal = document.createElement('div');
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h2>Survey Details: ${surveyData.name}</h2>
-                            <span class="close-modal">&times;</span>
+                    <div class="candidate-card" onclick="showCandidateDetails('${result.candidateEmail}')">
+                        <div class="candidate-name">${result.candidateName}</div>
+                        <div class="candidate-email">${result.candidateEmail}</div>
+                        <div class="candidate-date">Completed on: ${date}</div>
+                        <div class="overall-score ${overallAlignment}">
+                            Overall Alignment: ${overallAlignment.charAt(0).toUpperCase() + overallAlignment.slice(1)} (${overallPercentage}%)
                         </div>
-                        <div class="modal-body">
-                            <pre>${JSON.stringify(surveyData, null, 2)}</pre>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn primary-btn close-btn">Close</button>
+                        <div class="category-scores">
+                            ${getCategoryBadges(result.levels)}
                         </div>
                     </div>
                 `;
+            });
+            
+            html += `</div>`;
+            resultsContainer.innerHTML = html;
+        }
+        
+        function getAllSurveyResults() {
+            const results = [];
+            
+            // Loop through localStorage to find survey results
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
                 
-                // Add modal to body
-                document.body.appendChild(modal);
-                
-                // Add event listeners
-                modal.querySelector('.close-modal').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                });
-                
-                modal.querySelector('.close-btn').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                });
-                
-                // Close when clicking outside
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        document.body.removeChild(modal);
+                if (key.startsWith('survey_result_')) {
+                    try {
+                        const result = JSON.parse(localStorage.getItem(key));
+                        results.push(result);
+                    } catch (e) {
+                        console.error('Error parsing result:', e);
                     }
-                });
-            } catch (error) {
-                console.error('Error viewing survey:', error);
-                alert(`Error viewing survey: ${error.message}`);
-            }
-        }
-        
-        // Set up auto-refresh
-        let autoRefreshInterval;
-        function startAutoRefresh() {
-            // Clear any existing interval
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-            }
-            
-            // Set up new interval (refresh every 60 seconds)
-            autoRefreshInterval = setInterval(() => {
-                console.log('Auto-refreshing data...');
-                loadResults();
-            }, 60000); // 60 seconds
-        }
-        
-        function stopAutoRefresh() {
-            clearInterval(autoRefreshInterval);
-        }
-        
-        // Setup event listeners
-        function setupEventListeners() {
-            console.log('Setting up event listeners...');
-            
-            // Login button
-            loginBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Login button clicked');
-                handleLogin();
-            });
-            
-            // Admin password input - allow Enter key to submit
-            adminPasswordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    console.log('Enter key pressed in password field');
-                    handleLogin();
                 }
+            }
+            
+            return results;
+        }
+        
+        function getCategoryBadges(levels) {
+            let badges = '';
+            
+            if (!levels) return badges;
+            
+            for (const [category, level] of Object.entries(levels)) {
+                let categoryName = '';
+                
+                switch(category) {
+                    case 'optimism':
+                        categoryName = 'Optimism';
+                        break;
+                    case 'productivity':
+                        categoryName = 'Productivity';
+                        break;
+                    case 'valueOrientation':
+                        categoryName = 'Value';
+                        break;
+                    case 'collaboration':
+                        categoryName = 'Collaboration';
+                        break;
+                    case 'generalInsight':
+                        categoryName = 'Insight';
+                        break;
+                }
+                
+                badges += `<span class="category-score ${level}">${categoryName}: ${level.charAt(0).toUpperCase() + level.slice(1)}</span>`;
+            }
+            
+            return badges;
+        }
+        
+        function showCandidateDetails(email) {
+            const resultsContainer = document.getElementById('results-container');
+            const key = `survey_result_${email}`;
+            const resultData = JSON.parse(localStorage.getItem(key));
+            
+            if (!resultData) {
+                return;
+            }
+            
+            const date = new Date(resultData.timestamp).toLocaleDateString();
+            const time = new Date(resultData.timestamp).toLocaleTimeString();
+            
+            let detailHtml = `
+                <div class="detail-view">
+                    <button class="btn secondary-btn back-btn" onclick="loadResults()">Back to List</button>
+                    
+                    <div class="detail-header">
+                        <h2>${resultData.candidateName}</h2>
+                        <div class="detail-meta">Email: ${resultData.candidateEmail}</div>
+                        <div class="detail-meta">Completed on: ${date} at ${time}</div>
+                    </div>
+            `;
+            
+            // Add overall score if available
+            if (resultData.overallScore) {
+                const overallScore = resultData.overallScore;
+                detailHtml += `
+                    <h3>Overall Values Alignment</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${overallScore.percentage}%"></div>
+                    </div>
+                    <p class="score-text">Score: ${overallScore.score}/${overallScore.maxScore} (${overallScore.percentage}%)</p>
+                    <p class="score-text">Alignment: <span class="${overallScore.alignment}">${overallScore.alignment.charAt(0).toUpperCase() + overallScore.alignment.slice(1)}</span></p>
+                    <p class="interpretation">
+                        ${overallScore.alignment === 'high' ? 'Strong alignment with Wild Zora values' : 
+                          overallScore.alignment === 'medium' ? 'Moderate alignment with Wild Zora values' : 
+                          'Potential misalignment with Wild Zora values'}
+                    </p>
+                `;
+            }
+            
+            detailHtml += `
+                <h3>Category Scores</h3>
+                <div class="detail-categories">
+            `;
+            
+            // Add each category result
+            const categories = [
+                { id: 'optimism', name: 'Optimism' },
+                { id: 'productivity', name: 'Productivity & Continuous Improvement' },
+                { id: 'valueOrientation', name: 'Value Orientation' },
+                { id: 'collaboration', name: 'Collaboration' },
+                { id: 'generalInsight', name: 'General Insight' }
+            ];
+            
+            categories.forEach(category => {
+                const score = resultData.scores[category.id];
+                const level = resultData.levels[category.id];
+                
+                // Estimate max score based on level thresholds
+                let maxScore = 21; // Default for categories with 7 questions
+                if (category.id === 'generalInsight') {
+                    maxScore = 6; // Only 2 questions
+                }
+                
+                const percentScore = (score / maxScore) * 100;
+                
+                detailHtml += `
+                    <div class="result-category">
+                        <h3 class="result-title">${category.name}</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentScore}%"></div>
+                        </div>
+                        <p class="score-text">Score: ${score}/${maxScore}</p>
+                        <p class="score-text">Level: <span class="${level}">${level.charAt(0).toUpperCase() + level.slice(1)}</span></p>
+                    </div>
+                `;
             });
             
-            // Logout button
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                handleLogout();
-            });
+            detailHtml += `
+                    </div>
+                    
+                    <h3>Overall Profile</h3>
+                    <p>${getStrengthDescription(resultData.levels)}</p>
+                </div>
+            `;
             
-            // GitHub token button
-            githubTokenBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                showTokenModal();
-            });
+            resultsContainer.innerHTML = detailHtml;
+        }
+        
+        function getStrengthDescription(levels) {
+            const strengths = [];
+            const areas = [];
             
-            // Close token modal
-            closeTokenModal.addEventListener('click', () => {
-                tokenModal.style.display = 'none';
-            });
+            if (levels.optimism === 'high') strengths.push('strong optimism');
+            if (levels.productivity === 'high') strengths.push('excellent productivity habits');
+            if (levels.valueOrientation === 'high') strengths.push('strong focus on business value');
+            if (levels.collaboration === 'high') strengths.push('great collaborative skills');
             
-            // Save token button
-            saveTokenBtn.addEventListener('click', () => {
-                saveGitHubToken();
-            });
+            if (levels.optimism === 'low') areas.push('optimism');
+            if (levels.productivity === 'low') areas.push('productivity habits');
+            if (levels.valueOrientation === 'low') areas.push('focus on business value');
+            if (levels.collaboration === 'low') areas.push('collaborative approach');
             
-            // Clear token button
-            clearTokenBtn.addEventListener('click', () => {
-                clearGitHubToken();
-            });
+            let description = 'This candidate shows ';
             
-            // Close details modal
-            closeModal.addEventListener('click', () => {
-                detailsModal.style.display = 'none';
-            });
+            if (strengths.length > 0) {
+                description += `${strengths.join(', ')}`;
+            } else {
+                description += 'a balanced approach across all categories';
+            }
             
-            // Close value edit modal
-            closeEditValueModal.addEventListener('click', () => {
-                editValueModal.style.display = 'none';
-            });
+            if (areas.length > 0) {
+                description += ` with opportunities for growth in ${areas.join(', ')}`;
+            }
             
-            // Close questions edit modal
-            closeEditQuestionsModal.addEventListener('click', () => {
-                editQuestionsModal.style.display = 'none';
-            });
-            
-            // Close question edit modal
-            closeEditQuestionModal.addEventListener('click', () => {
-                editQuestionModal.style.display = 'none';
-            });
-            
-            // Copy survey link button
-            copyLinkBtn.addEventListener('click', () => {
-                surveyLinkInput.select();
-                document.execCommand('copy');
-                copyConfirmation.style.display = 'inline';
-                setTimeout(() => {
-                    copyConfirmation.style.display = 'none';
-                }, 2000);
-            });
-            
-            console.log('Event listeners setup complete');
+            return description;
         }
     </script>
 </body>
