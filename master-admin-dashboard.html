@@ -336,6 +336,25 @@
             max-height: 60px;
             object-fit: contain;
         }
+        
+        .customer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .customer-header h3 {
+            margin: 0;
+        }
+        
+        .btn-primary {
+            background-color: #1976d2;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0d47a1;
+        }
     </style>
 </head>
 <body>
@@ -444,8 +463,11 @@
         <div id="customer-values-modal" class="modal hidden">
             <div class="modal-content modal-content-large">
                 <span class="close-modal">&times;</span>
-                <h2>Manage Customer Values</h2>
-                <h3 id="values-customer-name">Company Name</h3>
+                <h2>Manage Customer</h2>
+                <div class="customer-header">
+                    <h3 id="values-customer-name">Company Name</h3>
+                    <button id="edit-basic-info-btn" class="btn btn-small">Edit Basic Info</button>
+                </div>
                 
                 <div class="tabs">
                     <button class="tab-btn active" data-tab="values-tab">Values</button>
@@ -670,8 +692,8 @@
     </div>
     
     <!-- Scripts -->
-    <script src="js/lib/config.js?v=1.9.2&t=20250316194400"></script>
-    <script src="js/lib/github-api.js?v=1.9.2&t=20250316194400"></script>
-    <script src="js/master-admin-dashboard.js?v=1.9.2&t=20250316194400"></script>
+    <script src="js/lib/config.js?v=1.9.4&t=20250317183000"></script>
+    <script src="js/lib/github-api.js?v=1.9.4&t=20250317183000"></script>
+    <script src="js/master-admin-dashboard.js?v=1.9.4&t=20250317183000"></script>
 </body>
 </html>

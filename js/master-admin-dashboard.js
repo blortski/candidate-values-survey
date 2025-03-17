@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.9.3
+ * Version: v1.9.4
  */
 
 // Global variables
@@ -19,14 +19,14 @@ let currentTab = 'values-tab';
 // Wait for the DOM to be fully loaded before executing any code
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== MASTER ADMIN DASHBOARD INITIALIZATION ===');
-    console.log('Master Admin Dashboard v1.9.3 initializing...');
+    console.log('Master Admin Dashboard v1.9.4 initializing...');
     console.log('Time:', new Date().toISOString());
     
     // Update version in the footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.9.3';
-        console.log('Version set to v1.9.3');
+        versionElement.textContent = 'v1.9.4';
+        console.log('Version set to v1.9.4');
     } else {
         console.error('Version element not found in the DOM');
     }
@@ -574,8 +574,8 @@ function displayCustomers() {
             <p><strong>Contact:</strong> ${customer.contact}</p>
             <p><strong>Email:</strong> ${customer.email}</p>
             <div class="card-actions">
-                <button class="btn btn-small manage-values-btn" data-id="${customer.id}" data-name="${customer.name}">Manage Values</button>
-                <button class="btn btn-small edit-customer-btn" data-id="${customer.id}">Edit</button>
+                <button class="btn btn-small edit-customer-btn" data-id="${customer.id}" data-name="${customer.name}">Edit</button>
+                <button class="btn btn-small btn-primary admin-page-btn" data-id="${customer.id}" data-name="${customer.name}">Customer Admin</button>
                 <button class="btn btn-small btn-danger delete-customer-btn" data-id="${customer.id}">Delete</button>
             </div>
         `;
@@ -583,16 +583,20 @@ function displayCustomers() {
         customersContainer.appendChild(customerCard);
         
         // Add event listeners to buttons
-        const manageValuesButton = customerCard.querySelector('.manage-values-btn');
         const editButton = customerCard.querySelector('.edit-customer-btn');
+        const adminPageButton = customerCard.querySelector('.admin-page-btn');
         const deleteButton = customerCard.querySelector('.delete-customer-btn');
         
-        if (manageValuesButton) {
-            manageValuesButton.addEventListener('click', () => showCustomerValuesModal(customer.id, customer.name));
+        if (editButton) {
+            editButton.addEventListener('click', () => showCustomerValuesModal(customer.id, customer.name));
         }
         
-        if (editButton) {
-            editButton.addEventListener('click', () => showEditCustomerForm(customer.id));
+        if (adminPageButton) {
+            adminPageButton.addEventListener('click', () => {
+                // Open the customer admin page for this customer
+                const adminUrl = `admin-dashboard.html?customer=${encodeURIComponent(customer.name)}`;
+                window.open(adminUrl, '_blank');
+            });
         }
         
         if (deleteButton) {
@@ -600,7 +604,7 @@ function displayCustomers() {
         }
     });
     
-    console.log('Customer cards created and added to container');
+    console.log('Customer cards created and displayed');
 }
 
 /**
@@ -624,13 +628,30 @@ function showCustomerValuesModal(customerId, customerName) {
         return;
     }
     
-    // Set current customer ID
+    // Set current customer ID and name
     currentCustomerId = customerId;
     
     // Set customer name in modal
     const customerNameElement = document.getElementById('values-customer-name');
     if (customerNameElement) {
         customerNameElement.textContent = customerName;
+    }
+    
+    // Add event listener to the Edit Basic Info button
+    const editBasicInfoBtn = document.getElementById('edit-basic-info-btn');
+    if (editBasicInfoBtn) {
+        // Remove any existing event listeners
+        const newEditBasicInfoBtn = editBasicInfoBtn.cloneNode(true);
+        editBasicInfoBtn.parentNode.replaceChild(newEditBasicInfoBtn, editBasicInfoBtn);
+        
+        // Add new event listener
+        newEditBasicInfoBtn.addEventListener('click', () => {
+            // Close the values modal
+            customerValuesModal.classList.add('hidden');
+            
+            // Show the edit basic info modal
+            showEditBasicInfoModal(customerId);
+        });
     }
     
     // Store customer data
@@ -651,10 +672,26 @@ function showCustomerValuesModal(customerId, customerName) {
     
     // Show modal
     customerValuesModal.classList.remove('hidden');
-    console.log('Customer values modal shown');
     
-    // Switch to first tab
-    switchTab('values-tab');
+    // Set active tab to Values
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+        button.classList.remove('active');
+        if (button.getAttribute('data-tab') === 'values-tab') {
+            button.classList.add('active');
+        }
+    });
+    
+    tabContents.forEach(content => {
+        content.classList.remove('active');
+        if (content.id === 'values-tab') {
+            content.classList.add('active');
+        }
+    });
+    
+    console.log('Customer values modal shown');
 }
 
 /**
@@ -1788,6 +1825,43 @@ function saveLogo() {
             console.error('Error saving logo:', error);
             showNotification('Error updating logo. Please try again.');
         });
+}
+
+/**
+ * Show the edit customer form for basic info
+ * @param {string} customerId - The ID of the customer to edit
+ */
+function showEditBasicInfoModal(customerId) {
+    console.log('Showing edit customer basic info modal for customer ID:', customerId);
+    
+    const editCustomerModal = document.getElementById('edit-customer-modal');
+    if (!editCustomerModal) {
+        console.error('Edit customer modal not found');
+        return;
+    }
+    
+    // Find customer
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) {
+        console.error('Customer not found:', customerId);
+        return;
+    }
+    
+    // Set current customer ID
+    currentCustomerId = customerId;
+    
+    // Fill form fields
+    const nameInput = document.getElementById('edit-customer-name');
+    const contactInput = document.getElementById('edit-customer-contact');
+    const emailInput = document.getElementById('edit-customer-email');
+    
+    if (nameInput) nameInput.value = customer.name;
+    if (contactInput) contactInput.value = customer.contact;
+    if (emailInput) emailInput.value = customer.email;
+    
+    // Show modal
+    editCustomerModal.classList.remove('hidden');
+    console.log('Edit customer modal shown');
 }
 
 /**
