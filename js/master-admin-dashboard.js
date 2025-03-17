@@ -594,7 +594,7 @@ function displayCustomers() {
         if (adminPageButton) {
             adminPageButton.addEventListener('click', () => {
                 // Open the customer admin page for this customer
-                const adminUrl = `admin-dashboard.html?customer=${encodeURIComponent(customer.name)}`;
+                const adminUrl = `customer-admin-dashboard.html?id=${customer.id}`;
                 window.open(adminUrl, '_blank');
             });
         }
