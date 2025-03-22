@@ -4,6 +4,8 @@
     "name": "Wild Zora Foods",
     "contact": "Joshua Tabin",
     "email": "joshua@wildzora.com",
+    "adminEmail": "joshua@wildzora.com",
+    "adminPassword": "password123",
     "logo": "",
     "values": [],
     "questions": [],
