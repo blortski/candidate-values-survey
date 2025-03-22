@@ -4,7 +4,7 @@
  * This script handles the functionality for the customer-specific admin dashboard,
  * including values management, employee management, and survey creation.
  * 
- * Version: v1.9.10
+ * Version: v1.9.11
  */
 
 // Global variables
