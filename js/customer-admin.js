@@ -4,7 +4,7 @@
  * This script handles the functionality for the customer-specific admin dashboard,
  * including values management, employee management, and survey creation.
  * 
- * Version: v1.9.7
+ * Version: v1.9.8
  */
 
 // Global variables
@@ -167,7 +167,7 @@ async function handleLogin() {
     
     // Test GitHub API connection
     try {
-        const isValid = await githubAPI.testConnection();
+        const isValid = await githubAPI.testAccess();
         
         if (isValid) {
             // Verify customer admin credentials
@@ -248,7 +248,7 @@ async function loginWithStoredCredentials(email, token) {
     
     // Test GitHub API connection
     try {
-        const isValid = await githubAPI.testConnection();
+        const isValid = await githubAPI.testAccess();
         
         if (isValid) {
             // Show dashboard
