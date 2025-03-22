@@ -1,0 +1,66 @@
+[
+  {
+    "id": "1",
+    "value_id": "1",
+    "text": "I believe that hard work always pays off in the end.",
+    "answers": [
+      {
+        "id": "1",
+        "text": "Strongly Agree",
+        "score": 5
+      },
+      {
+        "id": "2",
+        "text": "Agree",
+        "score": 4
+      },
+      {
+        "id": "3",
+        "text": "Neutral",
+        "score": 3
+      },
+      {
+        "id": "4",
+        "text": "Disagree",
+        "score": 2
+      },
+      {
+        "id": "5",
+        "text": "Strongly Disagree",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "value_id": "2",
+    "text": "I enjoy collaborating with others to solve problems.",
+    "answers": [
+      {
+        "id": "1",
+        "text": "Strongly Agree",
+        "score": 5
+      },
+      {
+        "id": "2",
+        "text": "Agree",
+        "score": 4
+      },
+      {
+        "id": "3",
+        "text": "Neutral",
+        "score": 3
+      },
+      {
+        "id": "4",
+        "text": "Disagree",
+        "score": 2
+      },
+      {
+        "id": "5",
+        "text": "Strongly Disagree",
+        "score": 1
+      }
+    ]
+  }
+]

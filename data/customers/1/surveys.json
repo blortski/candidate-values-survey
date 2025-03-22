@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "title": "Values Alignment Survey - Engineering Team",
+    "description": "This survey helps us understand how well your personal values align with our company values.",
+    "employee_id": "1",
+    "employee_name": "John Doe",
+    "employee_email": "john.doe@example.com",
+    "access_token": "abc123xyz456",
+    "status": "sent",
+    "date_created": "2025-03-15T10:30:00Z",
+    "date_sent": "2025-03-15T10:35:00Z",
+    "date_completed": null,
+    "results": null
+  }
+]

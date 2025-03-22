@@ -4,7 +4,7 @@
  * This script handles the functionality for the master admin dashboard,
  * including customer management, authentication, and data operations.
  * 
- * Version: v1.9.5
+ * Version: v1.9.6
  */
 
 // Global variables
@@ -19,14 +19,14 @@ let currentTab = 'values-tab';
 // Wait for the DOM to be fully loaded before executing any code
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== MASTER ADMIN DASHBOARD INITIALIZATION ===');
-    console.log('Initializing master admin dashboard v1.9.5...');
+    console.log('Initializing master admin dashboard v1.9.6...');
     console.log('Time:', new Date().toISOString());
     
     // Update version in the footer
     const versionElement = document.getElementById('app-version');
     if (versionElement) {
-        versionElement.textContent = 'v1.9.5';
-        console.log('Set version to:', 'v1.9.5');
+        versionElement.textContent = 'v1.9.6';
+        console.log('Set version to:', 'v1.9.6');
     } else {
         console.error('Version element not found in the DOM');
     }

@@ -4,7 +4,7 @@
  * This script handles the functionality for the customer-specific admin dashboard,
  * including values management, employee management, and survey creation.
  * 
- * Version: v1.5.5
+ * Version: v1.9.6
  */
 
 // Global variables
@@ -355,6 +355,7 @@ async function loadAllData() {
  */
 async function loadValuesData() {
     console.log('Loading values data...');
+    console.log('Customer ID:', customerId);
     
     // Show loading indicator
     valuesContainer.innerHTML = `
@@ -366,8 +367,14 @@ async function loadValuesData() {
     
     try {
         // Get values data from GitHub
-        const valuesResponse = await githubAPI.getFileContent(`data/customers/${customerId}/values.json`);
+        const valuesPath = `data/customers/${customerId}/values.json`;
+        console.log('Attempting to load values from path:', valuesPath);
+        
+        const valuesResponse = await githubAPI.getFileContent(valuesPath);
+        console.log('Values response received:', valuesResponse);
+        
         valuesData = JSON.parse(atob(valuesResponse.content));
+        console.log('Parsed values data:', valuesData);
         
         // Display values
         displayValues(valuesData);

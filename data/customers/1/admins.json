@@ -1,0 +1,9 @@
+[
+  {
+    "id": "1",
+    "name": "Joshua Tabin",
+    "email": "joshua@wildzora.com",
+    "password": "password123",
+    "role": "admin"
+  }
+]
